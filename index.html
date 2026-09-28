@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Karen Language Benchmark</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Karen Language Benchmark</h1>
+        <p class="subtitle">Adaptive K1–K9 language assessment</p>
+      </div>
+      <div class="top-actions">
+        <button id="studentModeBtn" class="btn secondary">Student Test</button>
+        <button id="teacherModeBtn" class="btn secondary">Teacher Dashboard</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="homeView" class="card hero">
+        <h2>Choose a mode</h2>
+        <p>Students take an adaptive benchmark. Teachers review growth and skill-domain results.</p>
+        <div class="mode-grid">
+          <button id="startStudentBtn" class="mode-card">
+            <span class="mode-icon">📝</span>
+            <strong>Student Test</strong>
+            <small>Take the adaptive Karen benchmark</small>
+          </button>
+          <button id="startTeacherBtn" class="mode-card">
+            <span class="mode-icon">📊</span>
+            <strong>Teacher Dashboard</strong>
+            <small>View benchmark scores and K-levels</small>
+          </button>
+        </div>
+      </section>
+
+      <section id="studentSetupView" class="card hidden">
+        <h2>Student Information</h2>
+        <div class="form-grid">
+          <label>
+            Student Name
+            <input id="studentName" type="text" placeholder="Enter your name" />
+          </label>
+          <label>
+            Grade
+            <select id="studentGrade">
+              <option value="">Select grade</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+            </select>
+          </label>
+          <label>
+            Testing Window
+            <select id="testWindow">
+              <option>Fall</option>
+              <option>Winter</option>
+              <option>Spring</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="beginTestBtn" class="btn primary">Begin Test</button>
+          <button class="btn ghost" data-home>Back</button>
+        </div>
+      </section>
+
+      <section id="testView" class="card hidden">
+        <div class="test-header">
+          <div>
+            <div class="eyebrow" id="questionDomain">Domain</div>
+            <div class="progress-text"><span id="questionNumber">1</span> of <span id="questionTotal">20</span></div>
+          </div>
+          <div class="level-pill">Current difficulty: <strong id="currentDifficulty">K5</strong></div>
+        </div>
+
+        <div class="progress-track">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <div id="questionPrompt" class="question-prompt"></div>
+        <div id="answerChoices" class="choices"></div>
+
+        <div class="actions">
+          <button id="nextQuestionBtn" class="btn primary" disabled>Next</button>
+        </div>
+      </section>
+
+      <section id="resultView" class="card hidden">
+        <div class="result-hero">
+          <div>
+            <div class="eyebrow">Benchmark Complete</div>
+            <h2 id="resultStudentName">Student</h2>
+          </div>
+          <div class="score-badge">
+            <span id="resultLevel">K5</span>
+            <small>Current Level</small>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="stat-label">Benchmark Score</span>
+            <strong id="resultScore">0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Accuracy</span>
+            <strong id="resultAccuracy">0%</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Questions</span>
+            <strong id="resultQuestionCount">0</strong>
+          </div>
+        </div>
+
+        <h3>Skill Domains</h3>
+        <div id="domainResults" class="domain-results"></div>
+
+        <div class="actions">
+          <button id="returnHomeBtn" class="btn primary">Done</button>
+        </div>
+      </section>
+
+      <section id="teacherView" class="card hidden">
+        <div class="teacher-head">
+          <div>
+            <h2>Teacher Dashboard</h2>
+            <p>Results are saved in this browser for the MVP.</p>
+          </div>
+          <div class="actions">
+            <button id="exportCsvBtn" class="btn secondary">Export CSV</button>
+            <button id="clearResultsBtn" class="btn danger">Clear Results</button>
+            <button class="btn ghost" data-home>Back</button>
+          </div>
+        </div>
+
+        <div class="dashboard-stats">
+          <div class="stat">
+            <span class="stat-label">Tests Completed</span>
+            <strong id="dashCount">0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Average Score</span>
+            <strong id="dashAverage">—</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Average Level</span>
+            <strong id="dashLevel">—</strong>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Grade</th>
+                <th>Window</th>
+                <th>Score</th>
+                <th>Level</th>
+                <th>Accuracy</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
