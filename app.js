@@ -1,172 +1,101 @@
-const consonants = [
-{letter:'က',sound:'Ka',detail:'Sound between G and K'},{letter:'ခ',sound:'Ka',detail:'Clear K sound'},
-{letter:'ဂ',sound:'Ga',detail:'Much softer than G'},{letter:'ဃ',sound:'Kha',detail:'K and H mixed'},
-{letter:'င',sound:'Ngah',detail:'Nasal sound'},{letter:'စ',sound:'Sa',detail:''},
-{letter:'ဆ',sound:'Cha',detail:''},{letter:'ရှ',sound:'Sha',detail:''},
-{letter:'ည',sound:'Nya',detail:''},{letter:'တ',sound:'Ta',detail:'Sound between T and D'},
-{letter:'ထ',sound:'Ta',detail:'Clear T sound'},{letter:'ဒ',sound:'Da',detail:''},
-{letter:'န',sound:'Na',detail:''},{letter:'ပ',sound:'Pa',detail:'Sound between P and B'},
-{letter:'ဖ',sound:'Pa',detail:'Clear P sound'},{letter:'ဘ',sound:'Ba',detail:''},
-{letter:'မ',sound:'Ma',detail:''},{letter:'ယ',sound:'Ya',detail:''},
-{letter:'ရ',sound:'Ra',detail:''},{letter:'လ',sound:'La',detail:''},
-{letter:'ဝ',sound:'Wa',detail:''},{letter:'သ',sound:'Tha',detail:''},
-{letter:'ဟ',sound:'Ha',detail:''},{letter:'အ',sound:'Ah',detail:''},{letter:'ဧ',sound:'Ahh..',detail:'Longer Ah sound'}
+const consonants=[
+{l:'က',s:'Ka'},{l:'ခ',s:'Ka'},{l:'ဂ',s:'Ga'},{l:'ဃ',s:'Kha'},{l:'င',s:'Ngah'},{l:'စ',s:'Sa'},{l:'ဆ',s:'Cha'},{l:'ရှ',s:'Sha'},{l:'ည',s:'Nya'},{l:'တ',s:'Ta'},{l:'ထ',s:'Ta'},{l:'ဒ',s:'Da'},{l:'န',s:'Na'},{l:'ပ',s:'Pa'},{l:'ဖ',s:'Pa'},{l:'ဘ',s:'Ba'},{l:'မ',s:'Ma'},{l:'ယ',s:'Ya'},{l:'ရ',s:'Ra'},{l:'လ',s:'La'},{l:'ဝ',s:'Wa'},{l:'သ',s:'Tha'},{l:'ဟ',s:'Ha'},{l:'အ',s:'Ah'},{l:'ဧ',s:'Ahh'}
+];
+const vowels=[
+{v:'ါ',s:'Ah'},{v:'ံ',s:'Ee'},{v:'ၢ',s:'Uh'},{v:'ု',s:'Eu'},{v:'ူ',s:'Oo'},{v:'့',s:'Ay/Ae'},{v:'ဲ',s:'Eh'},{v:'ိ',s:'Oe'},{v:'ီ',s:'Aw'}
 ];
 
-const vowels = [
-{symbol:'ါ',sound:'Ah',similar:['ၢ','ံ','့']},
-{symbol:'ံ',sound:'Ee',similar:['ါ','့','ိ']},
-{symbol:'ၢ',sound:'Uh',similar:['ါ','ု','ူ']},
-{symbol:'ု',sound:'Eu',similar:['ူ','ိ','ီ']},
-{symbol:'ူ',sound:'Oo',similar:['ု','ီ','ိ']},
-{symbol:'့',sound:'Ay/Ae',similar:['ံ','ါ','ဲ']},
-{symbol:'ဲ',sound:'Eh',similar:['့','ိ','ီ']},
-{symbol:'ိ',sound:'Oe',similar:['ီ','ု','ံ']},
-{symbol:'ီ',sound:'Aw',similar:['ိ','ူ','ု']}
-];
-
-const beginningExamples=[
-{cue:'Ma',answer:'မ'},{cue:'Na',answer:'န'},{cue:'Ya',answer:'ယ'},{cue:'Ra',answer:'ရ'},
-{cue:'La',answer:'လ'},{cue:'Wa',answer:'ဝ'},{cue:'Ha',answer:'ဟ'},{cue:'Sha',answer:'ရှ'},
-{cue:'Cha',answer:'ဆ'},{cue:'Nya',answer:'ည'},{cue:'Ngah',answer:'င'},{cue:'Ba',answer:'ဘ'}
-];
-
-const views={home:homeView,setup:studentSetupView,test:testView,result:resultView,teacher:teacherView};
-let state={};
-function freshState(){return{studentName:'',grade:'',window:'',questions:[],currentIndex:0,selected:null,responses:[]}}
-state=freshState();
-
-function showView(name){Object.values(views).forEach(v=>v.classList.add('hidden'));views[name].classList.remove('hidden')}
+const views={home:homeView,setup:studentSetupView,test:testView,result:resultView,teacher:teacherView};let state={};
+function fresh(){return{studentName:'',grade:'',window:'',questions:[],i:0,selected:null,responses:[]}}state=fresh();
+function showView(n){Object.values(views).forEach(v=>v.classList.add('hidden'));views[n].classList.remove('hidden')}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function soundLabel(i){return i.detail?`${i.sound} — ${i.detail}`:i.sound}
-function wrongConsonants(answer,n=3){return shuffle(consonants.map(x=>x.letter).filter(x=>x!==answer)).slice(0,n)}
-function wrongSounds(item,n=3){const c=soundLabel(item);return shuffle([...new Set(consonants.map(soundLabel).filter(x=>x!==c))]).slice(0,n)}
-function wrongVowels(answer,n=3){return shuffle(vowels.map(x=>x.symbol).filter(x=>x!==answer)).slice(0,n)}
-function wrongVowelSounds(answer,n=3){return shuffle(vowels.map(x=>x.sound).filter(x=>x!==answer)).slice(0,n)}
+function pct(rows){return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0}
+function wrong(arr,ans,n=3){return shuffle(arr.filter(x=>x!==ans)).slice(0,n)}
 
-function makeK1Questions(){
- return shuffle(consonants).slice(0,6).map(item=>{
-   const choices=shuffle([item.letter,...wrongConsonants(item.letter)]);
-   return{skill:'K1',domain:'Alphabet Recognition',type:'recognition',instruction:'Select the letter that matches the letter shown.',prompt:item.letter,promptClass:'karen-large',choices,answer:choices.indexOf(item.letter),choiceClass:'karen'}
- })
+function combine(c,v){
+ let base=c.s;
+ let stem=base;
+ if(base.endsWith('ah')) stem=base.slice(0,-2);
+ else if(base.endsWith('a')) stem=base.slice(0,-1);
+ else if(base.endsWith('h') && base.length>2) stem=base.slice(0,-1);
+
+ const special={
+   'Ah': stem+'ah','Ee':stem+'ee','Uh':stem+'uh','Eu':stem+'eu',
+   'Oo':stem+'oo','Ay/Ae':stem+'ay','Eh':stem+'eh','Oe':stem+'oe','Aw':stem+'aw'
+ };
+ if(c.l==='အ') return {'Ah':'Ah','Ee':'Ee','Uh':'Uh','Eu':'Eu','Oo':'Oo','Ay/Ae':'Ay','Eh':'Eh','Oe':'Oe','Aw':'Aw'}[v.s];
+ if(c.l==='ဧ') return {'Ah':'Ahh','Ee':'Eeh','Uh':'Uhh','Eu':'Euh','Oo':'Ooh','Ay/Ae':'Ayy','Eh':'Ehh','Oe':'Oeh','Aw':'Aww'}[v.s];
+ return special[v.s];
 }
+function comboBank(){
+ const out=[];
+ consonants.forEach(c=>vowels.forEach(v=>out.push({written:c.l+v.v,sound:combine(c,v),c,v})));
+ return out;
+}
+const combos=comboBank();
 
-function makeK2Questions(){
+function qSimple(skill,domain,type,instruction,prompt,choices,correct,promptClass='',choiceClass=''){
+ return{skill,domain,type,instruction,prompt,choices,answer:choices.indexOf(correct),promptClass,choiceClass}
+}
+function makeK1(){return shuffle(consonants).slice(0,5).map(x=>{const ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);return qSimple('K1','Alphabet Recognition','recognition','Select the matching letter.',x.l,ch,x.l,'karen-large','karen')})}
+function makeK2(){return shuffle(consonants).slice(0,6).map((x,i)=>{if(i<3){const sounds=[...new Set(consonants.map(z=>z.s))],ch=shuffle([x.s,...wrong(sounds,x.s)]);return qSimple('K2','Letter Sounds','letterToSound','What sound does this letter make?',x.l,ch,x.s,'karen-large','')}else{const ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);return qSimple('K2','Letter Sounds','soundToLetter','Which letter makes this sound?',x.s,ch,x.l,'','karen')}})}
+function makeK3(){return shuffle(vowels).slice(0,6).map((x,i)=>{if(i<3){const ch=shuffle([x.s,...wrong(vowels.map(z=>z.s),x.s)]);return qSimple('K3','Vowel Recognition','vowelToSound','What sound does this vowel make?',x.v,ch,x.s,'karen-large','')}else{const ch=shuffle([x.v,...wrong(vowels.map(z=>z.v),x.v)]);return qSimple('K3','Vowel Recognition','soundToVowel','Which vowel makes this sound?',x.s,ch,x.v,'','karen')}})}
+
+function makeK4(){
  const q=[];
- shuffle(consonants).slice(0,3).forEach(item=>{
-   const correct=soundLabel(item),choices=shuffle([correct,...wrongSounds(item)]);
-   q.push({skill:'K2',domain:'Letter Sounds',type:'letterToSound',instruction:'What sound does this letter make?',prompt:item.letter,promptClass:'karen-large',choices,answer:choices.indexOf(correct),choiceClass:''});
+ // 4 read simple CV: written -> pronunciation
+ shuffle(combos).slice(0,4).forEach(x=>{
+   const soundPool=[...new Set(combos.filter(z=>z.c.l===x.c.l).map(z=>z.sound))];
+   const ch=shuffle([x.sound,...wrong(soundPool,x.sound)]);
+   q.push(qSimple('K4','Alphabet + Vowel','readCV','Read this alphabet + vowel combination. Choose its pronunciation.',x.written,ch,x.sound,'karen-large',''));
  });
- shuffle(consonants).slice(0,3).forEach(item=>{
-   const choices=shuffle([item.letter,...wrongConsonants(item.letter)]);
-   q.push({skill:'K2',domain:'Letter Sounds',type:'soundToLetter',instruction:'Which Karen letter makes this sound?',prompt:soundLabel(item),promptClass:'',choices,answer:choices.indexOf(item.letter),choiceClass:'karen'});
+ // 4 identify correct pronunciation: same written, broader distractors
+ shuffle(combos).slice(0,4).forEach(x=>{
+   const pool=[...new Set(combos.map(z=>z.sound))];
+   const ch=shuffle([x.sound,...wrong(pool,x.sound)]);
+   q.push(qSimple('K4','Alphabet + Vowel','pronunciation','Which is the correct pronunciation?',x.written,ch,x.sound,'karen-large',''));
  });
- shuffle(beginningExamples).slice(0,3).forEach(ex=>{
-   const choices=shuffle([ex.answer,...wrongConsonants(ex.answer)]);
-   q.push({skill:'K2',domain:'Beginning Sounds',type:'beginningSound',instruction:'Which Karen letter matches the beginning sound shown?',prompt:ex.cue,promptClass:'',choices,answer:choices.indexOf(ex.answer),choiceClass:'karen'});
+ // 4 sound -> written combination
+ shuffle(combos).slice(0,4).forEach(x=>{
+   const sameC=combos.filter(z=>z.c.l===x.c.l).map(z=>z.written);
+   const ch=shuffle([x.written,...wrong(sameC,x.written)]);
+   q.push(qSimple('K4','Alphabet + Vowel','soundToWritten','Which written combination matches this sound?',x.sound,ch,x.written,'','karen'));
  });
  return shuffle(q)
 }
+function build(){return[...makeK1(),...makeK2(),...makeK3(),...makeK4()]}
 
-function makeK3Questions(){
- const q=[];
- // identify vowel form
- shuffle(vowels).slice(0,3).forEach(item=>{
-   const choices=shuffle([item.symbol,...wrongVowels(item.symbol)]);
-   q.push({skill:'K3',domain:'Vowel Recognition',type:'identifyVowel',instruction:'Select the vowel that matches the vowel shown.',prompt:item.symbol,promptClass:'karen-large',choices,answer:choices.indexOf(item.symbol),choiceClass:'karen'});
- });
- // vowel -> sound
- shuffle(vowels).slice(0,3).forEach(item=>{
-   const choices=shuffle([item.sound,...wrongVowelSounds(item.sound)]);
-   q.push({skill:'K3',domain:'Vowel Sounds',type:'vowelToSound',instruction:'What sound does this Karen vowel make?',prompt:item.symbol,promptClass:'karen-large',choices,answer:choices.indexOf(item.sound),choiceClass:''});
- });
- // sound -> vowel
- shuffle(vowels).slice(0,3).forEach(item=>{
-   const choices=shuffle([item.symbol,...wrongVowels(item.symbol)]);
-   q.push({skill:'K3',domain:'Vowel Sounds',type:'soundToVowel',instruction:'Which Karen vowel makes this sound?',prompt:item.sound,promptClass:'',choices,answer:choices.indexOf(item.symbol),choiceClass:'karen'});
- });
- // distinguish similar forms
- shuffle(vowels).slice(0,3).forEach(item=>{
-   const distractors=shuffle(item.similar).slice(0,3);
-   const choices=shuffle([item.symbol,...distractors]);
-   q.push({skill:'K3',domain:'Similar Vowel Forms',type:'similarForms',instruction:'Choose the exact vowel shown. Look carefully at the vowel form.',prompt:item.symbol,promptClass:'karen-large',choices,answer:choices.indexOf(item.symbol),choiceClass:'karen'});
- });
- return shuffle(q)
-}
-
-function buildTest(){return[...makeK1Questions(),...makeK2Questions(),...makeK3Questions()]}
-
-function renderQuestion(){
- const q=state.questions[state.currentIndex];state.selected=null;
- questionDomain.textContent=q.domain;questionNumber.textContent=state.currentIndex+1;questionTotal.textContent=state.questions.length;
- currentSkill.textContent=q.skill;questionInstruction.textContent=q.instruction;questionPrompt.textContent=q.prompt;
- questionPrompt.className='question-prompt '+(q.promptClass||'');progressBar.style.width=`${state.currentIndex/state.questions.length*100}%`;
- answerChoices.innerHTML='';
- q.choices.forEach((choice,i)=>{
-   const b=document.createElement('button');b.className='choice '+(q.choiceClass||'');b.textContent=choice;
-   b.onclick=()=>{[...answerChoices.children].forEach(c=>c.classList.remove('selected'));b.classList.add('selected');state.selected=i;nextQuestionBtn.disabled=false};
-   answerChoices.appendChild(b)
- });
+function render(){
+ const q=state.questions[state.i];state.selected=null;
+ questionDomain.textContent=q.domain;questionNumber.textContent=state.i+1;questionTotal.textContent=state.questions.length;currentSkill.textContent=q.skill;
+ questionInstruction.textContent=q.instruction;questionPrompt.textContent=q.prompt;questionPrompt.className='question-prompt '+q.promptClass;
+ progressBar.style.width=`${state.i/state.questions.length*100}%`;answerChoices.innerHTML='';
+ q.choices.forEach((c,i)=>{const b=document.createElement('button');b.className='choice '+q.choiceClass;b.textContent=c;b.onclick=()=>{[...answerChoices.children].forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.selected=i;nextQuestionBtn.disabled=false};answerChoices.appendChild(b)});
  nextQuestionBtn.disabled=true
 }
-
-function submitCurrent(){
- if(state.selected===null)return;
- const q=state.questions[state.currentIndex];
- state.responses.push({skill:q.skill,domain:q.domain,type:q.type,correct:state.selected===q.answer,prompt:q.prompt});
- state.currentIndex++;
- if(state.currentIndex>=state.questions.length)finishTest();else renderQuestion()
+function submit(){
+ if(state.selected===null)return;const q=state.questions[state.i];
+ state.responses.push({skill:q.skill,type:q.type,correct:state.selected===q.answer});state.i++;
+ state.i>=state.questions.length?finish():render()
 }
-
-function pct(rows){return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0}
-
-function finishTest(){
- const k1=state.responses.filter(r=>r.skill==='K1'),k2=state.responses.filter(r=>r.skill==='K2'),k3=state.responses.filter(r=>r.skill==='K3');
- const k1p=pct(k1),k2p=pct(k2),k3p=pct(k3),overall=pct(state.responses);
- let level='K1';
- if(k1p>=80&&k2p>=75)level='K2';
- if(k1p>=80&&k2p>=75&&k3p>=75)level='K3';
-
+function finish(){
+ const scores={};['K1','K2','K3','K4'].forEach(k=>scores[k]=pct(state.responses.filter(r=>r.skill===k)));
+ const overall=pct(state.responses);let level='K1';
+ if(scores.K1>=80&&scores.K2>=75)level='K2';
+ if(scores.K1>=80&&scores.K2>=75&&scores.K3>=75)level='K3';
+ if(scores.K1>=80&&scores.K2>=75&&scores.K3>=75&&scores.K4>=75)level='K4';
  resultStudentName.textContent=state.studentName;resultLevel.textContent=level;resultAccuracy.textContent=overall+'%';
- k1Score.textContent=k1p+'%';k2Score.textContent=k2p+'%';k3Score.textContent=k3p+'%';
-
- const a=pct(k3.filter(r=>r.type==='identifyVowel'));
- const b=pct(k3.filter(r=>r.type==='vowelToSound'||r.type==='soundToVowel'));
- const c=pct(k3.filter(r=>r.type==='similarForms'));
-
- vowelBreakdown.innerHTML=`<strong>Identify Karen vowels:</strong> ${a}%<br><strong>Match vowels with their sounds:</strong> ${b}%<br><strong>Distinguish similar vowel forms:</strong> ${c}%<br><br><strong>Current KLGA level:</strong> ${level}`;
-
- const result={student:state.studentName,grade:state.grade,window:state.window,k1:k1p,k2:k2p,k3:k3p,overall,level,identifyVowels:a,vowelSounds:b,similarVowels:c,date:new Date().toLocaleDateString()};
- const saved=JSON.parse(localStorage.getItem('klgaResultsV4')||'[]');saved.push(result);localStorage.setItem('klgaResultsV4',JSON.stringify(saved));
- showView('result')
+ k1Score.textContent=scores.K1+'%';k2Score.textContent=scores.K2+'%';k3Score.textContent=scores.K3+'%';k4Score.textContent=scores.K4+'%';
+ const k4=state.responses.filter(r=>r.skill==='K4');
+ const a=pct(k4.filter(r=>r.type==='readCV')),b=pct(k4.filter(r=>r.type==='pronunciation')),c=pct(k4.filter(r=>r.type==='soundToWritten'));
+ k4Breakdown.innerHTML=`<strong>Read simple consonant-vowel combinations:</strong> ${a}%<br><strong>Identify the correct pronunciation:</strong> ${b}%<br><strong>Match a written combination to its sound:</strong> ${c}%<br><br><strong>Current KLGA level:</strong> ${level}`;
+ const result={student:state.studentName,grade:state.grade,window:state.window,k1:scores.K1,k2:scores.K2,k3:scores.K3,k4:scores.K4,overall,level,readCV:a,pronunciation:b,soundMatch:c,date:new Date().toLocaleDateString()};
+ const saved=JSON.parse(localStorage.getItem('klgaResultsV5')||'[]');saved.push(result);localStorage.setItem('klgaResultsV5',JSON.stringify(saved));showView('result')
 }
+function renderDashboard(){const results=JSON.parse(localStorage.getItem('klgaResultsV5')||'[]');resultsTableBody.innerHTML='';results.slice().reverse().forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(r.student)}</td><td>${r.grade}</td><td>${r.window}</td><td>${r.k1}%</td><td>${r.k2}%</td><td>${r.k3}%</td><td>${r.k4}%</td><td><strong>${r.level}</strong></td><td>${r.date}</td>`;resultsTableBody.appendChild(tr)})}
+function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function exportCsv(){const r=JSON.parse(localStorage.getItem('klgaResultsV5')||'[]');const rows=[['Student','Grade','Window','K1','K2','K3','K4','Read CV','Correct Pronunciation','Written-Sound Match','Overall','Level','Date']];r.forEach(x=>rows.push([x.student,x.grade,x.window,x.k1,x.k2,x.k3,x.k4,x.readCV,x.pronunciation,x.soundMatch,x.overall,x.level,x.date]));const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\\n');const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KLGA-K1-K4-results.csv';a.click();URL.revokeObjectURL(url)}
 
-function renderDashboard(){
- const results=JSON.parse(localStorage.getItem('klgaResultsV4')||'[]');resultsTableBody.innerHTML='';
- results.slice().reverse().forEach(r=>{
-   const tr=document.createElement('tr');
-   tr.innerHTML=`<td>${escapeHtml(r.student)}</td><td>${r.grade}</td><td>${r.window}</td><td>${r.k1}%</td><td>${r.k2}%</td><td>${r.k3}%</td><td><strong>${r.level}</strong></td><td>${r.date}</td>`;
-   resultsTableBody.appendChild(tr)
- })
-}
-function escapeHtml(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-function exportCsv(){
- const results=JSON.parse(localStorage.getItem('klgaResultsV4')||'[]');
- const rows=[['Student','Grade','Window','K1','K2','K3','Identify Vowels','Vowel Sounds','Similar Vowel Forms','Overall','Level','Date']];
- results.forEach(r=>rows.push([r.student,r.grade,r.window,r.k1,r.k2,r.k3,r.identifyVowels,r.vowelSounds,r.similarVowels,r.overall,r.level,r.date]));
- const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\\n');
- const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KLGA-K1-K3-results.csv';a.click();URL.revokeObjectURL(url)
-}
-
-startStudentBtn.onclick=()=>showView('setup');studentModeBtn.onclick=()=>showView('setup');
-startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};
-document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
-returnHomeBtn.onclick=()=>{state=freshState();showView('home')};
-beginTestBtn.onclick=()=>{
- const name=studentName.value.trim(),grade=studentGrade.value,window=testWindow.value;
- if(!name||!grade){alert('Please enter student name and grade.');return}
- state=freshState();state.studentName=name;state.grade=grade;state.window=window;state.questions=buildTest();showView('test');renderQuestion()
-};
-nextQuestionBtn.onclick=submitCurrent;exportCsvBtn.onclick=exportCsv;
-clearResultsBtn.onclick=()=>{if(confirm('Clear all saved KLGA results in this browser?')){localStorage.removeItem('klgaResultsV4');renderDashboard()}}
+startStudentBtn.onclick=()=>showView('setup');studentModeBtn.onclick=()=>showView('setup');startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));returnHomeBtn.onclick=()=>{state=fresh();showView('home')};
+beginTestBtn.onclick=()=>{const name=studentName.value.trim(),grade=studentGrade.value,window=testWindow.value;if(!name||!grade){alert('Please enter student name and grade.');return}state=fresh();state.studentName=name;state.grade=grade;state.window=window;state.questions=build();showView('test');render()};
+nextQuestionBtn.onclick=submit;exportCsvBtn.onclick=exportCsv;clearResultsBtn.onclick=()=>{if(confirm('Clear all saved KLGA results?')){localStorage.removeItem('klgaResultsV5');renderDashboard()}}

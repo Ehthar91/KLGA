@@ -1,45 +1,36 @@
-# KLGA MVP v4
+# KLGA MVP v5 — K4 Alphabet + Vowel
 
-This version adds **K3 — Vowel Recognition**.
+Adds K4 using the full 25 consonants × 9 vowels = 225 possible combinations.
 
-## Karen vowel bank
-- ါ = Ah
-- ံ = Ee
-- ၢ = Uh
-- ု = Eu
-- ူ = Oo
-- ့ = Ay/Ae
-- ဲ = Eh
-- ိ = Oe
-- ီ = Aw
+Examples:
+- မာ = Mah
+- မံ = Mee
+- မၢ = Muh
+- မု = Meu
+- မူ = Moo
+- မ့ = May
+- မဲ = Meh
+- မိ = Moe
+- မီ = Maw
 
-## K3 assessment types
+## K4 measures
+1. Read simple consonant-vowel combinations
+2. Identify the correct pronunciation
+3. Match a written combination to its sound
 
-### 1. Identify Karen vowels
-Students see a target vowel and choose the exact matching vowel form.
+The app generates combinations programmatically from the consonant and vowel sound banks.
 
-### 2. Match vowels with their sounds
-Two directions are used:
-- vowel → sound
-- sound → vowel
+## K4 question count
+12 randomized K4 questions:
+- 4 written combination → pronunciation
+- 4 correct pronunciation identification
+- 4 sound → written combination
 
-### 3. Distinguish similar vowel forms
-Students see a target vowel with distractors chosen from visually similar vowel forms.
-
-## Current question counts
-- K1 Alphabet Recognition: 6
-- K2 Letter Sounds: 9
-- K3 Vowel Recognition: 12
-
-Total: 27 randomized questions.
-
-## Provisional level rule
-K3 requires:
+## Provisional K4 rule
+K4 requires:
 - K1 >= 80%
 - K2 >= 75%
 - K3 >= 75%
+- K4 >= 75%
 
-These cut scores are provisional until real student data is collected.
-
-## Current limitation
-Results are still saved only in the browser. Firebase can later centralize testing, student results, and the teacher dashboard.
+These cut scores remain provisional.
