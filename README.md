@@ -1,33 +1,66 @@
-# KLGA — K1 Alphabet Recognition MVP
+# KLGA MVP v3
 
-This version focuses on the first KLGA skill: **Alphabet Recognition**.
+This version includes:
 
-## Master Karen alphabet bank
-က ခ ဂ ဃ င စ ဆ ရှ ည တ ထ ဒ န ပ ဖ ဘ မ ယ ရ လ ဝ သ ဟ အ ဧ
+## K1 — Alphabet Recognition
+- Recognize Karen letters
+- 8 randomized questions from the 25-letter bank
 
-## Test design
-Each test gives 10 randomized recognition questions selected from all 25 letters.
+## K2 — Letter Sounds
+Three question types:
 
-The student sees a target letter and chooses the identical letter from four choices.
+1. Identify the sound of a consonant
+2. Match a sound to the correct Karen letter
+3. Recognize a beginning sound
 
-No letter-name matching is included.
+The K2 section currently gives:
+- 4 letter → sound questions
+- 4 sound → letter questions
+- 4 beginning-sound questions
 
-## Difficulty stages
-- K1-A: clearly different distractors
-- K1-B: more similar/confusable distractors
-- K1-C: mixed independent recognition
+## Karen sound bank
+Uses the teacher-provided sound descriptions:
+က Ka — between G and K
+ခ Ka
+ဂ Ga — softer G
+ဃ Kha — K + H
+င Ngah — nasal
+စ Sa
+ဆ Cha
+ရှ Sha
+ည Nya
+တ Ta — between T and D
+ထ Ta
+ဒ Da
+န Na
+ပ Pa — between P and B
+ဖ Pa
+ဘ Ba
+မ Ma
+ယ Ya
+ရ Ra
+လ La
+ဝ Wa
+သ Tha
+ဟ Ha
+အ Ah
+ဧ Ahh..
 
-## Provisional interpretation
-- 90–100% = K1-C
-- 75–89% = K1-B
-- Below 75% = K1-A
+## Provisional level rule
+K2 requires:
+- at least 80% on K1 Alphabet Recognition
+- at least 75% on K2 Letter Sounds
 
-These cut scores are provisional until you collect real student data.
+These cut scores are provisional.
 
-## Teacher dashboard
-Shows student, grade, testing window, score, accuracy, stage, and date.
+## Beginning sounds
+This first version uses simple Romanized sound cues such as:
+Ma, Na, Ya, Ra, La, Wa, Ha, Sha, Cha, Nya, Ngah, Ba.
 
-CSV export also includes missed letters.
+A later version can replace these with:
+- spoken audio
+- picture vocabulary
+- real Karen words with known beginning sounds
 
 ## Current limitation
-Results are stored only in the current browser. Firebase should be the next major infrastructure upgrade.
+Results are stored only in the current browser. Firebase is still the next infrastructure upgrade for shared Chromebook testing and a central teacher dashboard.
