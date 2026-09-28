@@ -8,7 +8,7 @@
 <body>
 <div class="app-shell">
 <header class="topbar">
-  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • K1–K6</p></div>
+  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • K1–K7</p></div>
   <div class="top-actions"><button id="studentModeBtn" class="btn secondary">Student Test</button><button id="teacherModeBtn" class="btn secondary">Teacher Dashboard</button></div>
 </header>
 <main>
@@ -21,6 +21,7 @@
 <div class="skill-card"><span>K4</span><strong>Alphabet + Vowel</strong><small>Read consonant-vowel combinations.</small></div>
 <div class="skill-card"><span>K5</span><strong>Blend Sound Recognition</strong><small>Recognize blend symbols and their sounds.</small></div>
 <div class="skill-card"><span>K6</span><strong>Tone Recognition</strong><small>Recognize tone marks and know their names.</small></div>
+<div class="skill-card"><span>K7</span><strong>Alphabet + Blend</strong><small>Read consonant-blend combinations and match them to sounds.</small></div>
 </div>
 <div class="actions center"><button id="startStudentBtn" class="btn primary">Start Student Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
 </section>
@@ -54,15 +55,15 @@
 <div class="stat"><span class="stat-label">K4</span><strong id="k4Score"></strong></div>
 <div class="stat"><span class="stat-label">K5</span><strong id="k5Score"></strong></div>
 <div class="stat"><span class="stat-label">K6</span><strong id="k6Score"></strong></div>
+<div class="stat"><span class="stat-label">K7</span><strong id="k7Score"></strong></div>
 </div>
-<h3>K5 — Blend Sound Recognition</h3><div id="k5Breakdown" class="summary-box"></div>
-<h3>K6 — Tone Recognition</h3><div id="k6Breakdown" class="summary-box"></div>
+<h3>K7 — Alphabet + Blend Breakdown</h3><div id="k7Breakdown" class="summary-box"></div>
 <div class="actions"><button id="returnHomeBtn" class="btn primary">Done</button></div>
 </section>
 
 <section id="teacherView" class="card hidden">
 <div class="teacher-head"><div><h2>Teacher Dashboard</h2><p>Results are stored in this browser for the MVP.</p></div><div class="actions"><button id="exportCsvBtn" class="btn secondary">Export CSV</button><button id="clearResultsBtn" class="btn danger">Clear Results</button><button class="btn ghost" data-home>Back</button></div></div>
-<div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th><th>Level</th><th>Date</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th><th>K7</th><th>Level</th><th>Date</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
 </section>
 </main>
 </div>

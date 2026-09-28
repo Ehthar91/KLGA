@@ -1,37 +1,40 @@
-# KLGA MVP v6 — K1 through K6
+# KLGA MVP v7 — K1 through K7
 
-New sections:
+New section:
 
-## K5 — Blend Sound Recognition
-Blend bank:
-- ၠ = Ya
-- ြ = Ra
-- ျ = La
-- ွ = Wa
-- ှ = Ga
+## K7 — Alphabet + Blend
 
-Measures:
-- Identify blend symbols
-- Match blend symbol to its sound
-- Match blend sound to the correct symbol
+Uses a 25 consonant × 5 blend bank = 125 written combinations.
 
-## K6 — Tone Recognition
-Tone bank:
-- ၢ် = Uh Thee
-- ာ် = Ah Thee
-- ၣ် = Ha Thee
-- း = Pluh See
-- ၤ = Kay Poe
+Blend rules:
+- ၠ = Y blend
+- ြ = R blend
+- ျ = L blend
+- ွ = W blend
+- ှ = G blend
 
-Measures:
-- Identify tone marks
-- Match tone mark to its name
-- Match tone name to the correct mark
+Confirmed exceptions currently stored:
+- ကၠ = Ja
+- ခၠ = Cha
+- ကြ = Kra
 
-The current test keeps K1–K4 and adds randomized K5 and K6 questions.
+K7 measures:
+1. Read alphabet + blend combinations
+2. Identify the correct pronunciation
+3. Match a written combination to its sound
 
-Provisional progression:
-K5 requires prior levels plus >=75% on K5.
-K6 requires prior levels plus >=75% on K6.
+The K7 section currently gives 12 randomized questions:
+- 4 written → sound
+- 4 pronunciation identification
+- 4 sound → written
 
-Results are still saved in the browser for this MVP.
+Important:
+Most K7 pronunciations are generated from the current draft blend rules.
+If additional pronunciation exceptions are identified, add them to the exceptions
+object in app.js so the bank remains accurate.
+
+Provisional K7 level rule:
+K1 >= 80%
+K2-K7 >= 75%
+
+Results are stored locally in the browser in this MVP.
