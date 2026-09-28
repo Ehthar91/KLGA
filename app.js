@@ -5,9 +5,6 @@ const vowels=[{v:'ါ',s:'Ah'},{v:'ံ',s:'Ee'},{v:'ၢ',s:'Uh'},{v:'ု',s:'Eu'
 const blends=[{m:'ၠ',s:'Ya',suffix:'y'},{m:'ြ',s:'Ra',suffix:'r'},{m:'ျ',s:'La',suffix:'l'},{m:'ွ',s:'Wa',suffix:'w'},{m:'ှ',s:'Ga',suffix:'g'}];
 const tones=[{m:'ၢ်',n:'Uh Thee'},{m:'ာ်',n:'Ah Thee'},{m:'ၣ်',n:'Ha Thee'},{m:'း',n:'Pluh See'},{m:'ၤ',n:'Kay Poe'}];
 
-const views={home:homeView,setup:studentSetupView,test:testView,result:resultView,teacher:teacherView};let state={};
-function fresh(){return{studentName:'',grade:'',window:'',questions:[],i:0,selected:null,responses:[]}}state=fresh();
-function showView(n){Object.values(views).forEach(v=>v.classList.add('hidden'));views[n].classList.remove('hidden')}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function pct(rows){return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0}
 function wrong(arr,ans,n=3){return shuffle(arr.filter(x=>x!==ans)).slice(0,n)}
