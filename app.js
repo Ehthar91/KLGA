@@ -122,92 +122,393 @@ function k8SoundFromWritten(w){
 
 const k8Bank=k8WrittenBank.map(w=>({w:w,s:k8SoundFromWritten(w)})).filter(x=>x.s);
 
+
 function q(skill,domain,type,instruction,prompt,choices,correct,promptClass='',choiceClass=''){
  return{skill,domain,type,instruction,prompt,choices,answer:choices.indexOf(correct),promptClass,choiceClass}
 }
-function makeK1(){return shuffle(consonants).slice(0,4).map(x=>{const ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);return q('K1','Alphabet Recognition','recognition','Select the matching letter.',x.l,ch,x.l,'karen-large','karen')})}
-function makeK2(){return shuffle(consonants).slice(0,4).map((x,i)=>{if(i<2){const ss=[...new Set(consonants.map(z=>z.s))],ch=shuffle([x.s,...wrong(ss,x.s)]);return q('K2','Letter Sounds','letterToSound','What sound does this letter make?',x.l,ch,x.s,'karen-large','')}const ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);return q('K2','Letter Sounds','soundToLetter','Which letter makes this sound?',x.s,ch,x.l,'','karen')})}
-function makeK3(){return shuffle(vowels).slice(0,4).map((x,i)=>{if(i<2){const ch=shuffle([x.s,...wrong(vowels.map(z=>z.s),x.s)]);return q('K3','Vowel Recognition','vowelToSound','What sound does this vowel make?',x.v,ch,x.s,'karen-large','')}const ch=shuffle([x.v,...wrong(vowels.map(z=>z.v),x.v)]);return q('K3','Vowel Recognition','soundToVowel','Which vowel makes this sound?',x.s,ch,x.v,'','karen')})}
-function makeK4(){return shuffle(cvBank).slice(0,6).map((x,i)=>{if(i<3){const pool=[...new Set(cvBank.filter(z=>z.c.l===x.c.l).map(z=>z.s))],ch=shuffle([x.s,...wrong(pool,x.s)]);return q('K4','Alphabet + Vowel','writtenToSound','Read this combination.',x.w,ch,x.s,'karen-large','')}const pool=cvBank.filter(z=>z.c.l===x.c.l).map(z=>z.w),ch=shuffle([x.w,...wrong(pool,x.w)]);return q('K4','Alphabet + Vowel','soundToWritten','Which written combination matches this sound?',x.s,ch,x.w,'','karen')})}
-function makeK5(){const out=[];tones.forEach(t=>{const ch=shuffle([t.m,...wrong(tones.map(x=>x.m),t.m)]);out.push(q('K5','Tone Recognition','identifyTone','Select the matching tone mark.',t.m,ch,t.m,'karen-large','karen'))});shuffle(tones).slice(0,3).forEach(t=>{const ch=shuffle([t.n,...wrong(tones.map(x=>x.n),t.n)]);out.push(q('K5','Tone Recognition','toneToName','What is the name of this tone?',t.m,ch,t.n,'karen-large',''))});return shuffle(out).slice(0,7)}
-function makeK6(){const out=[];blends.forEach(b=>{const ch=shuffle([b.m,...wrong(blends.map(x=>x.m),b.m)]);out.push(q('K6','Blend Sound Recognition','identifyBlend','Select the matching blend symbol.',b.m,ch,b.m,'karen-large','karen'))});shuffle(blends).slice(0,3).forEach(b=>{const ch=shuffle([b.s,...wrong(blends.map(x=>x.s),b.s)]);out.push(q('K6','Blend Sound Recognition','blendToSound','What sound does this blend symbol make?',b.m,ch,b.s,'karen-large',''))});return shuffle(out).slice(0,7)}
 
-function makeK7(){
+/* ---------------------------
+   QUESTION GENERATORS
+   Each function returns a pool. The adaptive engine samples
+   only the items it needs for the current level.
+---------------------------- */
+
+function makeK1Pool(){
+ return shuffle(consonants).map(x=>{
+   const ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);
+   return q('K1','Alphabet Recognition','recognition','Select the matching letter.',x.l,ch,x.l,'karen-large','karen');
+ });
+}
+
+function makeK2Pool(){
  const out=[];
- const sample=shuffle(blendBank).slice(0,12);
+ consonants.forEach(x=>{
+   const ss=[...new Set(consonants.map(z=>z.s))];
+   let ch=shuffle([x.s,...wrong(ss,x.s)]);
+   out.push(q('K2','Letter Sounds','letterToSound','What sound does this letter make?',x.l,ch,x.s,'karen-large',''));
+   ch=shuffle([x.l,...wrong(consonants.map(z=>z.l),x.l)]);
+   out.push(q('K2','Letter Sounds','soundToLetter','Which letter makes this sound?',x.s,ch,x.l,'','karen'));
+ });
+ return shuffle(out);
+}
 
- sample.slice(0,4).forEach(x=>{
-   const pool=[...new Set(blendBank.map(z=>z.s))];
-   const ch=shuffle([x.s,...wrong(pool,x.s)]);
+function makeK3Pool(){
+ const out=[];
+ vowels.forEach(x=>{
+   let ch=shuffle([x.s,...wrong(vowels.map(z=>z.s),x.s)]);
+   out.push(q('K3','Vowel Recognition','vowelToSound','What sound does this vowel make?',x.v,ch,x.s,'karen-large',''));
+   ch=shuffle([x.v,...wrong(vowels.map(z=>z.v),x.v)]);
+   out.push(q('K3','Vowel Recognition','soundToVowel','Which vowel makes this sound?',x.s,ch,x.v,'','karen'));
+ });
+ return shuffle(out);
+}
+
+function makeK4Pool(){
+ const out=[];
+ cvBank.forEach(x=>{
+   const soundPool=[...new Set(cvBank.filter(z=>z.c.l===x.c.l).map(z=>z.s))];
+   let ch=shuffle([x.s,...wrong(soundPool,x.s)]);
+   out.push(q('K4','Alphabet + Vowel','writtenToSound','Read this combination.',x.w,ch,x.s,'karen-large',''));
+   const writtenPool=cvBank.filter(z=>z.c.l===x.c.l).map(z=>z.w);
+   ch=shuffle([x.w,...wrong(writtenPool,x.w)]);
+   out.push(q('K4','Alphabet + Vowel','soundToWritten','Which written combination matches this sound?',x.s,ch,x.w,'','karen'));
+ });
+ return shuffle(out);
+}
+
+function makeK5Pool(){
+ const out=[];
+ tones.forEach(t=>{
+   let ch=shuffle([t.m,...wrong(tones.map(x=>x.m),t.m)]);
+   out.push(q('K5','Tone Recognition','identifyTone','Select the matching tone mark.',t.m,ch,t.m,'karen-large','karen'));
+   ch=shuffle([t.n,...wrong(tones.map(x=>x.n),t.n)]);
+   out.push(q('K5','Tone Recognition','toneToName','What is the name of this tone?',t.m,ch,t.n,'karen-large',''));
+   ch=shuffle([t.m,...wrong(tones.map(x=>x.m),t.m)]);
+   out.push(q('K5','Tone Recognition','nameToTone','Which tone mark is called "'+t.n+'"?',t.n,ch,t.m,'','karen'));
+ });
+ return shuffle(out);
+}
+
+function makeK6Pool(){
+ const out=[];
+ blends.forEach(b=>{
+   let ch=shuffle([b.m,...wrong(blends.map(x=>x.m),b.m)]);
+   out.push(q('K6','Blend Sound Recognition','identifyBlend','Select the matching blend symbol.',b.m,ch,b.m,'karen-large','karen'));
+   ch=shuffle([b.s,...wrong(blends.map(x=>x.s),b.s)]);
+   out.push(q('K6','Blend Sound Recognition','blendToSound','What sound does this blend symbol make?',b.m,ch,b.s,'karen-large',''));
+   ch=shuffle([b.m,...wrong(blends.map(x=>x.m),b.m)]);
+   out.push(q('K6','Blend Sound Recognition','soundToBlend','Which blend symbol makes this sound?',b.s,ch,b.m,'','karen'));
+ });
+ return shuffle(out);
+}
+
+function makeK7Pool(){
+ const out=[];
+ blendBank.forEach(x=>{
+   const soundPool=[...new Set(blendBank.map(z=>z.s))];
+   let ch=shuffle([x.s,...wrong(soundPool,x.s)]);
    out.push(q('K7','Alphabet + Blend','readBlend','Read this alphabet + blend combination.',x.w,ch,x.s,'karen-large',''));
- });
-
- sample.slice(4,8).forEach(x=>{
-   const pool=[...new Set(blendBank.map(z=>z.s))];
-   const ch=shuffle([x.s,...wrong(pool,x.s)]);
+   ch=shuffle([x.s,...wrong(soundPool,x.s)]);
    out.push(q('K7','Alphabet + Blend','pronunciation','Which is the correct pronunciation?',x.w,ch,x.s,'karen-large',''));
- });
-
- sample.slice(8,12).forEach(x=>{
-   const pool=blendBank.map(z=>z.w);
-   const ch=shuffle([x.w,...wrong(pool,x.w)]);
+   const writtenPool=blendBank.map(z=>z.w);
+   ch=shuffle([x.w,...wrong(writtenPool,x.w)]);
    out.push(q('K7','Alphabet + Blend','soundToWritten','Which written combination matches this sound?',x.s,ch,x.w,'','karen'));
  });
-
  return shuffle(out);
 }
 
-
-function makeK8(){
+function makeK8Pool(){
  const out=[];
- const sample=shuffle(k8Bank).slice(0,12);
-
- sample.slice(0,4).forEach(x=>{
-   const pool=[...new Set(k8Bank.map(z=>z.s))];
-   const ch=shuffle([x.s,...wrong(pool,x.s)]);
-   out.push(q('K8','Alphabet + Blend + Vowel','readABV',
-     'Read this alphabet + blend + vowel combination.',
-     x.w,ch,x.s,'karen-large',''));
+ k8Bank.forEach(x=>{
+   const soundPool=[...new Set(k8Bank.map(z=>z.s))];
+   let ch=shuffle([x.s,...wrong(soundPool,x.s)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','readABV','Read this alphabet + blend + vowel combination.',x.w,ch,x.s,'karen-large',''));
+   ch=shuffle([x.s,...wrong(soundPool,x.s)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','pronunciationABV','Which is the correct pronunciation?',x.w,ch,x.s,'karen-large',''));
+   const writtenPool=k8Bank.map(z=>z.w);
+   ch=shuffle([x.w,...wrong(writtenPool,x.w)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','soundToWrittenABV','Which written combination matches this sound?',x.s,ch,x.w,'','karen'));
  });
-
- sample.slice(4,8).forEach(x=>{
-   const pool=[...new Set(k8Bank.map(z=>z.s))];
-   const ch=shuffle([x.s,...wrong(pool,x.s)]);
-   out.push(q('K8','Alphabet + Blend + Vowel','pronunciationABV',
-     'Which is the correct pronunciation?',
-     x.w,ch,x.s,'karen-large',''));
- });
-
- sample.slice(8,12).forEach(x=>{
-   const pool=k8Bank.map(z=>z.w);
-   const ch=shuffle([x.w,...wrong(pool,x.w)]);
-   out.push(q('K8','Alphabet + Blend + Vowel','soundToWrittenABV',
-     'Which written combination matches this sound?',
-     x.s,ch,x.w,'','karen'));
- });
-
  return shuffle(out);
 }
 
-function build(){return[...makeK1(),...makeK2(),...makeK3(),...makeK4(),...makeK5(),...makeK6(),...makeK7(),...makeK8()]}
+function poolForLevel(level){
+ return ({
+   1:makeK1Pool,2:makeK2Pool,3:makeK3Pool,4:makeK4Pool,
+   5:makeK5Pool,6:makeK6Pool,7:makeK7Pool,8:makeK8Pool
+ })[level]();
+}
+
+/* ---------------------------
+   ADAPTIVE ENGINE
+---------------------------- */
+
+const views={home:homeView,setup:studentSetupView,test:testView,result:resultView,teacher:teacherView};
+
+let state={};
+
+function fresh(){
+ return{
+   studentName:'',
+   grade:'',
+   window:'',
+   currentLevel:4,
+   currentBatch:[],
+   currentIndex:0,
+   selected:null,
+   responses:[],
+   levelResults:{},
+   path:[],
+   highestPassed:0,
+   lowestFailed:9,
+   totalQuestions:0,
+   finished:false
+ };
+}
+state=fresh();
+
+function showView(n){
+ Object.values(views).forEach(v=>v.classList.add('hidden'));
+ views[n].classList.remove('hidden');
+}
+
+function pct(rows){
+ return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0;
+}
+
+function sampleLevel(level,count=4){
+ const pool=poolForLevel(level);
+ return shuffle(pool).slice(0,Math.min(count,pool.length));
+}
+
+function beginLevel(level){
+ state.currentLevel=level;
+ state.currentBatch=sampleLevel(level,4);
+ state.currentIndex=0;
+ state.selected=null;
+ state.path.push('K'+level);
+ render();
+}
 
 function render(){
- const z=state.questions[state.i];state.selected=null;questionDomain.textContent=z.domain;questionNumber.textContent=state.i+1;questionTotal.textContent=state.questions.length;currentSkill.textContent=z.skill;questionInstruction.textContent=z.instruction;questionPrompt.textContent=z.prompt;questionPrompt.className='question-prompt '+z.promptClass;progressBar.style.width=`${state.i/state.questions.length*100}%`;answerChoices.innerHTML='';
- z.choices.forEach((c,i)=>{const b=document.createElement('button');b.className='choice '+z.choiceClass;b.textContent=c;b.onclick=()=>{[...answerChoices.children].forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.selected=i;nextQuestionBtn.disabled=false};answerChoices.appendChild(b)});nextQuestionBtn.disabled=true
-}
-function submit(){if(state.selected===null)return;const z=state.questions[state.i];state.responses.push({skill:z.skill,type:z.type,correct:state.selected===z.answer});state.i++;state.i>=state.questions.length?finish():render()}
-function finish(){
- const s={};['K1','K2','K3','K4','K5','K6','K7','K8'].forEach(k=>s[k]=pct(state.responses.filter(r=>r.skill===k)));const overall=pct(state.responses);
- let level='K1';if(s.K1>=80&&s.K2>=75)level='K2';if(s.K1>=80&&s.K2>=75&&s.K3>=75)level='K3';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75)level='K4';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75)level='K5';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75)level='K6';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75&&s.K7>=75)level='K7';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75&&s.K7>=75&&s.K8>=75)level='K8';
- resultStudentName.textContent=state.studentName;resultLevel.textContent=level;resultAccuracy.textContent=overall+'%';k1Score.textContent=s.K1+'%';k2Score.textContent=s.K2+'%';k3Score.textContent=s.K3+'%';k4Score.textContent=s.K4+'%';k5Score.textContent=s.K5+'%';k6Score.textContent=s.K6+'%';k7Score.textContent=s.K7+'%';k8Score.textContent=s.K8+'%';
- const k7=state.responses.filter(r=>r.skill==='K7');
- k7Breakdown.innerHTML=`<strong>Read alphabet + blend combinations:</strong> ${pct(k7.filter(r=>r.type==='readBlend'))}%<br><strong>Identify the correct pronunciation:</strong> ${pct(k7.filter(r=>r.type==='pronunciation'))}%<br><strong>Match written combination to its sound:</strong> ${pct(k7.filter(r=>r.type==='soundToWritten'))}%`;
- const k8=state.responses.filter(r=>r.skill==='K8');
- k8Breakdown.innerHTML=`<strong>Read alphabet + blend + vowel combinations:</strong> ${pct(k8.filter(r=>r.type==='readABV'))}%<br><strong>Identify the correct pronunciation:</strong> ${pct(k8.filter(r=>r.type==='pronunciationABV'))}%<br><strong>Match written combination to its sound:</strong> ${pct(k8.filter(r=>r.type==='soundToWrittenABV'))}%<br><br><strong>Current KLGA level:</strong> ${level}`;
- const result={student:state.studentName,grade:state.grade,window:state.window,k1:s.K1,k2:s.K2,k3:s.K3,k4:s.K4,k5:s.K5,k6:s.K6,k7:s.K7,k8:s.K8,overall,level,date:new Date().toLocaleDateString()};const saved=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');saved.push(result);localStorage.setItem('klgaResultsV7',JSON.stringify(saved));showView('result')
-}
-function renderDashboard(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');resultsTableBody.innerHTML='';r.slice().reverse().forEach(x=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(x.student)}</td><td>${x.grade}</td><td>${x.window}</td><td>${x.k1}%</td><td>${x.k2}%</td><td>${x.k3}%</td><td>${x.k4}%</td><td>${x.k5}%</td><td>${x.k6}%</td><td>${x.k7}%</td><td>${x.k8}%</td><td><strong>${x.level}</strong></td><td>${x.date}</td>`;resultsTableBody.appendChild(tr)})}
-function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function exportCsv(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');const rows=[['Student','Grade','Window','K1','K2','K3','K4','K5','K6','K7','K8','Overall','Level','Date']];r.forEach(x=>rows.push([x.student,x.grade,x.window,x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.overall,x.level,x.date]));const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\\n');const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KLGA-K1-K7-results.csv';a.click();URL.revokeObjectURL(url)}
+ const z=state.currentBatch[state.currentIndex];
+ state.selected=null;
 
-startStudentBtn.onclick=()=>showView('setup');studentModeBtn.onclick=()=>showView('setup');startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));returnHomeBtn.onclick=()=>{state=fresh();showView('home')};beginTestBtn.onclick=()=>{const name=studentName.value.trim(),grade=studentGrade.value,window=testWindow.value;if(!name||!grade){alert('Please enter student name and grade.');return}state=fresh();state.studentName=name;state.grade=grade;state.window=window;state.questions=build();showView('test');render()};nextQuestionBtn.onclick=submit;exportCsvBtn.onclick=exportCsv;clearResultsBtn.onclick=()=>{if(confirm('Clear all saved KLGA results?')){localStorage.removeItem('klgaResultsV7');renderDashboard()}}
+ questionDomain.textContent=z.domain;
+ questionNumber.textContent=state.totalQuestions+1;
+ questionTotal.textContent='Adaptive';
+ currentSkill.textContent=z.skill;
+ questionInstruction.textContent=z.instruction;
+ questionPrompt.textContent=z.prompt;
+ questionPrompt.className='question-prompt '+z.promptClass;
+
+ // Progress is intentionally approximate because CAT length changes by student.
+ const estimated=Math.min(95,Math.round((state.totalQuestions/24)*100));
+ progressBar.style.width=estimated+'%';
+
+ answerChoices.innerHTML='';
+ z.choices.forEach((c,i)=>{
+   const b=document.createElement('button');
+   b.className='choice '+z.choiceClass;
+   b.textContent=c;
+   b.onclick=()=>{
+     [...answerChoices.children].forEach(x=>x.classList.remove('selected'));
+     b.classList.add('selected');
+     state.selected=i;
+     nextQuestionBtn.disabled=false;
+   };
+   answerChoices.appendChild(b);
+ });
+ nextQuestionBtn.disabled=true;
+}
+
+function submit(){
+ if(state.selected===null)return;
+
+ const z=state.currentBatch[state.currentIndex];
+ const correct=state.selected===z.answer;
+
+ state.responses.push({
+   skill:z.skill,
+   level:state.currentLevel,
+   type:z.type,
+   correct
+ });
+ state.totalQuestions++;
+
+ state.currentIndex++;
+
+ if(state.currentIndex>=state.currentBatch.length){
+   evaluateLevel();
+ }else{
+   render();
+ }
+}
+
+function evaluateLevel(){
+ const level=state.currentLevel;
+ const rows=state.responses.filter(r=>r.level===level);
+ const score=pct(rows);
+ state.levelResults[level]=score;
+
+ // Initial 4-item probe:
+ // 75%+ = pass, move up
+ // 50% or lower = fail, move down
+ // exactly 50% is fail in a mastery-oriented progression
+ if(score>=75){
+   state.highestPassed=Math.max(state.highestPassed,level);
+
+   if(level===8){
+     finishAdaptive(8);
+     return;
+   }
+
+   // If we just passed a level below a previously failed level,
+   // test the immediate next level to pinpoint placement.
+   const next=level+1;
+   if(next>=state.lowestFailed){
+     finishAdaptive(level);
+     return;
+   }
+   beginLevel(next);
+ }else{
+   state.lowestFailed=Math.min(state.lowestFailed,level);
+
+   if(level===1){
+     finishAdaptive(0);
+     return;
+   }
+
+   const prev=level-1;
+   if(prev<=state.highestPassed){
+     finishAdaptive(state.highestPassed);
+     return;
+   }
+   beginLevel(prev);
+ }
+}
+
+function finishAdaptive(level){
+ state.finished=true;
+ progressBar.style.width='100%';
+
+ // Placement:
+ // 0 means beginning K1 / below K1 mastery.
+ const displayLevel=level<=0?'Pre-K1':'K'+level;
+
+ resultStudentName.textContent=state.studentName;
+ resultLevel.textContent=displayLevel;
+ resultAccuracy.textContent=pct(state.responses)+'%';
+
+ // Show tested-level scores; untested levels display em dash.
+ const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score];
+ for(let i=1;i<=8;i++){
+   scoreEls[i].textContent = state.levelResults[i]===undefined ? '—' : state.levelResults[i]+'%';
+ }
+
+ const pathText=state.path.join(' → ');
+ adaptiveSummary.innerHTML=
+   `<strong>Adaptive path:</strong> ${pathText}<br>`+
+   `<strong>Questions answered:</strong> ${state.totalQuestions}<br>`+
+   `<strong>Placement:</strong> ${displayLevel}<br><br>`+
+   `The test moved up after level mastery and moved down after insufficient evidence.`;
+
+ const result={
+   student:state.studentName,
+   grade:state.grade,
+   window:state.window,
+   placement:displayLevel,
+   overall:pct(state.responses),
+   questions:state.totalQuestions,
+   path:pathText,
+   k1:state.levelResults[1]??'',
+   k2:state.levelResults[2]??'',
+   k3:state.levelResults[3]??'',
+   k4:state.levelResults[4]??'',
+   k5:state.levelResults[5]??'',
+   k6:state.levelResults[6]??'',
+   k7:state.levelResults[7]??'',
+   k8:state.levelResults[8]??'',
+   date:new Date().toLocaleDateString()
+ };
+
+ const saved=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
+ saved.push(result);
+ localStorage.setItem('klgaAdaptiveResults',JSON.stringify(saved));
+ showView('result');
+}
+
+function renderDashboard(){
+ const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
+ resultsTableBody.innerHTML='';
+ r.slice().reverse().forEach(x=>{
+   const tr=document.createElement('tr');
+   tr.innerHTML=
+     `<td>${esc(x.student)}</td>`+
+     `<td>${x.grade}</td>`+
+     `<td>${x.window}</td>`+
+     `<td>${x.questions}</td>`+
+     `<td>${x.path}</td>`+
+     `<td><strong>${x.placement}</strong></td>`+
+     `<td>${x.overall}%</td>`+
+     `<td>${x.date}</td>`;
+   resultsTableBody.appendChild(tr);
+ });
+}
+
+function esc(s=''){
+ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function exportCsv(){
+ const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
+ const rows=[['Student','Grade','Window','Placement','Overall','Questions','Adaptive Path','K1','K2','K3','K4','K5','K6','K7','K8','Date']];
+ r.forEach(x=>rows.push([
+   x.student,x.grade,x.window,x.placement,x.overall,x.questions,x.path,
+   x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.date
+ ]));
+ const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='KLGA-Adaptive-Results.csv';
+ a.click();
+ URL.revokeObjectURL(url);
+}
+
+startStudentBtn.onclick=()=>showView('setup');
+studentModeBtn.onclick=()=>showView('setup');
+startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};
+teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
+
+returnHomeBtn.onclick=()=>{
+ state=fresh();
+ showView('home');
+};
+
+beginTestBtn.onclick=()=>{
+ const name=studentName.value.trim();
+ const grade=studentGrade.value;
+ const window=testWindow.value;
+ if(!name||!grade){
+   alert('Please enter student name and grade.');
+   return;
+ }
+ state=fresh();
+ state.studentName=name;
+ state.grade=grade;
+ state.window=window;
+ showView('test');
+ beginLevel(4);
+};
+
+nextQuestionBtn.onclick=submit;
+exportCsvBtn.onclick=exportCsv;
+clearResultsBtn.onclick=()=>{
+ if(confirm('Clear all saved KLGA adaptive results?')){
+   localStorage.removeItem('klgaAdaptiveResults');
+   renderDashboard();
+ }
+};
