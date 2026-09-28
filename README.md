@@ -1,66 +1,45 @@
-# KLGA MVP v3
+# KLGA MVP v4
 
-This version includes:
+This version adds **K3 — Vowel Recognition**.
 
-## K1 — Alphabet Recognition
-- Recognize Karen letters
-- 8 randomized questions from the 25-letter bank
+## Karen vowel bank
+- ါ = Ah
+- ံ = Ee
+- ၢ = Uh
+- ု = Eu
+- ူ = Oo
+- ့ = Ay/Ae
+- ဲ = Eh
+- ိ = Oe
+- ီ = Aw
 
-## K2 — Letter Sounds
-Three question types:
+## K3 assessment types
 
-1. Identify the sound of a consonant
-2. Match a sound to the correct Karen letter
-3. Recognize a beginning sound
+### 1. Identify Karen vowels
+Students see a target vowel and choose the exact matching vowel form.
 
-The K2 section currently gives:
-- 4 letter → sound questions
-- 4 sound → letter questions
-- 4 beginning-sound questions
+### 2. Match vowels with their sounds
+Two directions are used:
+- vowel → sound
+- sound → vowel
 
-## Karen sound bank
-Uses the teacher-provided sound descriptions:
-က Ka — between G and K
-ခ Ka
-ဂ Ga — softer G
-ဃ Kha — K + H
-င Ngah — nasal
-စ Sa
-ဆ Cha
-ရှ Sha
-ည Nya
-တ Ta — between T and D
-ထ Ta
-ဒ Da
-န Na
-ပ Pa — between P and B
-ဖ Pa
-ဘ Ba
-မ Ma
-ယ Ya
-ရ Ra
-လ La
-ဝ Wa
-သ Tha
-ဟ Ha
-အ Ah
-ဧ Ahh..
+### 3. Distinguish similar vowel forms
+Students see a target vowel with distractors chosen from visually similar vowel forms.
+
+## Current question counts
+- K1 Alphabet Recognition: 6
+- K2 Letter Sounds: 9
+- K3 Vowel Recognition: 12
+
+Total: 27 randomized questions.
 
 ## Provisional level rule
-K2 requires:
-- at least 80% on K1 Alphabet Recognition
-- at least 75% on K2 Letter Sounds
+K3 requires:
+- K1 >= 80%
+- K2 >= 75%
+- K3 >= 75%
 
-These cut scores are provisional.
-
-## Beginning sounds
-This first version uses simple Romanized sound cues such as:
-Ma, Na, Ya, Ra, La, Wa, Ha, Sha, Cha, Nya, Ngah, Ba.
-
-A later version can replace these with:
-- spoken audio
-- picture vocabulary
-- real Karen words with known beginning sounds
+These cut scores are provisional until real student data is collected.
 
 ## Current limitation
-Results are stored only in the current browser. Firebase is still the next infrastructure upgrade for shared Chromebook testing and a central teacher dashboard.
+Results are still saved only in the browser. Firebase can later centralize testing, student results, and the teacher dashboard.

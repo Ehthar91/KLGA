@@ -11,7 +11,7 @@
     <header class="topbar">
       <div>
         <h1>Karen Language Growth Assessment</h1>
-        <p class="subtitle">KLGA • K1 Alphabet Recognition + K2 Letter Sounds</p>
+        <p class="subtitle">KLGA • K1 Alphabet • K2 Letter Sounds • K3 Vowels</p>
       </div>
       <div class="top-actions">
         <button id="studentModeBtn" class="btn secondary">Student Test</button>
@@ -22,18 +22,10 @@
     <main>
       <section id="homeView" class="card hero">
         <h2>KLGA Skills</h2>
-        <p>This version measures alphabet recognition and consonant sounds.</p>
         <div class="skill-grid">
-          <div class="skill-card">
-            <span class="skill-level">K1</span>
-            <strong>Alphabet Recognition</strong>
-            <small>Recognize and distinguish the 25 Karen letters.</small>
-          </div>
-          <div class="skill-card">
-            <span class="skill-level">K2</span>
-            <strong>Letter Sounds</strong>
-            <small>Identify sounds, match sounds to letters, and recognize beginning sounds.</small>
-          </div>
+          <div class="skill-card"><span class="skill-level">K1</span><strong>Alphabet Recognition</strong><small>Recognize and distinguish Karen consonants.</small></div>
+          <div class="skill-card"><span class="skill-level">K2</span><strong>Letter Sounds</strong><small>Identify consonant sounds and beginning sounds.</small></div>
+          <div class="skill-card"><span class="skill-level">K3</span><strong>Vowel Recognition</strong><small>Identify vowels, match sounds, and distinguish similar forms.</small></div>
         </div>
         <div class="actions center">
           <button id="startStudentBtn" class="btn primary">Start Student Test</button>
@@ -44,19 +36,12 @@
       <section id="studentSetupView" class="card hidden">
         <h2>Student Information</h2>
         <div class="form-grid">
-          <label>Student Name
-            <input id="studentName" type="text" placeholder="Enter your name" />
-          </label>
+          <label>Student Name<input id="studentName" type="text" placeholder="Enter your name" /></label>
           <label>Grade
-            <select id="studentGrade">
-              <option value="">Select grade</option>
-              <option>6</option><option>7</option><option>8</option>
-            </select>
+            <select id="studentGrade"><option value="">Select grade</option><option>6</option><option>7</option><option>8</option></select>
           </label>
           <label>Testing Window
-            <select id="testWindow">
-              <option>Fall</option><option>Winter</option><option>Spring</option>
-            </select>
+            <select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select>
           </label>
         </div>
         <div class="actions">
@@ -68,8 +53,8 @@
       <section id="testView" class="card hidden">
         <div class="test-header">
           <div>
-            <div class="eyebrow" id="questionDomain">Letter Sounds</div>
-            <div class="progress-text"><span id="questionNumber">1</span> of <span id="questionTotal">20</span></div>
+            <div class="eyebrow" id="questionDomain">Assessment</div>
+            <div class="progress-text"><span id="questionNumber">1</span> of <span id="questionTotal">30</span></div>
           </div>
           <div class="level-pill">Skill: <strong id="currentSkill">K1</strong></div>
         </div>
@@ -80,61 +65,46 @@
         <div id="questionPrompt" class="question-prompt"></div>
         <div id="answerChoices" class="choices"></div>
 
-        <div class="actions">
-          <button id="nextQuestionBtn" class="btn primary" disabled>Next</button>
-        </div>
+        <div class="actions"><button id="nextQuestionBtn" class="btn primary" disabled>Next</button></div>
       </section>
 
       <section id="resultView" class="card hidden">
         <div class="result-hero">
-          <div>
-            <div class="eyebrow">KLGA Benchmark Complete</div>
-            <h2 id="resultStudentName">Student</h2>
-          </div>
-          <div class="score-badge">
-            <span id="resultLevel">K1</span>
-            <small>Current Level</small>
-          </div>
+          <div><div class="eyebrow">KLGA Benchmark Complete</div><h2 id="resultStudentName">Student</h2></div>
+          <div class="score-badge"><span id="resultLevel">K1</span><small>Current Level</small></div>
         </div>
 
         <div class="stats-grid">
           <div class="stat"><span class="stat-label">Overall Accuracy</span><strong id="resultAccuracy">0%</strong></div>
-          <div class="stat"><span class="stat-label">Alphabet Recognition</span><strong id="k1Score">0%</strong></div>
-          <div class="stat"><span class="stat-label">Letter Sounds</span><strong id="k2Score">0%</strong></div>
+          <div class="stat"><span class="stat-label">K1 Alphabet</span><strong id="k1Score">0%</strong></div>
+          <div class="stat"><span class="stat-label">K2 Sounds</span><strong id="k2Score">0%</strong></div>
+          <div class="stat"><span class="stat-label">K3 Vowels</span><strong id="k3Score">0%</strong></div>
         </div>
 
-        <h3>Letter Sound Breakdown</h3>
-        <div id="soundBreakdown" class="summary-box"></div>
+        <h3>Vowel Recognition Breakdown</h3>
+        <div id="vowelBreakdown" class="summary-box"></div>
 
-        <div class="actions">
-          <button id="returnHomeBtn" class="btn primary">Done</button>
-        </div>
+        <div class="actions"><button id="returnHomeBtn" class="btn primary">Done</button></div>
       </section>
 
       <section id="teacherView" class="card hidden">
         <div class="teacher-head">
-          <div>
-            <h2>Teacher Dashboard</h2>
-            <p>Results are stored in this browser for the MVP.</p>
-          </div>
+          <div><h2>Teacher Dashboard</h2><p>Results are stored in this browser for the MVP.</p></div>
           <div class="actions">
             <button id="exportCsvBtn" class="btn secondary">Export CSV</button>
             <button id="clearResultsBtn" class="btn danger">Clear Results</button>
             <button class="btn ghost" data-home>Back</button>
           </div>
         </div>
-
         <div class="table-wrap">
           <table>
-            <thead><tr>
-              <th>Student</th><th>Grade</th><th>Window</th><th>K1</th><th>K2</th><th>Level</th><th>Date</th>
-            </tr></thead>
+            <thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>K1</th><th>K2</th><th>K3</th><th>Level</th><th>Date</th></tr></thead>
             <tbody id="resultsTableBody"></tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
