@@ -273,14 +273,14 @@ function pct(rows){
  return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0;
 }
 
-function sampleLevel(level,count=4){
+function sampleLevel(level,count=8){
  const pool=poolForLevel(level);
  return shuffle(pool).slice(0,Math.min(count,pool.length));
 }
 
 function beginLevel(level){
  state.currentLevel=level;
- state.currentBatch=sampleLevel(level,4);
+ state.currentBatch=sampleLevel(level,8);
  state.currentIndex=0;
  state.selected=null;
  state.path.push('K'+level);
@@ -348,7 +348,7 @@ function evaluateLevel(){
  const score=pct(rows);
  state.levelResults[level]=score;
 
- // Initial 4-item probe:
+ // 8-item level probe:
  // 75%+ = pass, move up
  // 50% or lower = fail, move down
  // exactly 50% is fail in a mastery-oriented progression

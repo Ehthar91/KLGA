@@ -1,60 +1,19 @@
-# KLGA Adaptive K1–K8 MVP
+# KLGA Adaptive K1–K8 — 8 Questions Per Tested Level
 
-This build converts the existing KLGA K1–K8 assessment into an adaptive test.
+This version increases the adaptive evidence at each K-level.
 
 ## Adaptive logic
 
-Students begin at K4.
+- Students begin at K4.
+- Each tested level gives 8 randomized questions.
+- 75% or higher (6/8 or better) = pass and move up.
+- Below 75% = move down.
+- The test stops once it brackets the student's placement.
+- Passing K8 places the student at K8.
+- Not passing K1 gives Pre-K1.
 
-Each tested level gives 4 randomized questions.
+Using 8 four-choice questions greatly reduces the chance that random guessing alone
+would produce a passing score. The approximate probability of randomly guessing
+6 or more correct out of 8 is about 0.4%.
 
-- 75% or higher: the level is considered passed and the test moves up.
-- Below 75%: the test moves down.
-- The test stops when it brackets the student's placement level.
-- If K8 is passed, placement is K8.
-- If K1 is not passed, placement is shown as Pre-K1.
-
-Examples:
-
-K4 pass -> K5 pass -> K6 fail
-Placement: K5
-
-K4 fail -> K3 fail -> K2 pass
-Then K3 is already known to be failed, so placement: K2
-
-K4 pass -> K5 pass -> K6 pass -> K7 pass -> K8 pass
-Placement: K8
-
-## Important assessment note
-
-This is a transparent heuristic adaptive model, not a psychometrically calibrated
-computer-adaptive test such as an IRT/Rasch-based assessment.
-
-It is appropriate for prototyping the KLGA workflow and collecting pilot data.
-After enough real student data is collected, item difficulty and cut scores should be
-recalibrated before making high-stakes interpretations.
-
-## Existing skill order
-
-K1 — Alphabet Recognition
-K2 — Letter Sounds
-K3 — Vowel Recognition
-K4 — Alphabet + Vowel
-K5 — Tone Recognition
-K6 — Blend Sound Recognition
-K7 — Alphabet + Blend
-K8 — Alphabet + Blend + Vowel
-
-## Results
-
-The teacher dashboard now shows:
-- Student
-- Grade
-- Testing window
-- Number of questions answered
-- Adaptive path
-- Placement
-- Overall accuracy
-- Date
-
-CSV export includes the tested level scores as well.
+This is still a pilot heuristic adaptive model, not a calibrated IRT/Rasch CAT.
