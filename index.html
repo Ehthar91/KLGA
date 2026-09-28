@@ -1,6 +1,71 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KLGA K7</title><link rel="stylesheet" href="styles.css"></head><body>
-<div class="app"><h1>Karen Language Growth Assessment</h1><p>K7 — Alphabet + Blend</p>
-<section id="setup"><label>Name <input id="name"></label><button id="start">Start K7 Demo</button></section>
-<section id="test" class="hidden"><div id="count"></div><h2 id="prompt"></h2><div id="choices"></div><button id="next" disabled>Next</button></section>
-<section id="result" class="hidden"><h2>Result</h2><p id="score"></p><button onclick="location.reload()">Done</button></section>
-<script src="app.js"></script></div></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karen Language Growth Assessment</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+<header class="topbar">
+  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • K1–K7</p></div>
+  <div class="top-actions"><button id="studentModeBtn" class="btn secondary">Student Test</button><button id="teacherModeBtn" class="btn secondary">Teacher Dashboard</button></div>
+</header>
+<main>
+<section id="homeView" class="card hero">
+<h2>KLGA Skills</h2>
+<div class="skill-grid">
+<div class="skill-card"><span>K1</span><strong>Alphabet Recognition</strong><small>Recognize Karen consonants.</small></div>
+<div class="skill-card"><span>K2</span><strong>Letter Sounds</strong><small>Identify consonant sounds.</small></div>
+<div class="skill-card"><span>K3</span><strong>Vowel Recognition</strong><small>Recognize vowels and vowel sounds.</small></div>
+<div class="skill-card"><span>K4</span><strong>Alphabet + Vowel</strong><small>Read consonant-vowel combinations.</small></div>
+<div class="skill-card"><span>K5</span><strong>Blend Sound Recognition</strong><small>Recognize blend symbols and their sounds.</small></div>
+<div class="skill-card"><span>K6</span><strong>Tone Recognition</strong><small>Recognize tone marks and know their names.</small></div>
+<div class="skill-card"><span>K7</span><strong>Alphabet + Blend</strong><small>Read consonant-blend combinations and match them to sounds.</small></div>
+</div>
+<div class="actions center"><button id="startStudentBtn" class="btn primary">Start Student Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
+</section>
+
+<section id="studentSetupView" class="card hidden">
+<h2>Student Information</h2>
+<div class="form-grid">
+<label>Student Name<input id="studentName" type="text" placeholder="Enter your name"></label>
+<label>Grade<select id="studentGrade"><option value="">Select grade</option><option>6</option><option>7</option><option>8</option></select></label>
+<label>Testing Window<select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select></label>
+</div>
+<div class="actions"><button id="beginTestBtn" class="btn primary">Begin Test</button><button class="btn ghost" data-home>Back</button></div>
+</section>
+
+<section id="testView" class="card hidden">
+<div class="test-header"><div><div id="questionDomain" class="eyebrow"></div><div class="progress-text"><span id="questionNumber"></span> of <span id="questionTotal"></span></div></div><div class="level-pill">Skill: <strong id="currentSkill"></strong></div></div>
+<div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+<div id="questionInstruction" class="instruction"></div>
+<div id="questionPrompt" class="question-prompt"></div>
+<div id="answerChoices" class="choices"></div>
+<div class="actions"><button id="nextQuestionBtn" class="btn primary" disabled>Next</button></div>
+</section>
+
+<section id="resultView" class="card hidden">
+<div class="result-hero"><div><div class="eyebrow">KLGA Benchmark Complete</div><h2 id="resultStudentName"></h2></div><div class="score-badge"><span id="resultLevel"></span><small>Current Level</small></div></div>
+<div class="stats-grid">
+<div class="stat"><span class="stat-label">Overall</span><strong id="resultAccuracy"></strong></div>
+<div class="stat"><span class="stat-label">K1</span><strong id="k1Score"></strong></div>
+<div class="stat"><span class="stat-label">K2</span><strong id="k2Score"></strong></div>
+<div class="stat"><span class="stat-label">K3</span><strong id="k3Score"></strong></div>
+<div class="stat"><span class="stat-label">K4</span><strong id="k4Score"></strong></div>
+<div class="stat"><span class="stat-label">K5</span><strong id="k5Score"></strong></div>
+<div class="stat"><span class="stat-label">K6</span><strong id="k6Score"></strong></div>
+<div class="stat"><span class="stat-label">K7</span><strong id="k7Score"></strong></div>
+</div>
+<h3>K7 — Alphabet + Blend Breakdown</h3><div id="k7Breakdown" class="summary-box"></div>
+<div class="actions"><button id="returnHomeBtn" class="btn primary">Done</button></div>
+</section>
+
+<section id="teacherView" class="card hidden">
+<div class="teacher-head"><div><h2>Teacher Dashboard</h2><p>Results are stored in this browser for the MVP.</p></div><div class="actions"><button id="exportCsvBtn" class="btn secondary">Export CSV</button><button id="clearResultsBtn" class="btn danger">Clear Results</button><button class="btn ghost" data-home>Back</button></div></div>
+<div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>K1</th><th>K2</th><th>K3</th><th>K4</th><th>K5</th><th>K6</th><th>K7</th><th>Level</th><th>Date</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
+</section>
+</main>
+</div>
+<script src="app.js"></script>
+</body></html>
