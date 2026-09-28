@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Karen Language Benchmark</title>
+  <title>Karen Language Growth Assessment</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <h1>Karen Language Benchmark</h1>
-        <p class="subtitle">Adaptive K1–K9 language assessment</p>
+        <h1>Karen Language Growth Assessment</h1>
+        <p class="subtitle">KLGA • K1 Alphabet Recognition</p>
       </div>
       <div class="top-actions">
         <button id="studentModeBtn" class="btn secondary">Student Test</button>
@@ -22,17 +22,17 @@
     <main>
       <section id="homeView" class="card hero">
         <h2>Choose a mode</h2>
-        <p>Students take an adaptive benchmark. Teachers review growth and skill-domain results.</p>
+        <p>K1 begins with Karen alphabet recognition using the full 25-letter bank.</p>
         <div class="mode-grid">
           <button id="startStudentBtn" class="mode-card">
             <span class="mode-icon">📝</span>
             <strong>Student Test</strong>
-            <small>Take the adaptive Karen benchmark</small>
+            <small>Take the K1 alphabet recognition benchmark</small>
           </button>
           <button id="startTeacherBtn" class="mode-card">
             <span class="mode-icon">📊</span>
             <strong>Teacher Dashboard</strong>
-            <small>View benchmark scores and K-levels</small>
+            <small>View alphabet recognition results</small>
           </button>
         </div>
       </section>
@@ -71,18 +71,19 @@
       <section id="testView" class="card hidden">
         <div class="test-header">
           <div>
-            <div class="eyebrow" id="questionDomain">Domain</div>
-            <div class="progress-text"><span id="questionNumber">1</span> of <span id="questionTotal">20</span></div>
+            <div class="eyebrow">Alphabet Recognition</div>
+            <div class="progress-text"><span id="questionNumber">1</span> of <span id="questionTotal">10</span></div>
           </div>
-          <div class="level-pill">Current difficulty: <strong id="currentDifficulty">K5</strong></div>
+          <div class="level-pill">Stage: <strong id="currentDifficulty">K1-A</strong></div>
         </div>
 
         <div class="progress-track">
           <div id="progressBar" class="progress-bar"></div>
         </div>
 
-        <div id="questionPrompt" class="question-prompt"></div>
-        <div id="answerChoices" class="choices"></div>
+        <div class="instruction">Select the letter that matches the letter shown.</div>
+        <div id="questionPrompt" class="question-prompt karen-letter"></div>
+        <div id="answerChoices" class="choices letter-choices"></div>
 
         <div class="actions">
           <button id="nextQuestionBtn" class="btn primary" disabled>Next</button>
@@ -92,32 +93,23 @@
       <section id="resultView" class="card hidden">
         <div class="result-hero">
           <div>
-            <div class="eyebrow">Benchmark Complete</div>
+            <div class="eyebrow">Alphabet Recognition Complete</div>
             <h2 id="resultStudentName">Student</h2>
           </div>
           <div class="score-badge">
-            <span id="resultLevel">K5</span>
-            <small>Current Level</small>
+            <span>K1</span>
+            <small>Skill Level</small>
           </div>
         </div>
 
         <div class="stats-grid">
-          <div class="stat">
-            <span class="stat-label">Benchmark Score</span>
-            <strong id="resultScore">0</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Accuracy</span>
-            <strong id="resultAccuracy">0%</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Questions</span>
-            <strong id="resultQuestionCount">0</strong>
-          </div>
+          <div class="stat"><span class="stat-label">Correct</span><strong id="resultScore">0/10</strong></div>
+          <div class="stat"><span class="stat-label">Accuracy</span><strong id="resultAccuracy">0%</strong></div>
+          <div class="stat"><span class="stat-label">Recognition Stage</span><strong id="resultStage">K1-A</strong></div>
         </div>
 
-        <h3>Skill Domains</h3>
-        <div id="domainResults" class="domain-results"></div>
+        <h3>Alphabet Recognition Result</h3>
+        <div id="alphabetSummary" class="summary-box"></div>
 
         <div class="actions">
           <button id="returnHomeBtn" class="btn primary">Done</button>
@@ -128,7 +120,7 @@
         <div class="teacher-head">
           <div>
             <h2>Teacher Dashboard</h2>
-            <p>Results are saved in this browser for the MVP.</p>
+            <p>Results are saved in this browser for this MVP.</p>
           </div>
           <div class="actions">
             <button id="exportCsvBtn" class="btn secondary">Export CSV</button>
@@ -138,40 +130,22 @@
         </div>
 
         <div class="dashboard-stats">
-          <div class="stat">
-            <span class="stat-label">Tests Completed</span>
-            <strong id="dashCount">0</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Average Score</span>
-            <strong id="dashAverage">—</strong>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Average Level</span>
-            <strong id="dashLevel">—</strong>
-          </div>
+          <div class="stat"><span class="stat-label">Tests Completed</span><strong id="dashCount">0</strong></div>
+          <div class="stat"><span class="stat-label">Average Accuracy</span><strong id="dashAverage">—</strong></div>
+          <div class="stat"><span class="stat-label">Skill</span><strong>K1</strong></div>
         </div>
 
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Grade</th>
-                <th>Window</th>
-                <th>Score</th>
-                <th>Level</th>
-                <th>Accuracy</th>
-                <th>Date</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th>Student</th><th>Grade</th><th>Window</th><th>Correct</th><th>Accuracy</th><th>Stage</th><th>Date</th>
+            </tr></thead>
             <tbody id="resultsTableBody"></tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
