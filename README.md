@@ -1,72 +1,27 @@
-# KLGA Full K1–K7 — Fixed Build
+# KLGA Full K1–K8 Build
 
-This is the full KLGA site, not the standalone K7 demo.
+This build keeps the full K1–K7 system and adds:
 
-Included:
-- K1 Alphabet Recognition
-- K2 Letter Sounds
-- K3 Vowel Recognition
-- K4 Alphabet + Vowel
-- K5 Blend Sound Recognition
-- K6 Tone Recognition
-- K7 Alphabet + Blend
+## K8 — Alphabet + Blend + Vowel
+
+K8 uses ONLY the 40 verified written combinations found in the lesson materials
+after tone-marked forms were excluded.
+
+K8 measures:
+1. Read alphabet + blend + vowel combinations
+2. Identify the correct pronunciation
+3. Match a written combination to its sound
+
+The K8 written bank is not generated randomly. It is restricted to the verified list.
+
+Important:
+K8 pronunciations are constructed from the existing verified K7 blend pronunciation
+plus the confirmed vowel sounds. If any K8 pronunciation needs an exception, add it
+to the K8 sound logic before treating the bank as fully finalized.
+
+The full site still includes:
 - Student setup
-- Results screen
+- K1 through K8 testing
+- Results
 - Teacher dashboard
 - CSV export
-
-## K7
-K7 uses ONLY the 44 teacher-approved blend combinations.
-No unverified combinations are generated.
-
-Approved K7 bank:
-- ကၠ = Ja
-- ကြ = Kra
-- ကျ = Kla
-- ကွ = Kwa
-- ခၠ = Cha
-- ခြ = Khra
-- ချ = Khla
-- ခွ = Khwa
-- ဃြ = Khra
-- ဃွ = Khwa
-- ဆှ = Chga
-- တြ = Tra
-- တွ = Twa
-- ထြ = Tra
-- ထွ = Twa
-- ထှ = Tga
-- ဒြ = Dra
-- ဒွ = Dwa
-- ပၠ = Pya
-- ပြ = Pra
-- ပျ = Pla
-- ပွ = Pwa
-- ပှ = Pga
-- ဖၠ = Pya
-- ဖြ = Pra
-- ဖျ = Pla
-- ဖွ = Pwa
-- ဖှ = Pga
-- ဘၠ = Bya
-- ဘြ = Bra
-- ဘျ = Bla
-- ဘွ = Bwa
-- ဘှ = Bga
-- မၠ = Mya
-- မြ = Mra
-- မျ = Mla
-- မွ = Mwa
-- မှ = Mga
-- ယွ = Ywa
-- လွ = Lwa
-- သြ = Thra
-- သျ = Thla
-- သွ = Thwa
-- ဟွ = Hwa
-
-To deploy on GitHub Pages, replace the old repository files with:
-- index.html
-- styles.css
-- app.js
-- README.md

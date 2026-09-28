@@ -88,6 +88,39 @@ const blendBank=[
 {w:"သွ",s:"Thwa"},
 {w:"ဟွ",s:"Hwa"}
 ];
+const k8WrittenBank=["ကျိ", "ကျီ", "ကျဲ", "ကျ့", "ကြီ", "ကၠါ", "ကၠိ", "ကၠံ", "ကၠၢ", "ချံ", "ချ့", "ခြါ", "ခွံ", "ခၠီ", "ဆှီ", "ဆှု", "ဆှဲ", "တြီ", "ထွဲ", "ပျီ", "ပျဲ", "ပြါ", "ပြိ", "ပြု", "ပြံ", "ပၠါ", "ဖျိ", "ဖျီ", "ဖျ့", "ဖှီ", "ဖှံ", "ဖၠါ", "ဘှီ", "ဘှဲ", "ဘှ့", "ဘှၢ", "ဘၠူ", "မှဲ", "မှံ", "မၠီ"];
+
+
+
+function splitK8Written(w){
+ const vowelSymbols=vowels.map(v=>v.v).sort((a,b)=>b.length-a.length);
+ for(const v of vowelSymbols){
+   if(w.endsWith(v)){
+     return {blend:w.slice(0,-v.length), vowel:v};
+   }
+ }
+ return null;
+}
+
+function k8SoundFromWritten(w){
+ const parts=splitK8Written(w);
+ if(!parts) return '';
+ const blend=blendBank.find(x=>x.w===parts.blend);
+ const vowel=vowels.find(x=>x.v===parts.vowel);
+ if(!blend || !vowel) return '';
+
+ let stem=blend.s;
+ if(stem.endsWith('ah')) stem=stem.slice(0,-2);
+ else if(stem.endsWith('a')) stem=stem.slice(0,-1);
+
+ const endings={
+   'Ah':'ah','Ee':'ee','Uh':'uh','Eu':'eu','Oo':'oo',
+   'Ay/Ae':'ay','Eh':'eh','Oe':'oe','Aw':'aw'
+ };
+ return stem + endings[vowel.s];
+}
+
+const k8Bank=k8WrittenBank.map(w=>({w:w,s:k8SoundFromWritten(w)})).filter(x=>x.s);
 
 function q(skill,domain,type,instruction,prompt,choices,correct,promptClass='',choiceClass=''){
  return{skill,domain,type,instruction,prompt,choices,answer:choices.indexOf(correct),promptClass,choiceClass}
@@ -124,7 +157,39 @@ function makeK7(){
  return shuffle(out);
 }
 
-function build(){return[...makeK1(),...makeK2(),...makeK3(),...makeK4(),...makeK5(),...makeK6(),...makeK7()]}
+
+function makeK8(){
+ const out=[];
+ const sample=shuffle(k8Bank).slice(0,12);
+
+ sample.slice(0,4).forEach(x=>{
+   const pool=[...new Set(k8Bank.map(z=>z.s))];
+   const ch=shuffle([x.s,...wrong(pool,x.s)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','readABV',
+     'Read this alphabet + blend + vowel combination.',
+     x.w,ch,x.s,'karen-large',''));
+ });
+
+ sample.slice(4,8).forEach(x=>{
+   const pool=[...new Set(k8Bank.map(z=>z.s))];
+   const ch=shuffle([x.s,...wrong(pool,x.s)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','pronunciationABV',
+     'Which is the correct pronunciation?',
+     x.w,ch,x.s,'karen-large',''));
+ });
+
+ sample.slice(8,12).forEach(x=>{
+   const pool=k8Bank.map(z=>z.w);
+   const ch=shuffle([x.w,...wrong(pool,x.w)]);
+   out.push(q('K8','Alphabet + Blend + Vowel','soundToWrittenABV',
+     'Which written combination matches this sound?',
+     x.s,ch,x.w,'','karen'));
+ });
+
+ return shuffle(out);
+}
+
+function build(){return[...makeK1(),...makeK2(),...makeK3(),...makeK4(),...makeK5(),...makeK6(),...makeK7(),...makeK8()]}
 
 function render(){
  const z=state.questions[state.i];state.selected=null;questionDomain.textContent=z.domain;questionNumber.textContent=state.i+1;questionTotal.textContent=state.questions.length;currentSkill.textContent=z.skill;questionInstruction.textContent=z.instruction;questionPrompt.textContent=z.prompt;questionPrompt.className='question-prompt '+z.promptClass;progressBar.style.width=`${state.i/state.questions.length*100}%`;answerChoices.innerHTML='';
@@ -132,15 +197,17 @@ function render(){
 }
 function submit(){if(state.selected===null)return;const z=state.questions[state.i];state.responses.push({skill:z.skill,type:z.type,correct:state.selected===z.answer});state.i++;state.i>=state.questions.length?finish():render()}
 function finish(){
- const s={};['K1','K2','K3','K4','K5','K6','K7'].forEach(k=>s[k]=pct(state.responses.filter(r=>r.skill===k)));const overall=pct(state.responses);
- let level='K1';if(s.K1>=80&&s.K2>=75)level='K2';if(s.K1>=80&&s.K2>=75&&s.K3>=75)level='K3';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75)level='K4';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75)level='K5';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75)level='K6';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75&&s.K7>=75)level='K7';
- resultStudentName.textContent=state.studentName;resultLevel.textContent=level;resultAccuracy.textContent=overall+'%';k1Score.textContent=s.K1+'%';k2Score.textContent=s.K2+'%';k3Score.textContent=s.K3+'%';k4Score.textContent=s.K4+'%';k5Score.textContent=s.K5+'%';k6Score.textContent=s.K6+'%';k7Score.textContent=s.K7+'%';
+ const s={};['K1','K2','K3','K4','K5','K6','K7','K8'].forEach(k=>s[k]=pct(state.responses.filter(r=>r.skill===k)));const overall=pct(state.responses);
+ let level='K1';if(s.K1>=80&&s.K2>=75)level='K2';if(s.K1>=80&&s.K2>=75&&s.K3>=75)level='K3';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75)level='K4';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75)level='K5';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75)level='K6';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75&&s.K7>=75)level='K7';if(s.K1>=80&&s.K2>=75&&s.K3>=75&&s.K4>=75&&s.K5>=75&&s.K6>=75&&s.K7>=75&&s.K8>=75)level='K8';
+ resultStudentName.textContent=state.studentName;resultLevel.textContent=level;resultAccuracy.textContent=overall+'%';k1Score.textContent=s.K1+'%';k2Score.textContent=s.K2+'%';k3Score.textContent=s.K3+'%';k4Score.textContent=s.K4+'%';k5Score.textContent=s.K5+'%';k6Score.textContent=s.K6+'%';k7Score.textContent=s.K7+'%';k8Score.textContent=s.K8+'%';
  const k7=state.responses.filter(r=>r.skill==='K7');
- k7Breakdown.innerHTML=`<strong>Read alphabet + blend combinations:</strong> ${pct(k7.filter(r=>r.type==='readBlend'))}%<br><strong>Identify the correct pronunciation:</strong> ${pct(k7.filter(r=>r.type==='pronunciation'))}%<br><strong>Match written combination to its sound:</strong> ${pct(k7.filter(r=>r.type==='soundToWritten'))}%<br><br><strong>Current KLGA level:</strong> ${level}`;
- const result={student:state.studentName,grade:state.grade,window:state.window,k1:s.K1,k2:s.K2,k3:s.K3,k4:s.K4,k5:s.K5,k6:s.K6,k7:s.K7,overall,level,date:new Date().toLocaleDateString()};const saved=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');saved.push(result);localStorage.setItem('klgaResultsV7',JSON.stringify(saved));showView('result')
+ k7Breakdown.innerHTML=`<strong>Read alphabet + blend combinations:</strong> ${pct(k7.filter(r=>r.type==='readBlend'))}%<br><strong>Identify the correct pronunciation:</strong> ${pct(k7.filter(r=>r.type==='pronunciation'))}%<br><strong>Match written combination to its sound:</strong> ${pct(k7.filter(r=>r.type==='soundToWritten'))}%`;
+ const k8=state.responses.filter(r=>r.skill==='K8');
+ k8Breakdown.innerHTML=`<strong>Read alphabet + blend + vowel combinations:</strong> ${pct(k8.filter(r=>r.type==='readABV'))}%<br><strong>Identify the correct pronunciation:</strong> ${pct(k8.filter(r=>r.type==='pronunciationABV'))}%<br><strong>Match written combination to its sound:</strong> ${pct(k8.filter(r=>r.type==='soundToWrittenABV'))}%<br><br><strong>Current KLGA level:</strong> ${level}`;
+ const result={student:state.studentName,grade:state.grade,window:state.window,k1:s.K1,k2:s.K2,k3:s.K3,k4:s.K4,k5:s.K5,k6:s.K6,k7:s.K7,k8:s.K8,overall,level,date:new Date().toLocaleDateString()};const saved=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');saved.push(result);localStorage.setItem('klgaResultsV7',JSON.stringify(saved));showView('result')
 }
-function renderDashboard(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');resultsTableBody.innerHTML='';r.slice().reverse().forEach(x=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(x.student)}</td><td>${x.grade}</td><td>${x.window}</td><td>${x.k1}%</td><td>${x.k2}%</td><td>${x.k3}%</td><td>${x.k4}%</td><td>${x.k5}%</td><td>${x.k6}%</td><td>${x.k7}%</td><td><strong>${x.level}</strong></td><td>${x.date}</td>`;resultsTableBody.appendChild(tr)})}
+function renderDashboard(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');resultsTableBody.innerHTML='';r.slice().reverse().forEach(x=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${esc(x.student)}</td><td>${x.grade}</td><td>${x.window}</td><td>${x.k1}%</td><td>${x.k2}%</td><td>${x.k3}%</td><td>${x.k4}%</td><td>${x.k5}%</td><td>${x.k6}%</td><td>${x.k7}%</td><td>${x.k8}%</td><td><strong>${x.level}</strong></td><td>${x.date}</td>`;resultsTableBody.appendChild(tr)})}
 function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function exportCsv(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');const rows=[['Student','Grade','Window','K1','K2','K3','K4','K5','K6','K7','Overall','Level','Date']];r.forEach(x=>rows.push([x.student,x.grade,x.window,x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.overall,x.level,x.date]));const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\\n');const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KLGA-K1-K7-results.csv';a.click();URL.revokeObjectURL(url)}
+function exportCsv(){const r=JSON.parse(localStorage.getItem('klgaResultsV7')||'[]');const rows=[['Student','Grade','Window','K1','K2','K3','K4','K5','K6','K7','K8','Overall','Level','Date']];r.forEach(x=>rows.push([x.student,x.grade,x.window,x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.overall,x.level,x.date]));const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\\n');const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='KLGA-K1-K7-results.csv';a.click();URL.revokeObjectURL(url)}
 
 startStudentBtn.onclick=()=>showView('setup');studentModeBtn.onclick=()=>showView('setup');startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));returnHomeBtn.onclick=()=>{state=fresh();showView('home')};beginTestBtn.onclick=()=>{const name=studentName.value.trim(),grade=studentGrade.value,window=testWindow.value;if(!name||!grade){alert('Please enter student name and grade.');return}state=fresh();state.studentName=name;state.grade=grade;state.window=window;state.questions=build();showView('test');render()};nextQuestionBtn.onclick=submit;exportCsvBtn.onclick=exportCsv;clearResultsBtn.onclick=()=>{if(confirm('Clear all saved KLGA results?')){localStorage.removeItem('klgaResultsV7');renderDashboard()}}
