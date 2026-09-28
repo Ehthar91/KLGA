@@ -1,27 +1,16 @@
-# KLGA Full K1–K8 Build
+# KLGA Full K1–K8 — K5/K6 Order Updated
 
-This build keeps the full K1–K7 system and adds:
+The progression is now:
 
-## K8 — Alphabet + Blend + Vowel
+- K1 — Alphabet Recognition
+- K2 — Letter Sounds
+- K3 — Vowel Recognition
+- K4 — Alphabet + Vowel
+- K5 — Tone Recognition
+- K6 — Blend Sound Recognition
+- K7 — Alphabet + Blend
+- K8 — Alphabet + Blend + Vowel
 
-K8 uses ONLY the 40 verified written combinations found in the lesson materials
-after tone-marked forms were excluded.
+This change reflects the instructional sequence: students learn tone recognition before blend recognition.
 
-K8 measures:
-1. Read alphabet + blend + vowel combinations
-2. Identify the correct pronunciation
-3. Match a written combination to its sound
-
-The K8 written bank is not generated randomly. It is restricted to the verified list.
-
-Important:
-K8 pronunciations are constructed from the existing verified K7 blend pronunciation
-plus the confirmed vowel sounds. If any K8 pronunciation needs an exception, add it
-to the K8 sound logic before treating the bank as fully finalized.
-
-The full site still includes:
-- Student setup
-- K1 through K8 testing
-- Results
-- Teacher dashboard
-- CSV export
+All numbering, test order, result labels, dashboard fields, and scoring levels have been updated to match.
