@@ -1,40 +1,49 @@
-# KLGA MVP v7 — K1 through K7
+KLGA K7 verified blend bank only.
 
-New section:
+Approved combinations:
+ကၠ = Ja
+ကြ = Kra
+ကျ = Kla
+ကွ = Kwa
+ခၠ = Cha
+ခြ = Khra
+ချ = Khla
+ခွ = Khwa
+ဃြ = Khra
+ဃွ = Khwa
+ဆှ = Chga
+တြ = Tra
+တွ = Twa
+ထြ = Tra
+ထွ = Twa
+ထှ = Tga
+ဒြ = Dra
+ဒွ = Dwa
+ပၠ = Pya
+ပြ = Pra
+ပျ = Pla
+ပွ = Pwa
+ပှ = Pga
+ဖၠ = Pya
+ဖြ = Pra
+ဖျ = Pla
+ဖွ = Pwa
+ဖှ = Pga
+ဘၠ = Bya
+ဘြ = Bra
+ဘျ = Bla
+ဘွ = Bwa
+ဘှ = Bga
+မၠ = Mya
+မြ = Mra
+မျ = Mla
+မွ = Mwa
+မှ = Mga
+ယွ = Ywa
+လွ = Lwa
+သြ = Thra
+သျ = Thla
+သွ = Thwa
+ဟွ = Hwa
 
-## K7 — Alphabet + Blend
-
-Uses a 25 consonant × 5 blend bank = 125 written combinations.
-
-Blend rules:
-- ၠ = Y blend
-- ြ = R blend
-- ျ = L blend
-- ွ = W blend
-- ှ = G blend
-
-Confirmed exceptions currently stored:
-- ကၠ = Ja
-- ခၠ = Cha
-- ကြ = Kra
-
-K7 measures:
-1. Read alphabet + blend combinations
-2. Identify the correct pronunciation
-3. Match a written combination to its sound
-
-The K7 section currently gives 12 randomized questions:
-- 4 written → sound
-- 4 pronunciation identification
-- 4 sound → written
-
-Important:
-Most K7 pronunciations are generated from the current draft blend rules.
-If additional pronunciation exceptions are identified, add them to the exceptions
-object in app.js so the bank remains accurate.
-
-Provisional K7 level rule:
-K1 >= 80%
-K2-K7 >= 75%
-
-Results are stored locally in the browser in this MVP.
+This build contains no automatically generated K7 combinations.
