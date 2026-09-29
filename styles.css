@@ -20,3 +20,8 @@
   .roster-form-grid{grid-template-columns:1fr}
   .roster-head{align-items:flex-start;flex-direction:column}
 }
+
+#rosterStudentId[readonly]{
+  background:#f1f5f9;
+  color:#475569;
+}

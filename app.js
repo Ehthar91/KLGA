@@ -833,6 +833,36 @@ function renderRoster(){
   });
 }
 
+
+function getNextAutoStudentId(){
+  const roster=loadRoster();
+
+  // Find numeric IDs and continue from the highest.
+  const nums=roster
+    .map(s=>String(s.studentId||'').trim())
+    .filter(id=>/^\d+$/.test(id))
+    .map(Number);
+
+  const next = nums.length ? Math.max(...nums)+1 : 1001;
+  return String(next);
+}
+
+function applyStudentIdMode(mode){
+  if(mode==='auto'){
+    rosterStudentId.readOnly=true;
+    rosterStudentId.placeholder='Auto-generated';
+    if(!editingStudentKey){
+      rosterStudentId.value=getNextAutoStudentId();
+    }
+  }else{
+    rosterStudentId.readOnly=false;
+    rosterStudentId.placeholder='Enter student ID';
+    if(!editingStudentKey){
+      rosterStudentId.value='';
+    }
+  }
+}
+
 function openStudentForm(student=null){
   studentFormWrap.classList.remove('hidden');
   studentFormError.classList.add('hidden');
@@ -843,12 +873,20 @@ function openStudentForm(student=null){
     rosterStudentId.value=student.studentId;
     rosterStudentName.value=student.name;
     rosterStudentGrade.value=student.grade;
+
+    // Existing IDs remain editable through Manual mode.
+    studentIdMode.value='manual';
+    applyStudentIdMode('manual');
+
     saveStudentBtn.textContent='Update Student';
   }else{
     editingStudentKey=null;
-    rosterStudentId.value='';
     rosterStudentName.value='';
     rosterStudentGrade.value='';
+
+    studentIdMode.value='auto';
+    applyStudentIdMode('auto');
+
     saveStudentBtn.textContent='Save Student';
   }
 }
@@ -876,6 +914,10 @@ function deleteStudent(key){
 }
 
 function persistStudent(){
+  if(studentIdMode.value==='auto' && !editingStudentKey){
+    rosterStudentId.value=getNextAutoStudentId();
+  }
+
   const studentId=rosterStudentId.value.trim();
   const name=rosterStudentName.value.trim();
   const grade=rosterStudentGrade.value;
@@ -1025,6 +1067,7 @@ beginTestBtn.onclick=()=>{
 };
 
 
+studentIdMode.onchange=()=>applyStudentIdMode(studentIdMode.value);
 addStudentBtn.onclick=()=>openStudentForm();
 saveStudentBtn.onclick=persistStudent;
 cancelStudentBtn.onclick=closeStudentForm;

@@ -1,25 +1,23 @@
-# KLGA 5-Level Adaptive + Student Roster
+# KLGA 5-Level Adaptive + Student Roster + ID Assignment
 
-New Student Roster section added to the Teacher Dashboard.
+Student Roster now supports two Student ID modes:
 
-## Student Roster fields
-- Student ID
-- Student Name
-- Grade
+## Auto Assign ID
+- Default mode for new students.
+- Starts at 1001 if no numeric IDs exist.
+- Otherwise assigns the next number after the highest numeric Student ID.
+- Example: 1001, 1002, 1003...
 
-## Roster features
+## Manual ID
+- Teacher can type any Student ID.
+- Duplicate Student IDs are still blocked.
+
+## Editing
+When editing an existing student, the ID opens in Manual mode so the existing ID can be preserved or changed.
+
+Other roster features remain:
 - Add student
 - Edit student
 - Delete student
-- Prevent duplicate Student IDs
-- Save roster in browser localStorage
-- Sort roster alphabetically by student name for display
-
-## Why this comes first
-The roster will become the source of student identities for the future testing-session workflow:
-
-Teacher creates session -> selects roster students -> students enter Session Name + Password -> students select their name -> teacher confirms -> testing begins.
-
-## Current limitation
-The roster is still stored only in this browser. It is not yet shared across devices.
-Firebase or another backend will be needed before students on Chromebooks can join teacher-created sessions in real time.
+- Grade 6–8
+- Browser localStorage persistence

@@ -97,8 +97,14 @@
 
   <div id="studentFormWrap" class="student-form-wrap hidden">
     <div class="form-grid roster-form-grid">
-      <label>Student ID
-        <input id="rosterStudentId" type="text" placeholder="Example: 1001">
+      <label>ID Assignment
+        <select id="studentIdMode">
+          <option value="auto">Auto Assign ID</option>
+          <option value="manual">Manual ID</option>
+        </select>
+      </label>
+      <label id="studentIdFieldWrap">Student ID
+        <input id="rosterStudentId" type="text" placeholder="Auto-generated" readonly>
       </label>
       <label>Student Name
         <input id="rosterStudentName" type="text" placeholder="Student name">
