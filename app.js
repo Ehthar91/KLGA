@@ -118,6 +118,8 @@ function k8SoundFromWritten(w){
 }
 
 const k8Bank=k8WrittenBank.map(w=>({w:w,s:k8SoundFromWritten(w)})).filter(x=>x.s);
+const k9Bank=[{"phrase": "ယမၤလိတၢ်လၢဖုသၣ်ဖၠူၣ်ကၠိ", "sound": "Yer Ma Loe Ta Luh Peu Tha Pyoo Joe"}, {"phrase": "ယကၠိခိၣ်မ့ၢ်သရၣ်ကၠိစဲး", "sound": "Yer Joe Koe May Ther Ra Joe Seh"}, {"phrase": "အဝဲအိၣ်လၢဝ့ၢ်မၠီမၠး", "sound": "Ah Weh Oe Luh Way Mya Mya"}, {"phrase": "အပါမံၤလၢစီၤဖါကၠါ", "sound": "Ah Pah Mee Luh Saw Pah Jah"}, {"phrase": "ဖါတံၢ်ဆါနၤပၠါလၢဖၠါပူၤ", "sound": "Pah Tee Chah Na Pyah Luh Pyah Poo"}, {"phrase": "မီၣ်လမၠဲၣ်အိၣ်ဘူးဒီးဘလူကၠိ", "sound": "Maw Ler Myeh Oe Boo Daw Ber Loo Joe"}, {"phrase": "ပတ့အီၣ်ကိၣ်ဒီးဘုကၠူၣ်ကမူၣ်", "sound": "Per Tay Aw Koe Daw Beu Joo Ker Moo"}, {"phrase": "နီၢ်ဘၠူလၣ်လဲၤဆူဖၠါပူၤ", "sound": "Naw Byoo Lah Leh Choo Pyah Poo"}, {"phrase": "ဘီကီးမ့ၢ်ကၠီၣ်တဲၣ်ဝ့ၢ်ခိၣ်", "sound": "Baw Kaw May Jaw Teh Way Koe"}, {"phrase": "ယကထီၣ်ဖၠၣ်စိမိၤကၠိ", "sound": "Yer Ker Taw Pya Soe Moe Joe"}, {"phrase": "မၠ့းကၠံနါမ့ၢ်ကခၠ့ၣ်ဝ့ၢ်ခိၣ်", "sound": "Myay Jee Nah May Ker Chay Way Koe"}, {"phrase": "ကခၠ့ၣ်ကသံၣ်သွံၣ်န့ၣ်အမံၤဒိၣ်", "sound": "Ker Chay Ker Thee Thwee Nay Ah Mee Doe"}, {"phrase": "အပၠီးမ့ၢ်ဝဲခၠီကလုာ်တဂၤလီၤ", "sound": "Ah Pyaw May Weh Chaw Ker Leu Ter Ga Law"}, {"phrase": "ထိၣ်ကၠၢဖိစီၢ်လီၤလၢသ့ၣ်ခံ", "sound": "Toe Juh Poe Saw Law Luh Thay Kee"}, {"phrase": "ကၠၢမနံၣ်ဖိန့ၣ်ပကိးလၢကၠၢမဲလီၤ", "sound": "Juh Mer Nee Poe Nay Per Koe Luh Juh Meh Law"}, {"phrase": "ဘးအူကၠံအပၢ်မ့ၢ်ဖုသၣ်မၠးကၠံလီၤ", "sound": "Ba Oo Jee Ah Pa May Peu Tha Mya Jee Law"}, {"phrase": "တြီယၤတဂ့ၤ", "sound": "Traw Ya Ter Gay"}, {"phrase": "ယတမၤကြီတၢ်ဘၣ်", "sound": "Yer Ter Ma Kraw Ta Ba"}, {"phrase": "ယကြၢးမၤတၢ်ဂ့ၤလီၤ", "sound": "Yer Kruh Ma Ta Gay Law"}, {"phrase": "တလိၣ်ပတြၢၤယၤဘၣ်", "sound": "Ter Loe Per Truh Ya Ba"}, {"phrase": "ကးဘၢဃာ်ဆီအပဲတြီ", "sound": "Ka Buh Kha Chaw Ah Peh Traw"}, {"phrase": "လံာ်ကြီကြာ်ကထံၣ်ဘၣ်အီၤ", "sound": "Lee Kraw Kra Ker Tee Ba Aw"}, {"phrase": "တၢ်နၢသြီၣ်နၢမူဘၣ်ယၤ", "sound": "Ta Nuh Thraw Nuh Moo Ba Ya"}, {"phrase": "အဖီအိၣ်ပြံကဒံပြီးကဒီးပြး", "sound": "Ah Paw Oe Pree Ker Dee Praw Ker Daw Pra"}, {"phrase": "ပြုကလၤဟဲက့ၤဟဲက့ၤ", "sound": "Preu Ker La Heh Kay Heh Kay"}, {"phrase": "တဘၣ်အိၣ်ပြံပြါတဂ့ၤ", "sound": "Ter Ba Oe Pree Prah Ter Gay"}, {"phrase": "ထုးခြါထီၣ်နသးတစဲး", "sound": "Teu Khrah Taw Ner Tha Ter Seh"}, {"phrase": "ဟးအူပြိကလံၤဘၣ်ဒး", "sound": "Ha Oo Proe Ker Lee Ba Da"}, {"phrase": "နီၢ်ပြံလၣ်မံသါသီၣ်ခြီးခြီး", "sound": "Naw Pree La Mee Thah Thaw Khraw Khraw"}, {"phrase": "ထိၣ်သတြီၤနသးဒီးအီၤ", "sound": "Toe Ther Traw Ner Tha Daw Aw"}, {"phrase": "မုၢ်ဆဲးလီၤကပြုၢ်ကပြီၤ", "sound": "Meu Cheh Law Ker Preu Ker Praw"}, {"phrase": "ယအိၣ်လၢတၢ်ကြဲၢ်သဝီ", "sound": "Yer Oe Luh Ta Kreh Ther Waw"}, {"phrase": "ကျီပျီထီၣ်ကျဲတက့ၢ်", "sound": "Klaw Plaw Taw Kleh Ter Kay"}, {"phrase": "ပျီၤယုၢ်သၣ်ချံကဘၣ်နၤ", "sound": "Plaw Yeu Tha Khlee Ker Ba Na"}, {"phrase": "ကဟးဖျိးဘၣ်ဖုးကျဲ", "sound": "Ker Ha Ploe Ba Peu Kleh"}, {"phrase": "ခးတပျာ်ချံၣ်ပျၢ်သၢထံၣ်", "sound": "Ka Ter Pla Khlee Pla Thuh Tee"}, {"phrase": "ထီပျီာ်ဖီကဖျီအသး", "sound": "Taw Plaw Paw Ker Plaw Ah Tha"}, {"phrase": "ပျဲအကျဲယံၤယံၤတစဲး", "sound": "Pleh Ah Kleh Yee Yee Ter Seh"}, {"phrase": "ဟးပူၤဖျဲးနသးချ့ချ့", "sound": "Ha Poo Pleh Ner Tha Khlay Khlay"}, {"phrase": "အပျ့ၤတဘ့ၣ်စၢ်ဘျဲးဘျီး", "sound": "Ah Play Ter Bay Sa Bleh Blaw"}, {"phrase": "ဟးဖျ့ဖျိလၢကျဲပူၤဘၣ်ဒး", "sound": "Ha Play Ploe Luh Kleh Poo Ba Da"}, {"phrase": "ဝၣ်ဒ့ကဖျ့ဘၣ်ဖုးနမဲာ်ချံ", "sound": "Wa Day Ker Play Ba Peu Ner Meh Khlee"}, {"phrase": "ပျဲဂဲၤဖိသၣ်လၢပျဲၢ်စီၢ်ခိၣ်တဂ့ၤ", "sound": "Pleh Geh Poe Tha Luh Pleh Saw Koe Ter Gay"}, {"phrase": "ပျဲဟးအီၤဆူပျီပူၤတက့ၢ်", "sound": "Pleh Ha Aw Choo Plaw Poo Ter Kay"}, {"phrase": "ပျ့ၣ်ကျိပူၤညၣ်ပျာ်အိၣ်အါမး", "sound": "Play Kloe Poo Nya Pla Oe Ah Ma"}, {"phrase": "ချိၣ်ဟးတချ့အါအါဘၣ်", "sound": "Khloe Ha Ter Khlay Ah Ah Ba"}, {"phrase": "ယသးပျံၤမဲာ်တဲာ်ချဲးအါ", "sound": "Yer Tha Plee Meh Teh Khleh Ah"}, {"phrase": "ကျ့ထီၣ်ဃဲာ်ပကကျီဝၣ်", "sound": "Klay Taw Kheh Per Ker Klaw Wa"}, {"phrase": "ကွၢ်ဃုနကွါတက့ၢ်", "sound": "Kwa Kheu Ner Kwah Ter Kay"}, {"phrase": "ညၣ်ကွီမဲၢ်အိၣ်လၢကွံပူၤ", "sound": "Nya Kwaw Meh Oe Luh Kwee Poo"}, {"phrase": "ကွဲးကွံးကွးဟံၣ်ဒူၣ်တဂ့ၤ", "sound": "Kweh Kwee Kwa Hee Doo Ter Gay"}, {"phrase": "ကွံာ်ကွဲၢ်လဲၢ်ဘီလၢလၢၢ်တဂ့ၤ", "sound": "Kwee Kweh Leh Baw Luh Luh Ter Gay"}, {"phrase": "ကွၢ်သကွ့ၤတၢ်လၢနဃၢၤ", "sound": "Kwa Ther Kway Ta Luh Ner Khuh"}, {"phrase": "ကွဲးဟ့ၣ်ယုၢ်စံၣ်ညီၣ်ကွီၢ်အလံာ်", "sound": "Kweh Hay Yeu See Nyaw Kwaw Ah Lee"}, {"phrase": "လဲၤဟးကွၢ်ကီကွဲၢ်ကဘီလ့", "sound": "Leh Ha Kwa Kaw Kweh Ker Baw Lay"}, {"phrase": "ကွံာ်လီၤလၢၢ်ဆူကွံပူၤ", "sound": "Kwee Law Luh Choo Kwee Poo"}, {"phrase": "ခွဲပျီဟံၣ်ပူၤဒီးနီၣ်ခွဲ", "sound": "Khweh Plaw Hee Poo Daw Naw Khweh"}, {"phrase": "ကွၢ်ထွဲနဒ့မုၣ်ဂ့ၤဂ့ၤ", "sound": "Kwa Tweh Ner Day Meu Gay Gay"}, {"phrase": "ခွဲးခွးတၢ်ကပီာ်နၢၤနၢၤ", "sound": "Khweh Khwa Ta Ker Paw Nuh Nuh"}, {"phrase": "ခွံၣ်ယဲၤဖုဖျိးဝဲဒၣ်ယံၤမး", "sound": "Khwee Yeh Peu Ploe Weh Da Yee Ma"}, {"phrase": "စီၤဖါခွဲၣ်ဟးအခီၣ်ခွ့ခွီ", "sound": "Saw Pah Khweh Ha Ah Kaw Khway Khwaw"}, {"phrase": "ယတခွါလဲၤသးဝံၣ်ခွါယၢၢ်", "sound": "Yer Ter Khwah Leh Tha Wee Khwah Yuh"}, {"phrase": "ခွံခိၣ်ခွံနၢ်ဝံၤအီၣ်တကွံသၣ်", "sound": "Khwee Koe Khwee Na Wee Aw Ter Kwee Tha"}, {"phrase": "ယဒ့ဖိကွဲးကွ့ကွီယမဲာ်", "sound": "Yer Day Poe Kweh Kway Kwaw Yer Meh"}, {"phrase": "ပှိၢ်စှီၤဘှဲမ့ၢ်ကညီတကလုာ်ဃီ", "sound": "Pgoe Sgaw Bgeh May Ker Nyaw Ter Ker Leu Khaw"}, {"phrase": "ဟးကဘှၢဒ်သိးချိၣ်တဂ့ၤ", "sound": "Ha Ker Bguh Da Thoe Khloe Ter Gay"}, {"phrase": "နီၢ်သးဖှံဘှီထီၣ်အထၣ်", "sound": "Naw Tha Pgee Bgaw Taw Ah Ta"}, {"phrase": "ခွံထီၣ်ခိၣ်ကဆှဲကဆှီ", "sound": "Khwee Taw Koe Ker Chgeh Ker Chgaw"}, {"phrase": "ခ့ဘှ့အ့ၣ်ဖှီတၢ်ဖိညီၤ", "sound": "Kay Bgay Ay Pgaw Ta Poe Nyaw"}, {"phrase": "ဖှံလီၤန့ၢ်ထိၣ်ဖှံးဖိဆၣ်", "sound": "Pgee Law Nay Toe Pgee Poe Cha"}, {"phrase": "ဖှဲးသ့ၣ်ဖးဆှီအဟၢဖၢ", "sound": "Pgeh Thay Pa Chgaw Ah Huh Puh"}, {"phrase": "ကဆ့ၣ်နီၤအီၣ်မ့ၤဘှၢဘှၢ", "sound": "Ker Chay Naw Aw May Bguh Bguh"}, {"phrase": "မၤသီၣ်စှၢၢ်စှံးတဂ့ၤ", "sound": "Ma Thaw Sguh Sgee Ter Gay"}, {"phrase": "ဖါတံၢ်လဲၤပှ့ၤတကီၤဆံၣ်သၣ်", "sound": "Pah Tee Leh Pgay Ter Kaw Chee Tha"}, {"phrase": "ဆှဲးဆှုလီၤတဲာ်တၢၢ်နၢမှဲဒၢ", "sound": "Chgeh Chgeu Law Teh Tuh Nuh Mgeh Duh"}, {"phrase": "ဖုသးပှၢ်ကွၢ်ထွဲအလံၤ", "sound": "Peu Tha Pga Kwa Tweh Ah Lee"}, {"phrase": "ကမၢနဘှီတၢ်တမံၤ", "sound": "Ker Muh Ner Bgaw Ta Ter Mee"}, {"phrase": "ဘှီနဲသပှၢ်ပှၢ်တက့ၢ်", "sound": "Bgaw Neh Ther Pga Pga Ter Kay"}, {"phrase": "တၢ်ဘှံးသးကသါဘှၢဘှၢ", "sound": "Ta Bgee Tha Ker Thah Bguh Bguh"}, {"phrase": "နံၤကမှံပှဲၤဒီးသးဖှံ", "sound": "Nee Ker Mgee Pgeh Daw Tha Pgee"}];
+
 
 
 function q(skill,domain,type,instruction,prompt,choices,correct,promptClass='',choiceClass=''){
@@ -232,8 +234,115 @@ function makeK8Pool(){
 function poolForLevel(level){
  return ({
    1:makeK1Pool,2:makeK2Pool,3:makeK3Pool,4:makeK4Pool,
-   5:makeK5Pool,6:makeK6Pool,7:makeK7Pool,8:makeK8Pool
+   5:makeK5Pool,6:makeK6Pool,7:makeK7Pool,8:makeK8Pool,9:makeK9Pool
  })[level]();
+}
+
+
+function tweakSound(sound){
+ const tokens=sound.split(' ');
+ if(tokens.length<2) return sound;
+
+ const substitutions={
+  'May':['Meh','Myay','Mae'],
+  'Way':['Weh','Waw','Wey'],
+  'Koe':['Kaw','Kee','Koeh'],
+  'Joe':['Jee','Jaw','Juh'],
+  'Jee':['Joe','Juh','Jaw'],
+  'Juh':['Jee','Joe','Jah'],
+  'Poo':['Poe','Paw','Peu'],
+  'Poe':['Poo','Paw','Peu'],
+  'Law':['Luh','Loe','Lah'],
+  'Luh':['Law','Loe','Lah'],
+  'Taw':['Toe','Tee','Ter'],
+  'Toe':['Taw','Tee','Ter'],
+  'Kleh':['Klay','Klee','Klah'],
+  'Klay':['Kleh','Klee','Klah'],
+  'Pleh':['Play','Plee','Plah'],
+  'Play':['Pleh','Plee','Plaw'],
+  'Plaw':['Pleh','Play','Ploo'],
+  'Kwa':['Kwah','Kwee','Kwaw'],
+  'Kwah':['Kwa','Kweh','Kwaw'],
+  'Kweh':['Kwee','Kwa','Kwaw'],
+  'Kwee':['Kweh','Kwa','Kwaw'],
+  'Khwee':['Khweh','Khwa','Khwaw'],
+  'Pgee':['Pgeh','Pga','Pgaw'],
+  'Pgeh':['Pgee','Pga','Pgaw'],
+  'Bguh':['Bgaw','Bgeh','Bgee'],
+  'Chgeh':['Chgaw','Chgeu','Chgee']
+ };
+
+ const idxs=shuffle(tokens.map((_,i)=>i));
+ for(const idx of idxs){
+   const t=tokens[idx];
+   if(substitutions[t]){
+     const out=[...tokens];
+     out[idx]=shuffle(substitutions[t])[0];
+     return out.join(' ');
+   }
+ }
+
+ // Fallback: swap one syllable with a near vowel variation.
+ const idx=idxs[0];
+ const t=tokens[idx];
+ const endings=[
+   ['a','eh'],['aw','oe'],['ee','eh'],['oe','aw'],['uh','ah'],['oo','oe'],
+   ['ay','eh'],['eh','ay']
+ ];
+ let replacement=t;
+ for(const [a,b] of endings){
+   if(t.toLowerCase().endsWith(a)){
+     replacement=t.slice(0,t.length-a.length)+b;
+     replacement=replacement[0].toUpperCase()+replacement.slice(1);
+     break;
+   }
+ }
+ if(replacement===t) replacement=t+'h';
+
+ const out=[...tokens];
+ out[idx]=replacement;
+ return out.join(' ');
+}
+
+function makeCloseDistractors(correct){
+ const choices=new Set([correct]);
+
+ // Two very close distractors: one syllable changed.
+ let guard=0;
+ while(choices.size<3 && guard<30){
+   choices.add(tweakSound(correct));
+   guard++;
+ }
+
+ // Fourth choice: use another real reading sound, preferably same length.
+ const tokenCount=correct.split(' ').length;
+ const candidates=k9Bank
+   .map(x=>x.sound)
+   .filter(s=>s!==correct && Math.abs(s.split(' ').length-tokenCount)<=1);
+ const far=shuffle(candidates)[0] || shuffle(k9Bank.map(x=>x.sound).filter(s=>s!==correct))[0];
+ choices.add(far);
+
+ while(choices.size<4){
+   choices.add(tweakSound(correct));
+ }
+ return shuffle([...choices]).slice(0,4);
+}
+
+function makeK9Pool(){
+ return shuffle(k9Bank).map(x=>{
+   const ch=makeCloseDistractors(x.sound);
+   return q(
+     'K9',
+     'Phrase Reading',
+     'phraseToSound',
+     'Choose the reading sound that matches this phrase.',
+     x.phrase,
+     ch,
+     x.sound,
+     'karen-large',
+     ''
+   );
+ });
 }
 
 /* ---------------------------
@@ -257,7 +366,7 @@ function fresh(){
    levelResults:{},
    path:[],
    highestPassed:0,
-   lowestFailed:9,
+   lowestFailed:10,
    totalQuestions:0,
    finished:false
  };
@@ -355,8 +464,8 @@ function evaluateLevel(){
  if(score>=75){
    state.highestPassed=Math.max(state.highestPassed,level);
 
-   if(level===8){
-     finishAdaptive(8);
+   if(level===9){
+     finishAdaptive(9);
      return;
    }
 
@@ -398,8 +507,8 @@ function finishAdaptive(level){
  resultAccuracy.textContent=pct(state.responses)+'%';
 
  // Show tested-level scores; untested levels display em dash.
- const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score];
- for(let i=1;i<=8;i++){
+ const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score,k9Score];
+ for(let i=1;i<=9;i++){
    scoreEls[i].textContent = state.levelResults[i]===undefined ? '—' : state.levelResults[i]+'%';
  }
 
@@ -426,6 +535,7 @@ function finishAdaptive(level){
    k6:state.levelResults[6]??'',
    k7:state.levelResults[7]??'',
    k8:state.levelResults[8]??'',
+   k9:state.levelResults[9]??'',
    date:new Date().toLocaleDateString()
  };
 
@@ -459,10 +569,10 @@ function esc(s=''){
 
 function exportCsv(){
  const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- const rows=[['Student','Grade','Window','Placement','Overall','Questions','Adaptive Path','K1','K2','K3','K4','K5','K6','K7','K8','Date']];
+ const rows=[['Student','Grade','Window','Placement','Overall','Questions','Adaptive Path','K1','K2','K3','K4','K5','K6','K7','K8','K9','Date']];
  r.forEach(x=>rows.push([
    x.student,x.grade,x.window,x.placement,x.overall,x.questions,x.path,
-   x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.date
+   x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.k9,x.date
  ]));
  const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
  const blob=new Blob([csv],{type:'text/csv'});
