@@ -435,7 +435,7 @@ function beginLevel(level){
  }
  state.currentIndex=0;
  state.selected=null;
- state.path.push('K'+level);
+ state.path.push('Level '+level);
  render();
 }
 
@@ -555,7 +555,7 @@ function beginIndividual(level,countChoice){
  }
  state.currentIndex=0;
  state.selected=null;
- state.path=['K'+level];
+ state.path=['Level '+level];
  render();
 }
 
@@ -565,7 +565,7 @@ function finishIndividual(){
  const score=pct(rows);
  state.levelResults[level]=score;
 
- const display='K'+level;
+ const display='Level '+level;
  resultStudentName.textContent=state.studentName;
  resultLevel.textContent=display;
  resultAccuracy.textContent=score+'%';
@@ -576,7 +576,7 @@ function finishIndividual(){
  }
 
  adaptiveSummary.innerHTML=
-   `<strong>Individual test:</strong> ${display}<br>`+
+   `<strong>Individual level test:</strong> ${display}<br>`+
    `<strong>Questions answered:</strong> ${rows.length}<br>`+
    `<strong>Score:</strong> ${score}% (${rows.filter(r=>r.correct).length}/${rows.length})<br>`+
    `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}`;
@@ -585,7 +585,7 @@ function finishIndividual(){
    student:state.studentName,
    grade:state.grade,
    window:state.window,
-   mode:'Individual K Test',
+   mode:'Individual Level Test',
    placement:display,
    resultLabel:score>=75?'Met Benchmark':'Below Benchmark',
    overall:score,
@@ -615,7 +615,7 @@ function finishAdaptive(level){
 
  // Placement:
  // 0 means beginning K1 / below K1 mastery.
- const displayLevel=level<=0?'Pre-K1':'K'+level;
+ const displayLevel=level<=0?'Below Level 1':'Level '+level;
 
  resultStudentName.textContent=state.studentName;
  resultLevel.textContent=displayLevel;
@@ -687,7 +687,7 @@ function esc(s=''){
 
 function exportCsv(){
  const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- const rows=[['Student','Grade','Window','Mode','Result','Overall','Questions','Path / Level','K1','K2','K3','K4','K5','K6','K7','K8','K9','Date']];
+ const rows=[['Student','Grade','Window','Mode','Result','Overall','Questions','Path / Level','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Level 8','Level 9','Date']];
  r.forEach(x=>rows.push([
    x.student,x.grade,x.window,x.mode||'Adaptive Test',x.resultLabel||x.placement,x.overall,x.questions,x.path,
    x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.k9,x.date

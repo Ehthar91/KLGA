@@ -8,22 +8,22 @@
 <body>
 <div class="app-shell">
 <header class="topbar">
-  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • Adaptive K1–K9</p></div>
+  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • Adaptive Level 1–Level 9</p></div>
   <div class="top-actions"><button id="studentModeBtn" class="btn secondary">Student Test</button><button id="teacherModeBtn" class="btn secondary">Teacher Dashboard</button></div>
 </header>
 <main>
 <section id="homeView" class="card hero">
 <h2>Adaptive KLGA Assessment</h2>
 <div class="skill-grid">
-<div class="skill-card"><span>K1</span><strong>Alphabet Recognition</strong><small>Recognize Karen consonants.</small></div>
-<div class="skill-card"><span>K2</span><strong>Letter Sounds</strong><small>Identify consonant sounds.</small></div>
-<div class="skill-card"><span>K3</span><strong>Vowel Recognition</strong><small>Recognize vowels and vowel sounds.</small></div>
-<div class="skill-card"><span>K4</span><strong>Alphabet + Vowel</strong><small>Read consonant-vowel combinations.</small></div>
-<div class="skill-card"><span>K5</span><strong>Tone Recognition</strong><small>Recognize tone marks and know their names.</small></div>
-<div class="skill-card"><span>K6</span><strong>Blend Sound Recognition</strong><small>Recognize blend symbols and their sounds.</small></div>
-<div class="skill-card"><span>K7</span><strong>Alphabet + Blend</strong><small>Read consonant-blend combinations and match them to sounds.</small></div>
-<div class="skill-card"><span>K8</span><strong>Alphabet + Blend + Vowel</strong><small>Read verified combinations from lesson materials.</small></div>
-<div class="skill-card"><span>K9</span><strong>Phrase Reading</strong><small>Match Karen reading phrases to very similar reading-sound choices.</small></div>
+<div class="skill-card"><span>Level 1</span><strong>Alphabet Recognition</strong><small>Recognize Karen consonants.</small></div>
+<div class="skill-card"><span>Level 2</span><strong>Letter Sounds</strong><small>Identify consonant sounds.</small></div>
+<div class="skill-card"><span>Level 3</span><strong>Vowel Recognition</strong><small>Recognize vowels and vowel sounds.</small></div>
+<div class="skill-card"><span>Level 4</span><strong>Alphabet + Vowel</strong><small>Read consonant-vowel combinations.</small></div>
+<div class="skill-card"><span>Level 5</span><strong>Tone Recognition</strong><small>Recognize tone marks and know their names.</small></div>
+<div class="skill-card"><span>Level 6</span><strong>Blend Sound Recognition</strong><small>Recognize blend symbols and their sounds.</small></div>
+<div class="skill-card"><span>Level 7</span><strong>Alphabet + Blend</strong><small>Read consonant-blend combinations and match them to sounds.</small></div>
+<div class="skill-card"><span>Level 8</span><strong>Alphabet + Blend + Vowel</strong><small>Read verified combinations from lesson materials.</small></div>
+<div class="skill-card"><span>Level 9</span><strong>Phrase Reading</strong><small>Match Karen reading phrases to very similar reading-sound choices.</small></div>
 </div>
 <p class="adaptive-note">Students begin at K4. Each tested level uses 8 randomized questions, and the test moves up or down based on performance.</p><div class="actions center"><button id="startStudentBtn" class="btn primary">Start Adaptive Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
 </section>
@@ -37,20 +37,20 @@
 <label>Test Mode
 <select id="testMode">
 <option value="adaptive">Adaptive Test</option>
-<option value="individual">Individual K Test</option>
+<option value="individual">Individual Level Test</option>
 </select>
 </label>
-<label id="individualLevelWrap" class="hidden">Choose K Level
+<label id="individualLevelWrap" class="hidden">Choose Level
 <select id="individualLevel">
-<option value="1">K1 — Alphabet Recognition</option>
-<option value="2">K2 — Letter Sounds</option>
-<option value="3">K3 — Vowel Recognition</option>
-<option value="4">K4 — Alphabet + Vowel</option>
-<option value="5">K5 — Tone Recognition</option>
-<option value="6">K6 — Blend Sound Recognition</option>
-<option value="7">K7 — Alphabet + Blend</option>
-<option value="8">K8 — Alphabet + Blend + Vowel</option>
-<option value="9">K9 — Phrase Reading</option>
+<option value="1">Level 1 — Alphabet Recognition</option>
+<option value="2">Level 2 — Letter Sounds</option>
+<option value="3">Level 3 — Vowel Recognition</option>
+<option value="4">Level 4 — Alphabet + Vowel</option>
+<option value="5">Level 5 — Tone Recognition</option>
+<option value="6">Level 6 — Blend Sound Recognition</option>
+<option value="7">Level 7 — Alphabet + Blend</option>
+<option value="8">Level 8 — Alphabet + Blend + Vowel</option>
+<option value="9">Level 9 — Phrase Reading</option>
 </select>
 </label>
 <label id="questionCountWrap" class="hidden">Question Count
@@ -80,15 +80,15 @@
 <div class="result-hero"><div><div class="eyebrow">KLGA Benchmark Complete</div><h2 id="resultStudentName"></h2></div><div class="score-badge"><span id="resultLevel"></span><small>Current Level</small></div></div>
 <div class="stats-grid">
 <div class="stat"><span class="stat-label">Overall</span><strong id="resultAccuracy"></strong></div>
-<div class="stat"><span class="stat-label">K1</span><strong id="k1Score"></strong></div>
-<div class="stat"><span class="stat-label">K2</span><strong id="k2Score"></strong></div>
-<div class="stat"><span class="stat-label">K3</span><strong id="k3Score"></strong></div>
-<div class="stat"><span class="stat-label">K4</span><strong id="k4Score"></strong></div>
-<div class="stat"><span class="stat-label">K5</span><strong id="k5Score"></strong></div>
-<div class="stat"><span class="stat-label">K6</span><strong id="k6Score"></strong></div>
-<div class="stat"><span class="stat-label">K7</span><strong id="k7Score"></strong></div>
-<div class="stat"><span class="stat-label">K8</span><strong id="k8Score"></strong></div>
-<div class="stat"><span class="stat-label">K9</span><strong id="k9Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 1</span><strong id="k1Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 2</span><strong id="k2Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 3</span><strong id="k3Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 4</span><strong id="k4Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 5</span><strong id="k5Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 6</span><strong id="k6Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 7</span><strong id="k7Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 8</span><strong id="k8Score"></strong></div>
+<div class="stat"><span class="stat-label">Level 9</span><strong id="k9Score"></strong></div>
 </div>
 <h3>Adaptive Placement Summary</h3><div id="adaptiveSummary" class="summary-box"></div>
 <div class="actions"><button id="returnHomeBtn" class="btn primary">Done</button></div>
