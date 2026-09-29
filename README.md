@@ -1,30 +1,43 @@
-# KLGA Level 1–Level 9 — Adaptive + Individual Level Tests + Question Count
+# KLGA — 5-Level Adaptive Assessment
 
-Individual Level Test now includes a Question Count option:
+The original 9 internal skills are now grouped into 5 visible proficiency levels.
 
-- 5 Random Questions
-- 8 Random Questions
-- 10 Random Questions
-- 15 Random Questions
-- 20 Random Questions
-- All Questions
+## Level 1 — Foundations
+- Alphabet Recognition
+- Letter Sounds
+- Vowel Recognition
 
-The selected level uses only its own question bank.
+## Level 2 — Sound Building
+- Alphabet + Vowel
+- Tone Recognition
+- Blend Sound Recognition
 
-If the requested number is larger than that level's available question pool,
-the test automatically uses all available questions.
+## Level 3 — Blend Reading
+- Alphabet + Blend
 
-Adaptive Test remains unchanged at 8 randomized questions per tested level.
+## Level 4 — Advanced Sound Building
+- Alphabet + Blend + Vowel
 
+## Level 5 — Phrase Reading
+- Reading phrases
 
-## K9 distractor update
+## Adaptive Test
 
-K9 no longer creates arbitrary made-up sound tweaks.
+- Starts at Level 2.
+- Level 1 and Level 2 use 9 questions by default so the three internal skills are sampled evenly.
+- Levels 3–5 use 8 questions by default.
+- 75% or higher passes the level and moves upward.
+- Below 75% moves downward.
+- The system still records individual skill scores for teacher diagnostics.
 
-Close distractors now change only valid components from the KLGA sound system:
-- a real alphabet/base sound,
-- a real vowel sound,
-- or a real blend sound.
+## Individual Level Test
 
-At least two choices are still designed to be close to the correct answer, but the
-changed sounds now come from valid alphabet, vowel, or blend sound inventories.
+Teachers can choose Level 1 through Level 5.
+Question Count options remain available, including All Questions.
+
+For grouped Levels 1 and 2, random questions are distributed as evenly as possible across the three internal skills.
+
+## Teacher Dashboard / CSV
+
+The dashboard reports the 5-level placement.
+CSV export also includes all nine internal skill scores for diagnostic use.

@@ -380,376 +380,515 @@ function makeK9Pool(){
  });
 }
 
+
 /* ---------------------------
-   ADAPTIVE ENGINE
+   5-LEVEL ADAPTIVE ENGINE
+   Internal skill banks remain K1-K9 for diagnostics.
 ---------------------------- */
 
-const views={home:homeView,setup:studentSetupView,test:testView,result:resultView,teacher:teacherView};
+const LEVELS = {
+  1: {
+    name:'Foundations',
+    skills:[1,2,3],
+    description:'Alphabet Recognition, Letter Sounds, Vowel Recognition'
+  },
+  2: {
+    name:'Sound Building',
+    skills:[4,5,6],
+    description:'Alphabet + Vowel, Tone Recognition, Blend Sound Recognition'
+  },
+  3: {
+    name:'Blend Reading',
+    skills:[7],
+    description:'Alphabet + Blend'
+  },
+  4: {
+    name:'Advanced Sound Building',
+    skills:[8],
+    description:'Alphabet + Blend + Vowel'
+  },
+  5: {
+    name:'Phrase Reading',
+    skills:[9],
+    description:'Reading Phrases'
+  }
+};
+
+const SKILL_NAMES = {
+  1:'Alphabet Recognition',
+  2:'Letter Sounds',
+  3:'Vowel Recognition',
+  4:'Alphabet + Vowel',
+  5:'Tone Recognition',
+  6:'Blend Sound Recognition',
+  7:'Alphabet + Blend',
+  8:'Alphabet + Blend + Vowel',
+  9:'Phrase Reading'
+};
+
+const views={
+  home:homeView,
+  setup:studentSetupView,
+  test:testView,
+  result:resultView,
+  teacher:teacherView
+};
 
 let state={};
 
 function fresh(){
- return{
-   studentName:'',
-   grade:'',
-   window:'',
-   mode:'adaptive',
-   individualLevel:null,
-   currentLevel:4,
-   currentBatch:[],
-   currentIndex:0,
-   selected:null,
-   responses:[],
-   levelResults:{},
-   path:[],
-   highestPassed:0,
-   lowestFailed:10,
-   totalQuestions:0,
-   finished:false
- };
+  return {
+    studentName:'',
+    grade:'',
+    window:'',
+    mode:'adaptive',
+    currentLevel:2,
+    individualLevel:null,
+    currentBatch:[],
+    currentIndex:0,
+    selected:null,
+    responses:[],
+    levelResults:{},
+    skillResults:{},
+    path:[],
+    highestPassed:0,
+    lowestFailed:6,
+    totalQuestions:0
+  };
 }
 state=fresh();
 
 function showView(n){
- Object.values(views).forEach(v=>v.classList.add('hidden'));
- views[n].classList.remove('hidden');
+  Object.values(views).forEach(v=>v.classList.add('hidden'));
+  views[n].classList.remove('hidden');
 }
 
 function pct(rows){
- return rows.length?Math.round(rows.filter(r=>r.correct).length/rows.length*100):0;
+  return rows.length ? Math.round(rows.filter(r=>r.correct).length/rows.length*100) : 0;
 }
 
-function sampleLevel(level,count=8){
- const pool=poolForLevel(level);
- return shuffle(pool).slice(0,Math.min(count,pool.length));
+function questionsForSkill(skill){
+  return poolForLevel(skill);
+}
+
+// Balanced sampling for grouped levels.
+// Level 1 and 2 default to 9 questions: 3 from each internal skill.
+// Levels 3-5 default to 8.
+function defaultCountForLevel(level){
+  return LEVELS[level].skills.length>1 ? 9 : 8;
+}
+
+function buildLevelPool(level){
+  const skills=LEVELS[level].skills;
+  let all=[];
+  skills.forEach(skill=>{
+    questionsForSkill(skill).forEach(item=>{
+      all.push({...item, internalSkill:skill, visibleLevel:level});
+    });
+  });
+  return shuffle(all);
+}
+
+function balancedSample(level, countChoice){
+  const skills=LEVELS[level].skills;
+  const pools={};
+  skills.forEach(skill=>{
+    pools[skill]=shuffle(questionsForSkill(skill)).map(item=>({
+      ...item,
+      internalSkill:skill,
+      visibleLevel:level
+    }));
+  });
+
+  if(countChoice==='all'){
+    let all=[];
+    skills.forEach(skill=>all.push(...pools[skill]));
+    return shuffle(all);
+  }
+
+  let count = Number(countChoice) || defaultCountForLevel(level);
+
+  if(skills.length===1){
+    return pools[skills[0]].slice(0,Math.min(count,pools[skills[0]].length));
+  }
+
+  // Balance across the grouped skills as evenly as possible.
+  let result=[];
+  let cursor=0;
+  let guard=0;
+  while(result.length<count && guard<1000){
+    const skill=skills[cursor % skills.length];
+    if(pools[skill].length){
+      result.push(pools[skill].shift());
+    }
+    cursor++;
+    guard++;
+    if(skills.every(s=>pools[s].length===0)) break;
+  }
+  return shuffle(result);
 }
 
 function beginLevel(level){
- state.currentLevel=level;
- const pool=poolForLevel(level);
- if(countChoice==='all'){
-   state.currentBatch=shuffle(pool);
- }else{
-   const count=Number(countChoice)||8;
-   state.currentBatch=shuffle(pool).slice(0,Math.min(count,pool.length));
- }
- state.currentIndex=0;
- state.selected=null;
- state.path.push('Level '+level);
- render();
+  state.currentLevel=level;
+  state.currentBatch=balancedSample(level, defaultCountForLevel(level));
+  state.currentIndex=0;
+  state.selected=null;
+  state.path.push('Level '+level);
+  render();
+}
+
+function beginIndividual(level,countChoice){
+  state.mode='individual';
+  state.individualLevel=level;
+  state.currentLevel=level;
+  state.currentBatch=balancedSample(level,countChoice);
+  state.currentIndex=0;
+  state.selected=null;
+  state.path=['Level '+level];
+  render();
 }
 
 function render(){
- const z=state.currentBatch[state.currentIndex];
- state.selected=null;
+  const z=state.currentBatch[state.currentIndex];
+  state.selected=null;
 
- questionDomain.textContent=z.domain;
- questionNumber.textContent=state.totalQuestions+1;
- questionTotal.textContent='Adaptive';
- currentSkill.textContent=z.skill;
- questionInstruction.textContent=z.instruction;
- questionPrompt.textContent=z.prompt;
- questionPrompt.className='question-prompt '+z.promptClass;
+  questionDomain.textContent='Level '+state.currentLevel+' — '+LEVELS[state.currentLevel].name;
+  questionNumber.textContent=state.totalQuestions+1;
+  questionTotal.textContent=state.mode==='individual'
+    ? state.currentBatch.length
+    : 'Adaptive';
+  currentSkill.textContent=SKILL_NAMES[z.internalSkill] || z.skill;
+  questionInstruction.textContent=z.instruction;
+  questionPrompt.textContent=z.prompt;
+  questionPrompt.className='question-prompt '+z.promptClass;
 
- // Progress is intentionally approximate because CAT length changes by student.
- const estimated=Math.min(95,Math.round((state.totalQuestions/24)*100));
- progressBar.style.width=estimated+'%';
+  const estimated = state.mode==='individual'
+    ? Math.round((state.currentIndex/state.currentBatch.length)*100)
+    : Math.min(95,Math.round((state.totalQuestions/30)*100));
+  progressBar.style.width=estimated+'%';
 
- answerChoices.innerHTML='';
- z.choices.forEach((c,i)=>{
-   const b=document.createElement('button');
-   b.className='choice '+z.choiceClass;
-   b.textContent=c;
-   b.onclick=()=>{
-     [...answerChoices.children].forEach(x=>x.classList.remove('selected'));
-     b.classList.add('selected');
-     state.selected=i;
-     nextQuestionBtn.disabled=false;
-   };
-   answerChoices.appendChild(b);
- });
- nextQuestionBtn.disabled=true;
+  answerChoices.innerHTML='';
+  z.choices.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='choice '+z.choiceClass;
+    b.textContent=c;
+    b.onclick=()=>{
+      [...answerChoices.children].forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      state.selected=i;
+      nextQuestionBtn.disabled=false;
+    };
+    answerChoices.appendChild(b);
+  });
+  nextQuestionBtn.disabled=true;
 }
 
 function submit(){
- if(state.selected===null)return;
+  if(state.selected===null) return;
 
- const z=state.currentBatch[state.currentIndex];
- const correct=state.selected===z.answer;
+  const z=state.currentBatch[state.currentIndex];
+  const correct=state.selected===z.answer;
 
- state.responses.push({
-   skill:z.skill,
-   level:state.currentLevel,
-   type:z.type,
-   correct
- });
- state.totalQuestions++;
+  state.responses.push({
+    visibleLevel:state.currentLevel,
+    internalSkill:z.internalSkill,
+    skill:z.skill,
+    type:z.type,
+    correct
+  });
 
- state.currentIndex++;
+  state.totalQuestions++;
+  state.currentIndex++;
 
- if(state.currentIndex>=state.currentBatch.length){
-   if(state.mode==='individual'){
-     finishIndividual();
-   }else{
-     evaluateLevel();
-   }
- }else{
-   render();
- }
+  if(state.currentIndex>=state.currentBatch.length){
+    if(state.mode==='individual'){
+      finishIndividual();
+    }else{
+      evaluateLevel();
+    }
+  }else{
+    render();
+  }
+}
+
+function calculateDiagnostics(level){
+  const levelRows=state.responses.filter(r=>r.visibleLevel===level);
+  state.levelResults[level]=pct(levelRows);
+
+  LEVELS[level].skills.forEach(skill=>{
+    const rows=state.responses.filter(r=>r.internalSkill===skill);
+    if(rows.length) state.skillResults[skill]=pct(rows);
+  });
 }
 
 function evaluateLevel(){
- const level=state.currentLevel;
- const rows=state.responses.filter(r=>r.level===level);
- const score=pct(rows);
- state.levelResults[level]=score;
+  const level=state.currentLevel;
+  calculateDiagnostics(level);
+  const score=state.levelResults[level];
 
- // 8-item level probe:
- // 75%+ = pass, move up
- // 50% or lower = fail, move down
- // exactly 50% is fail in a mastery-oriented progression
- if(score>=75){
-   state.highestPassed=Math.max(state.highestPassed,level);
+  if(score>=75){
+    state.highestPassed=Math.max(state.highestPassed,level);
 
-   if(level===9){
-     finishAdaptive(9);
-     return;
-   }
+    if(level===5){
+      finishAdaptive(5);
+      return;
+    }
 
-   // If we just passed a level below a previously failed level,
-   // test the immediate next level to pinpoint placement.
-   const next=level+1;
-   if(next>=state.lowestFailed){
-     finishAdaptive(level);
-     return;
-   }
-   beginLevel(next);
- }else{
-   state.lowestFailed=Math.min(state.lowestFailed,level);
+    const next=level+1;
+    if(next>=state.lowestFailed){
+      finishAdaptive(level);
+      return;
+    }
+    beginLevel(next);
+  }else{
+    state.lowestFailed=Math.min(state.lowestFailed,level);
 
-   if(level===1){
-     finishAdaptive(0);
-     return;
-   }
+    if(level===1){
+      finishAdaptive(0);
+      return;
+    }
 
-   const prev=level-1;
-   if(prev<=state.highestPassed){
-     finishAdaptive(state.highestPassed);
-     return;
-   }
-   beginLevel(prev);
- }
+    const prev=level-1;
+    if(prev<=state.highestPassed){
+      finishAdaptive(state.highestPassed);
+      return;
+    }
+    beginLevel(prev);
+  }
 }
 
+function diagnosticHtml(){
+  let out='';
+  for(let level=1;level<=5;level++){
+    const testedSkills=LEVELS[level].skills.filter(s=>state.skillResults[s]!==undefined);
+    if(!testedSkills.length) continue;
 
-function beginIndividual(level,countChoice){
- state.mode='individual';
- state.individualLevel=level;
- state.currentLevel=level;
- const pool=poolForLevel(level);
- if(countChoice==='all'){
-   state.currentBatch=shuffle(pool);
- }else{
-   const count=Number(countChoice)||8;
-   state.currentBatch=shuffle(pool).slice(0,Math.min(count,pool.length));
- }
- state.currentIndex=0;
- state.selected=null;
- state.path=['Level '+level];
- render();
+    out += `<div class="diag-level"><strong>Level ${level} — ${LEVELS[level].name}</strong>`;
+    testedSkills.forEach(skill=>{
+      out += `<div class="diag-row"><span>${SKILL_NAMES[skill]}</span><strong>${state.skillResults[skill]}%</strong></div>`;
+    });
+    out += `</div>`;
+  }
+  return out || '<span>No diagnostic subskill scores available.</span>';
 }
 
-function finishIndividual(){
- const level=state.individualLevel;
- const rows=state.responses.filter(r=>r.level===level);
- const score=pct(rows);
- state.levelResults[level]=score;
-
- const display='Level '+level;
- resultStudentName.textContent=state.studentName;
- resultLevel.textContent=display;
- resultAccuracy.textContent=score+'%';
-
- const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score,k9Score];
- for(let i=1;i<=9;i++){
-   scoreEls[i].textContent = i===level ? score+'%' : '—';
- }
-
- adaptiveSummary.innerHTML=
-   `<strong>Individual level test:</strong> ${display}<br>`+
-   `<strong>Questions answered:</strong> ${rows.length}<br>`+
-   `<strong>Score:</strong> ${score}% (${rows.filter(r=>r.correct).length}/${rows.length})<br>`+
-   `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}`;
-
- const result={
-   student:state.studentName,
-   grade:state.grade,
-   window:state.window,
-   mode:'Individual Level Test',
-   placement:display,
-   resultLabel:score>=75?'Met Benchmark':'Below Benchmark',
-   overall:score,
-   questions:rows.length,
-   path:display,
-   k1:level===1?score:'',
-   k2:level===2?score:'',
-   k3:level===3?score:'',
-   k4:level===4?score:'',
-   k5:level===5?score:'',
-   k6:level===6?score:'',
-   k7:level===7?score:'',
-   k8:level===8?score:'',
-   k9:level===9?score:'',
-   date:new Date().toLocaleDateString()
- };
-
- const saved=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- saved.push(result);
- localStorage.setItem('klgaAdaptiveResults',JSON.stringify(saved));
- showView('result');
+function setResultTiles(){
+  const els=[null,level1Score,level2Score,level3Score,level4Score,level5Score];
+  for(let level=1;level<=5;level++){
+    els[level].textContent = state.levelResults[level]===undefined
+      ? '—'
+      : state.levelResults[level]+'%';
+  }
 }
 
 function finishAdaptive(level){
- state.finished=true;
- progressBar.style.width='100%';
+  progressBar.style.width='100%';
+  const displayLevel=level<=0?'Below Level 1':'Level '+level;
 
- // Placement:
- // 0 means beginning K1 / below K1 mastery.
- const displayLevel=level<=0?'Below Level 1':'Level '+level;
+  resultStudentName.textContent=state.studentName;
+  resultLevel.textContent=displayLevel;
+  resultAccuracy.textContent=pct(state.responses)+'%';
+  setResultTiles();
 
- resultStudentName.textContent=state.studentName;
- resultLevel.textContent=displayLevel;
- resultAccuracy.textContent=pct(state.responses)+'%';
+  adaptiveSummary.innerHTML=
+    `<strong>Adaptive path:</strong> ${state.path.join(' → ')}<br>`+
+    `<strong>Questions answered:</strong> ${state.totalQuestions}<br>`+
+    `<strong>Placement:</strong> ${displayLevel}`;
 
- // Show tested-level scores; untested levels display em dash.
- const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score,k9Score];
- for(let i=1;i<=9;i++){
-   scoreEls[i].textContent = state.levelResults[i]===undefined ? '—' : state.levelResults[i]+'%';
- }
+  diagnosticSummary.innerHTML=diagnosticHtml();
 
- const pathText=state.path.join(' → ');
- adaptiveSummary.innerHTML=
-   `<strong>Adaptive path:</strong> ${pathText}<br>`+
-   `<strong>Questions answered:</strong> ${state.totalQuestions}<br>`+
-   `<strong>Placement:</strong> ${displayLevel}<br><br>`+
-   `The test moved up after level mastery and moved down after insufficient evidence.`;
+  const result={
+    student:state.studentName,
+    grade:state.grade,
+    window:state.window,
+    mode:'Adaptive Test',
+    resultLabel:displayLevel,
+    placement:displayLevel,
+    overall:pct(state.responses),
+    questions:state.totalQuestions,
+    path:state.path.join(' → '),
+    level1:state.levelResults[1]??'',
+    level2:state.levelResults[2]??'',
+    level3:state.levelResults[3]??'',
+    level4:state.levelResults[4]??'',
+    level5:state.levelResults[5]??'',
+    skill1:state.skillResults[1]??'',
+    skill2:state.skillResults[2]??'',
+    skill3:state.skillResults[3]??'',
+    skill4:state.skillResults[4]??'',
+    skill5:state.skillResults[5]??'',
+    skill6:state.skillResults[6]??'',
+    skill7:state.skillResults[7]??'',
+    skill8:state.skillResults[8]??'',
+    skill9:state.skillResults[9]??'',
+    date:new Date().toLocaleDateString()
+  };
 
- const result={
-   student:state.studentName,
-   grade:state.grade,
-   window:state.window,
-   mode:'Adaptive Test',
-   placement:displayLevel,
-   resultLabel:displayLevel,
-   overall:pct(state.responses),
-   questions:state.totalQuestions,
-   path:pathText,
-   k1:state.levelResults[1]??'',
-   k2:state.levelResults[2]??'',
-   k3:state.levelResults[3]??'',
-   k4:state.levelResults[4]??'',
-   k5:state.levelResults[5]??'',
-   k6:state.levelResults[6]??'',
-   k7:state.levelResults[7]??'',
-   k8:state.levelResults[8]??'',
-   k9:state.levelResults[9]??'',
-   date:new Date().toLocaleDateString()
- };
+  const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  saved.push(result);
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
+  showView('result');
+}
 
- const saved=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- saved.push(result);
- localStorage.setItem('klgaAdaptiveResults',JSON.stringify(saved));
- showView('result');
+function finishIndividual(){
+  const level=state.individualLevel;
+  calculateDiagnostics(level);
+  const score=state.levelResults[level];
+  const rows=state.responses.filter(r=>r.visibleLevel===level);
+
+  resultStudentName.textContent=state.studentName;
+  resultLevel.textContent='Level '+level;
+  resultAccuracy.textContent=score+'%';
+  setResultTiles();
+
+  adaptiveSummary.innerHTML=
+    `<strong>Individual level test:</strong> Level ${level} — ${LEVELS[level].name}<br>`+
+    `<strong>Questions answered:</strong> ${rows.length}<br>`+
+    `<strong>Score:</strong> ${score}% (${rows.filter(r=>r.correct).length}/${rows.length})<br>`+
+    `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}`;
+
+  diagnosticSummary.innerHTML=diagnosticHtml();
+
+  const result={
+    student:state.studentName,
+    grade:state.grade,
+    window:state.window,
+    mode:'Individual Level Test',
+    resultLabel:score>=75?'Met Benchmark':'Below Benchmark',
+    placement:'Level '+level,
+    overall:score,
+    questions:rows.length,
+    path:'Level '+level,
+    level1:level===1?score:'',
+    level2:level===2?score:'',
+    level3:level===3?score:'',
+    level4:level===4?score:'',
+    level5:level===5?score:'',
+    skill1:state.skillResults[1]??'',
+    skill2:state.skillResults[2]??'',
+    skill3:state.skillResults[3]??'',
+    skill4:state.skillResults[4]??'',
+    skill5:state.skillResults[5]??'',
+    skill6:state.skillResults[6]??'',
+    skill7:state.skillResults[7]??'',
+    skill8:state.skillResults[8]??'',
+    skill9:state.skillResults[9]??'',
+    date:new Date().toLocaleDateString()
+  };
+
+  const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  saved.push(result);
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
+  showView('result');
 }
 
 function renderDashboard(){
- const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- resultsTableBody.innerHTML='';
- r.slice().reverse().forEach(x=>{
-   const tr=document.createElement('tr');
-   tr.innerHTML=
-     `<td>${esc(x.student)}</td>`+
-     `<td>${x.grade}</td>`+
-     `<td>${x.window}</td>`+
-     `<td>${x.mode||'Adaptive Test'}</td>`+
-     `<td>${x.questions}</td>`+
-     `<td>${x.path}</td>`+
-     `<td><strong>${x.resultLabel||x.placement}</strong></td>`+
-     `<td>${x.overall}%</td>`+
-     `<td>${x.date}</td>`;
-   resultsTableBody.appendChild(tr);
- });
+  const r=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  resultsTableBody.innerHTML='';
+
+  r.slice().reverse().forEach(x=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      `<td>${esc(x.student)}</td>`+
+      `<td>${x.grade}</td>`+
+      `<td>${x.window}</td>`+
+      `<td>${x.mode}</td>`+
+      `<td>${x.questions}</td>`+
+      `<td>${x.path}</td>`+
+      `<td><strong>${x.resultLabel}</strong></td>`+
+      `<td>${x.overall}%</td>`+
+      `<td>${x.date}</td>`;
+    resultsTableBody.appendChild(tr);
+  });
 }
 
 function esc(s=''){
- return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 
 function exportCsv(){
- const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- const rows=[['Student','Grade','Window','Mode','Result','Overall','Questions','Path / Level','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Level 8','Level 9','Date']];
- r.forEach(x=>rows.push([
-   x.student,x.grade,x.window,x.mode||'Adaptive Test',x.resultLabel||x.placement,x.overall,x.questions,x.path,
-   x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.k9,x.date
- ]));
- const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
- const blob=new Blob([csv],{type:'text/csv'});
- const url=URL.createObjectURL(blob);
- const a=document.createElement('a');
- a.href=url;
- a.download='KLGA-Adaptive-Results.csv';
- a.click();
- URL.revokeObjectURL(url);
+  const r=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+
+  const rows=[[
+    'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
+    'Level 1','Level 2','Level 3','Level 4','Level 5',
+    'Alphabet Recognition','Letter Sounds','Vowel Recognition',
+    'Alphabet + Vowel','Tone Recognition','Blend Sound Recognition',
+    'Alphabet + Blend','Alphabet + Blend + Vowel','Phrase Reading','Date'
+  ]];
+
+  r.forEach(x=>rows.push([
+    x.student,x.grade,x.window,x.mode,x.resultLabel,x.overall,x.questions,x.path,
+    x.level1,x.level2,x.level3,x.level4,x.level5,
+    x.skill1,x.skill2,x.skill3,x.skill4,x.skill5,x.skill6,x.skill7,x.skill8,x.skill9,
+    x.date
+  ]));
+
+  const csv=rows.map(row=>
+    row.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')
+  ).join('\n');
+
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='KLGA-5-Level-Results.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 startStudentBtn.onclick=()=>showView('setup');
 studentModeBtn.onclick=()=>showView('setup');
 startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};
 teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};
+
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
 returnHomeBtn.onclick=()=>{
- state=fresh();
- showView('home');
+  state=fresh();
+  showView('home');
 };
 
 testMode.onchange=()=>{
- const isIndividual=testMode.value==='individual';
- individualLevelWrap.classList.toggle('hidden',!isIndividual);
- questionCountWrap.classList.toggle('hidden',!isIndividual);
+  const isIndividual=testMode.value==='individual';
+  individualLevelWrap.classList.toggle('hidden',!isIndividual);
+  questionCountWrap.classList.toggle('hidden',!isIndividual);
 };
 
 beginTestBtn.onclick=()=>{
- const name=studentName.value.trim();
- const grade=studentGrade.value;
- const window=testWindow.value;
- const mode=testMode.value;
+  const name=studentName.value.trim();
+  const grade=studentGrade.value;
+  const window=testWindow.value;
+  const mode=testMode.value;
 
- if(!name||!grade){
-   alert('Please enter student name and grade.');
-   return;
- }
+  if(!name||!grade){
+    alert('Please enter student name and grade.');
+    return;
+  }
 
- state=fresh();
- state.studentName=name;
- state.grade=grade;
- state.window=window;
- state.mode=mode;
+  state=fresh();
+  state.studentName=name;
+  state.grade=grade;
+  state.window=window;
+  state.mode=mode;
 
- showView('test');
+  showView('test');
 
- if(mode==='individual'){
-   beginIndividual(Number(individualLevel.value),questionCount.value);
- }else{
-   beginLevel(4);
- }
+  if(mode==='individual'){
+    beginIndividual(Number(individualLevel.value),questionCount.value);
+  }else{
+    beginLevel(2);
+  }
 };
 
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
+
 clearResultsBtn.onclick=()=>{
- if(confirm('Clear all saved KLGA adaptive results?')){
-   localStorage.removeItem('klgaAdaptiveResults');
-   renderDashboard();
- }
+  if(confirm('Clear all saved KLGA results?')){
+    localStorage.removeItem('klgaFiveLevelResults');
+    renderDashboard();
+  }
 };
