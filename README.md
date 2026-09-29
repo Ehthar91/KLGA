@@ -1,43 +1,25 @@
-# KLGA — 5-Level Adaptive Assessment
+# KLGA 5-Level Adaptive + Student Roster
 
-The original 9 internal skills are now grouped into 5 visible proficiency levels.
+New Student Roster section added to the Teacher Dashboard.
 
-## Level 1 — Foundations
-- Alphabet Recognition
-- Letter Sounds
-- Vowel Recognition
+## Student Roster fields
+- Student ID
+- Student Name
+- Grade
 
-## Level 2 — Sound Building
-- Alphabet + Vowel
-- Tone Recognition
-- Blend Sound Recognition
+## Roster features
+- Add student
+- Edit student
+- Delete student
+- Prevent duplicate Student IDs
+- Save roster in browser localStorage
+- Sort roster alphabetically by student name for display
 
-## Level 3 — Blend Reading
-- Alphabet + Blend
+## Why this comes first
+The roster will become the source of student identities for the future testing-session workflow:
 
-## Level 4 — Advanced Sound Building
-- Alphabet + Blend + Vowel
+Teacher creates session -> selects roster students -> students enter Session Name + Password -> students select their name -> teacher confirms -> testing begins.
 
-## Level 5 — Phrase Reading
-- Reading phrases
-
-## Adaptive Test
-
-- Starts at Level 2.
-- Level 1 and Level 2 use 9 questions by default so the three internal skills are sampled evenly.
-- Levels 3–5 use 8 questions by default.
-- 75% or higher passes the level and moves upward.
-- Below 75% moves downward.
-- The system still records individual skill scores for teacher diagnostics.
-
-## Individual Level Test
-
-Teachers can choose Level 1 through Level 5.
-Question Count options remain available, including All Questions.
-
-For grouped Levels 1 and 2, random questions are distributed as evenly as possible across the three internal skills.
-
-## Teacher Dashboard / CSV
-
-The dashboard reports the 5-level placement.
-CSV export also includes all nine internal skill scores for diagnostic use.
+## Current limitation
+The roster is still stored only in this browser. It is not yet shared across devices.
+Firebase or another backend will be needed before students on Chromebooks can join teacher-created sessions in real time.

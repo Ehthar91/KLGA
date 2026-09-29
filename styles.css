@@ -4,3 +4,19 @@
 .diag-level{padding:12px 0;border-bottom:1px solid #dbe3ee}
 .diag-level:last-child{border-bottom:0}
 .diag-row{display:flex;justify-content:space-between;gap:20px;padding:6px 0;color:#475569}
+
+.roster-panel{margin-bottom:28px}
+.roster-head{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:16px}
+.roster-head p{margin:4px 0 0;color:#64748b}
+.student-form-wrap{border:1px solid #dbe3ee;background:#f8fafc;border-radius:16px;padding:18px;margin-bottom:18px}
+.roster-form-grid{grid-template-columns:1fr 2fr 1fr}
+.roster-table-wrap{margin-top:12px}
+.row-actions{display:flex;gap:8px}
+.btn.mini{padding:6px 10px;font-size:13px}
+.empty-row{text-align:center;color:#94a3b8;padding:24px}
+.section-divider{border:0;border-top:1px solid #e2e8f0;margin:28px 0}
+.session-error{margin-top:10px;color:#b91c1c;font-weight:700}
+@media(max-width:850px){
+  .roster-form-grid{grid-template-columns:1fr}
+  .roster-head{align-items:flex-start;flex-direction:column}
+}

@@ -782,6 +782,147 @@ function finishIndividual(){
   showView('result');
 }
 
+
+/* ---------------------------
+   STUDENT ROSTER
+---------------------------- */
+
+let editingStudentKey=null;
+
+function loadRoster(){
+  return JSON.parse(localStorage.getItem('klgaStudentRoster')||'[]');
+}
+
+function saveRoster(roster){
+  localStorage.setItem('klgaStudentRoster',JSON.stringify(roster));
+}
+
+function renderRoster(){
+  const roster=loadRoster();
+  rosterTableBody.innerHTML='';
+
+  if(!roster.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="4" class="empty-row">No students added yet.</td>';
+    rosterTableBody.appendChild(tr);
+    return;
+  }
+
+  roster
+    .slice()
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .forEach(student=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=
+        `<td>${esc(student.studentId)}</td>`+
+        `<td>${esc(student.name)}</td>`+
+        `<td>${esc(student.grade)}</td>`+
+        `<td class="row-actions">`+
+          `<button class="btn mini secondary" data-edit-student="${student.key}">Edit</button>`+
+          `<button class="btn mini danger" data-delete-student="${student.key}">Delete</button>`+
+        `</td>`;
+      rosterTableBody.appendChild(tr);
+    });
+
+  document.querySelectorAll('[data-edit-student]').forEach(btn=>{
+    btn.onclick=()=>editStudent(btn.dataset.editStudent);
+  });
+
+  document.querySelectorAll('[data-delete-student]').forEach(btn=>{
+    btn.onclick=()=>deleteStudent(btn.dataset.deleteStudent);
+  });
+}
+
+function openStudentForm(student=null){
+  studentFormWrap.classList.remove('hidden');
+  studentFormError.classList.add('hidden');
+  studentFormError.textContent='';
+
+  if(student){
+    editingStudentKey=student.key;
+    rosterStudentId.value=student.studentId;
+    rosterStudentName.value=student.name;
+    rosterStudentGrade.value=student.grade;
+    saveStudentBtn.textContent='Update Student';
+  }else{
+    editingStudentKey=null;
+    rosterStudentId.value='';
+    rosterStudentName.value='';
+    rosterStudentGrade.value='';
+    saveStudentBtn.textContent='Save Student';
+  }
+}
+
+function closeStudentForm(){
+  studentFormWrap.classList.add('hidden');
+  editingStudentKey=null;
+}
+
+function editStudent(key){
+  const roster=loadRoster();
+  const student=roster.find(s=>s.key===key);
+  if(student) openStudentForm(student);
+}
+
+function deleteStudent(key){
+  const roster=loadRoster();
+  const student=roster.find(s=>s.key===key);
+  if(!student) return;
+
+  if(confirm(`Delete ${student.name} from the roster?`)){
+    saveRoster(roster.filter(s=>s.key!==key));
+    renderRoster();
+  }
+}
+
+function persistStudent(){
+  const studentId=rosterStudentId.value.trim();
+  const name=rosterStudentName.value.trim();
+  const grade=rosterStudentGrade.value;
+
+  if(!studentId || !name || !grade){
+    studentFormError.textContent='Please enter Student ID, Student Name, and Grade.';
+    studentFormError.classList.remove('hidden');
+    return;
+  }
+
+  const roster=loadRoster();
+
+  const duplicate=roster.find(
+    s=>s.studentId.toLowerCase()===studentId.toLowerCase() && s.key!==editingStudentKey
+  );
+
+  if(duplicate){
+    studentFormError.textContent='That Student ID is already in the roster.';
+    studentFormError.classList.remove('hidden');
+    return;
+  }
+
+  if(editingStudentKey){
+    const idx=roster.findIndex(s=>s.key===editingStudentKey);
+    if(idx>=0){
+      roster[idx]={
+        ...roster[idx],
+        studentId,
+        name,
+        grade
+      };
+    }
+  }else{
+    roster.push({
+      key:'stu_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      studentId,
+      name,
+      grade
+    });
+  }
+
+  saveRoster(roster);
+  closeStudentForm();
+  renderRoster();
+}
+
+
 function renderDashboard(){
   const r=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
   resultsTableBody.innerHTML='';
@@ -841,8 +982,8 @@ function exportCsv(){
 
 startStudentBtn.onclick=()=>showView('setup');
 studentModeBtn.onclick=()=>showView('setup');
-startTeacherBtn.onclick=()=>{renderDashboard();showView('teacher')};
-teacherModeBtn.onclick=()=>{renderDashboard();showView('teacher')};
+startTeacherBtn.onclick=()=>{renderRoster();renderDashboard();showView('teacher')};
+teacherModeBtn.onclick=()=>{renderRoster();renderDashboard();showView('teacher')};
 
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
@@ -882,6 +1023,11 @@ beginTestBtn.onclick=()=>{
     beginLevel(2);
   }
 };
+
+
+addStudentBtn.onclick=()=>openStudentForm();
+saveStudentBtn.onclick=persistStudent;
+cancelStudentBtn.onclick=closeStudentForm;
 
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
