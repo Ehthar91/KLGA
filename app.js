@@ -1,3 +1,69 @@
+
+/* ---------------------------
+   FIREBASE BRIDGE
+   Uses window.KLGAFirebase when firebase-app.js is configured.
+   Falls back to localStorage when Firebase is unavailable.
+---------------------------- */
+
+async function fbReady(){
+  return !!(window.KLGAFirebase && window.KLGAFirebase.ready);
+}
+
+async function cloudLoadRoster(){
+  if(await fbReady()) return await window.KLGAFirebase.getRoster();
+  return loadRoster();
+}
+
+async function cloudSaveStudent(student){
+  if(await fbReady()) return await window.KLGAFirebase.saveStudent(student);
+  const roster=loadRoster();
+  const i=roster.findIndex(s=>s.key===student.key);
+  if(i>=0) roster[i]=student; else roster.push(student);
+  saveRoster(roster);
+}
+
+async function cloudDeleteStudent(key){
+  if(await fbReady()) return await window.KLGAFirebase.deleteStudent(key);
+  saveRoster(loadRoster().filter(s=>s.key!==key));
+}
+
+async function cloudLoadSessions(){
+  if(await fbReady()) return await window.KLGAFirebase.getSessions();
+  return loadSessions();
+}
+
+async function cloudSaveSession(session){
+  if(await fbReady()) return await window.KLGAFirebase.saveSession(session);
+  const sessions=loadSessions();
+  const i=sessions.findIndex(s=>s.key===session.key);
+  if(i>=0) sessions[i]=session; else sessions.push(session);
+  saveSessions(sessions);
+}
+
+async function cloudDeleteSession(key){
+  if(await fbReady()) return await window.KLGAFirebase.deleteSession(key);
+  saveSessions(loadSessions().filter(s=>s.key!==key));
+}
+
+async function cloudSaveResult(result){
+  if(await fbReady()) return await window.KLGAFirebase.saveResult(result);
+  const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  saved.push(result);
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
+}
+
+async function cloudJoinSession(name,password){
+  if(await fbReady()) return await window.KLGAFirebase.findActiveSession(name,password);
+  const sessions=loadSessions();
+  return sessions.find(s=>s.status==='Active' && s.name===name && s.password===password) || null;
+}
+
+async function cloudSetStudentJoin(sessionKey,studentKey,status){
+  if(await fbReady()) return await window.KLGAFirebase.setStudentStatus(sessionKey,studentKey,status);
+  return true;
+}
+
+
 const consonants=[
 {l:'က',s:'Ka'},{l:'ခ',s:'Ka'},{l:'ဂ',s:'Ga'},{l:'ဃ',s:'Kha'},{l:'င',s:'Ngah'},{l:'စ',s:'Sa'},{l:'ဆ',s:'Cha'},{l:'ရှ',s:'Sha'},{l:'ည',s:'Nya'},{l:'တ',s:'Ta'},{l:'ထ',s:'Ta'},{l:'ဒ',s:'Da'},{l:'န',s:'Na'},{l:'ပ',s:'Pa'},{l:'ဖ',s:'Pa'},{l:'ဘ',s:'Ba'},{l:'မ',s:'Ma'},{l:'ယ',s:'Ya'},{l:'ရ',s:'Ra'},{l:'လ',s:'La'},{l:'ဝ',s:'Wa'},{l:'သ',s:'Tha'},{l:'ဟ',s:'Ha'},{l:'အ',s:'Ah'},{l:'ဧ',s:'Ahh'}
 ];
@@ -428,6 +494,7 @@ const SKILL_NAMES = {
 
 const views={
   home:homeView,
+  join:joinSessionView,
   setup:studentSetupView,
   test:testView,
   result:resultView,
@@ -727,6 +794,7 @@ function finishAdaptive(level){
   const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
   saved.push(result);
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
+  cloudSaveResult(result).catch(()=>{});
   showView('result');
 }
 
@@ -779,6 +847,7 @@ function finishIndividual(){
   const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
   saved.push(result);
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
+  cloudSaveResult(result).catch(()=>{});
   showView('result');
 }
 
@@ -1188,8 +1257,8 @@ function exportCsv(){
   URL.revokeObjectURL(url);
 }
 
-startStudentBtn.onclick=()=>showView('setup');
-studentModeBtn.onclick=()=>showView('setup');
+startStudentBtn.onclick=()=>showView('join');
+studentModeBtn.onclick=()=>showView('join');
 startTeacherBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
 teacherModeBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
 
@@ -1247,6 +1316,89 @@ studentIdMode.onchange=()=>applyStudentIdMode(studentIdMode.value);
 addStudentBtn.onclick=()=>openStudentForm();
 saveStudentBtn.onclick=persistStudent;
 cancelStudentBtn.onclick=closeStudentForm;
+
+
+let joinedSession=null;
+let joinedStudent=null;
+
+joinSessionBtn.onclick=async()=>{
+  joinSessionError.classList.add('hidden');
+  const name=joinSessionName.value.trim();
+  const password=joinSessionPassword.value.trim();
+
+  if(!name || !password){
+    joinSessionError.textContent='Enter the session name and password.';
+    joinSessionError.classList.remove('hidden');
+    return;
+  }
+
+  const session=await cloudJoinSession(name,password);
+  if(!session){
+    joinSessionError.textContent='Active session not found or password is incorrect.';
+    joinSessionError.classList.remove('hidden');
+    return;
+  }
+
+  joinedSession=session;
+
+  const roster=await cloudLoadRoster();
+  const allowed=(session.studentKeys||[])
+    .map(key=>roster.find(s=>s.key===key))
+    .filter(Boolean)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  joinStudentSelect.innerHTML='';
+  allowed.forEach(student=>{
+    const opt=document.createElement('option');
+    opt.value=student.key;
+    opt.textContent=`${student.name} — Grade ${student.grade}`;
+    joinStudentSelect.appendChild(opt);
+  });
+
+  if(!allowed.length){
+    joinSessionError.textContent='No students are assigned to this session.';
+    joinSessionError.classList.remove('hidden');
+    return;
+  }
+
+  joinStudentWrap.classList.remove('hidden');
+  confirmStudentJoinBtn.classList.remove('hidden');
+  joinSessionBtn.classList.add('hidden');
+};
+
+confirmStudentJoinBtn.onclick=async()=>{
+  const roster=await cloudLoadRoster();
+  const student=roster.find(s=>s.key===joinStudentSelect.value);
+  if(!student || !joinedSession) return;
+
+  joinedStudent=student;
+  await cloudSetStudentJoin(joinedSession.key,student.key,'waiting');
+
+  waitingApprovalWrap.classList.remove('hidden');
+  confirmStudentJoinBtn.classList.add('hidden');
+
+  // Local prototype proceeds after a short delay.
+  // With Firebase configured, teacher-side approval can later replace this.
+  setTimeout(()=>{
+    studentName.value=student.name;
+    studentGrade.value=student.grade;
+    testWindow.value='Fall';
+
+    if(joinedSession.testType==='individual'){
+      testMode.value='individual';
+      individualLevelWrap.classList.remove('hidden');
+      questionCountWrap.classList.remove('hidden');
+      individualLevel.value=String(joinedSession.level||1);
+    }else{
+      testMode.value='adaptive';
+      individualLevelWrap.classList.add('hidden');
+      questionCountWrap.classList.add('hidden');
+    }
+
+    showView('setup');
+  },700);
+};
+
 
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;

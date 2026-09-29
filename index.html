@@ -24,6 +24,42 @@
 <p class="adaptive-note">Students begin at Level 2. The test moves up or down based on performance. Levels 1 and 2 include multiple diagnostic skills.</p><div class="actions center"><button id="startStudentBtn" class="btn primary">Start Adaptive Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
 </section>
 
+
+<section id="joinSessionView" class="card hidden">
+  <div class="session-login">
+    <div class="eyebrow">KLGA Student Login</div>
+    <h2>Join Testing Session</h2>
+    <p class="subtitle">Enter the session name and password from your teacher.</p>
+
+    <div class="form-grid">
+      <label>Session Name
+        <input id="joinSessionName" type="text" autocomplete="off" placeholder="Session name">
+      </label>
+      <label>Session Password
+        <input id="joinSessionPassword" type="password" autocomplete="off" placeholder="Session password">
+      </label>
+    </div>
+
+    <div id="joinSessionError" class="session-error hidden"></div>
+
+    <div id="joinStudentWrap" class="hidden">
+      <h3>Select Your Name</h3>
+      <select id="joinStudentSelect"></select>
+    </div>
+
+    <div id="waitingApprovalWrap" class="hidden waiting-box">
+      <strong>Waiting for teacher confirmation…</strong>
+      <p>Please keep this page open.</p>
+    </div>
+
+    <div class="actions">
+      <button id="joinSessionBtn" class="btn primary">Join Session</button>
+      <button id="confirmStudentJoinBtn" class="btn primary hidden">Continue</button>
+      <button class="btn ghost" data-home>Back</button>
+    </div>
+  </div>
+</section>
+
 <section id="studentSetupView" class="card hidden">
 <h2>Student Test Setup</h2>
 <div class="form-grid">
@@ -229,5 +265,6 @@
 </section>
 </main>
 </div>
+<script type="module" src="firebase-app.js"></script>
 <script src="app.js"></script>
 </body></html>
