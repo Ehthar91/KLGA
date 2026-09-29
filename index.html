@@ -29,11 +29,40 @@
 </section>
 
 <section id="studentSetupView" class="card hidden">
-<h2>Student Information</h2>
+<h2>Student Test Setup</h2>
 <div class="form-grid">
 <label>Student Name<input id="studentName" type="text" placeholder="Enter your name"></label>
 <label>Grade<select id="studentGrade"><option value="">Select grade</option><option>6</option><option>7</option><option>8</option></select></label>
 <label>Testing Window<select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select></label>
+<label>Test Mode
+<select id="testMode">
+<option value="adaptive">Adaptive Test</option>
+<option value="individual">Individual K Test</option>
+</select>
+</label>
+<label id="individualLevelWrap" class="hidden">Choose K Level
+<select id="individualLevel">
+<option value="1">K1 — Alphabet Recognition</option>
+<option value="2">K2 — Letter Sounds</option>
+<option value="3">K3 — Vowel Recognition</option>
+<option value="4">K4 — Alphabet + Vowel</option>
+<option value="5">K5 — Tone Recognition</option>
+<option value="6">K6 — Blend Sound Recognition</option>
+<option value="7">K7 — Alphabet + Blend</option>
+<option value="8">K8 — Alphabet + Blend + Vowel</option>
+<option value="9">K9 — Phrase Reading</option>
+</select>
+</label>
+<label id="questionCountWrap" class="hidden">Question Count
+<select id="questionCount">
+<option value="5">5 Random Questions</option>
+<option value="8" selected>8 Random Questions</option>
+<option value="10">10 Random Questions</option>
+<option value="15">15 Random Questions</option>
+<option value="20">20 Random Questions</option>
+<option value="all">All Questions</option>
+</select>
+</label>
 </div>
 <div class="actions"><button id="beginTestBtn" class="btn primary">Begin Test</button><button class="btn ghost" data-home>Back</button></div>
 </section>
@@ -67,7 +96,7 @@
 
 <section id="teacherView" class="card hidden">
 <div class="teacher-head"><div><h2>Teacher Dashboard</h2><p>Results are stored in this browser for the MVP.</p></div><div class="actions"><button id="exportCsvBtn" class="btn secondary">Export CSV</button><button id="clearResultsBtn" class="btn danger">Clear Results</button><button class="btn ghost" data-home>Back</button></div></div>
-<div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>Questions</th><th>Adaptive Path</th><th>Placement</th><th>Overall</th><th>Date</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Student</th><th>Grade</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th></tr></thead><tbody id="resultsTableBody"></tbody></table></div>
 </section>
 </main>
 </div>

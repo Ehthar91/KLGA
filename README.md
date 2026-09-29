@@ -1,24 +1,17 @@
-# KLGA Adaptive K1–K9
+# KLGA K1–K9 — Adaptive + Individual K Tests + Question Count
 
-New level:
+Individual K Test now includes a Question Count option:
 
-## K9 — Phrase Reading
+- 5 Random Questions
+- 8 Random Questions
+- 10 Random Questions
+- 15 Random Questions
+- 20 Random Questions
+- All Questions
 
-K9 uses 80 reading phrases from Lessons 15–19.
+The selected K-level uses only its own question bank.
 
-Each K9 question:
-- shows one Karen phrase,
-- gives four English reading-sound choices,
-- includes at least two close distractors created by changing only one syllable or vowel sound,
-- uses 8 randomized K9 questions when the adaptive engine reaches K9.
+If the requested number is larger than that K-level's available question pool,
+the test automatically uses all available questions.
 
-Adaptive routing:
-- Students still begin at K4.
-- Each tested level gives 8 randomized questions.
-- 6/8 or better = pass and move up.
-- 5/8 or lower = move down.
-- Passing K9 places the student at K9.
-
-Important:
-The K9 Romanized reading sounds follow the current teacher-defined sound conventions
-used during development.
+Adaptive Test remains unchanged at 8 randomized questions per tested level.

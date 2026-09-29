@@ -358,6 +358,8 @@ function fresh(){
    studentName:'',
    grade:'',
    window:'',
+   mode:'adaptive',
+   individualLevel:null,
    currentLevel:4,
    currentBatch:[],
    currentIndex:0,
@@ -389,7 +391,13 @@ function sampleLevel(level,count=8){
 
 function beginLevel(level){
  state.currentLevel=level;
- state.currentBatch=sampleLevel(level,8);
+ const pool=poolForLevel(level);
+ if(countChoice==='all'){
+   state.currentBatch=shuffle(pool);
+ }else{
+   const count=Number(countChoice)||8;
+   state.currentBatch=shuffle(pool).slice(0,Math.min(count,pool.length));
+ }
  state.currentIndex=0;
  state.selected=null;
  state.path.push('K'+level);
@@ -445,7 +453,11 @@ function submit(){
  state.currentIndex++;
 
  if(state.currentIndex>=state.currentBatch.length){
-   evaluateLevel();
+   if(state.mode==='individual'){
+     finishIndividual();
+   }else{
+     evaluateLevel();
+   }
  }else{
    render();
  }
@@ -494,6 +506,74 @@ function evaluateLevel(){
  }
 }
 
+
+function beginIndividual(level,countChoice){
+ state.mode='individual';
+ state.individualLevel=level;
+ state.currentLevel=level;
+ const pool=poolForLevel(level);
+ if(countChoice==='all'){
+   state.currentBatch=shuffle(pool);
+ }else{
+   const count=Number(countChoice)||8;
+   state.currentBatch=shuffle(pool).slice(0,Math.min(count,pool.length));
+ }
+ state.currentIndex=0;
+ state.selected=null;
+ state.path=['K'+level];
+ render();
+}
+
+function finishIndividual(){
+ const level=state.individualLevel;
+ const rows=state.responses.filter(r=>r.level===level);
+ const score=pct(rows);
+ state.levelResults[level]=score;
+
+ const display='K'+level;
+ resultStudentName.textContent=state.studentName;
+ resultLevel.textContent=display;
+ resultAccuracy.textContent=score+'%';
+
+ const scoreEls=[null,k1Score,k2Score,k3Score,k4Score,k5Score,k6Score,k7Score,k8Score,k9Score];
+ for(let i=1;i<=9;i++){
+   scoreEls[i].textContent = i===level ? score+'%' : '—';
+ }
+
+ adaptiveSummary.innerHTML=
+   `<strong>Individual test:</strong> ${display}<br>`+
+   `<strong>Questions answered:</strong> ${rows.length}<br>`+
+   `<strong>Score:</strong> ${score}% (${rows.filter(r=>r.correct).length}/${rows.length})<br>`+
+   `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}`;
+
+ const result={
+   student:state.studentName,
+   grade:state.grade,
+   window:state.window,
+   mode:'Individual K Test',
+   placement:display,
+   resultLabel:score>=75?'Met Benchmark':'Below Benchmark',
+   overall:score,
+   questions:rows.length,
+   path:display,
+   k1:level===1?score:'',
+   k2:level===2?score:'',
+   k3:level===3?score:'',
+   k4:level===4?score:'',
+   k5:level===5?score:'',
+   k6:level===6?score:'',
+   k7:level===7?score:'',
+   k8:level===8?score:'',
+   k9:level===9?score:'',
+   date:new Date().toLocaleDateString()
+ };
+
+ const saved=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
+ saved.push(result);
+ localStorage.setItem('klgaAdaptiveResults',JSON.stringify(saved));
+ showView('result');
+}
+
 function finishAdaptive(level){
  state.finished=true;
  progressBar.style.width='100%';
@@ -523,7 +603,9 @@ function finishAdaptive(level){
    student:state.studentName,
    grade:state.grade,
    window:state.window,
+   mode:'Adaptive Test',
    placement:displayLevel,
+   resultLabel:displayLevel,
    overall:pct(state.responses),
    questions:state.totalQuestions,
    path:pathText,
@@ -554,9 +636,10 @@ function renderDashboard(){
      `<td>${esc(x.student)}</td>`+
      `<td>${x.grade}</td>`+
      `<td>${x.window}</td>`+
+     `<td>${x.mode||'Adaptive Test'}</td>`+
      `<td>${x.questions}</td>`+
      `<td>${x.path}</td>`+
-     `<td><strong>${x.placement}</strong></td>`+
+     `<td><strong>${x.resultLabel||x.placement}</strong></td>`+
      `<td>${x.overall}%</td>`+
      `<td>${x.date}</td>`;
    resultsTableBody.appendChild(tr);
@@ -569,9 +652,9 @@ function esc(s=''){
 
 function exportCsv(){
  const r=JSON.parse(localStorage.getItem('klgaAdaptiveResults')||'[]');
- const rows=[['Student','Grade','Window','Placement','Overall','Questions','Adaptive Path','K1','K2','K3','K4','K5','K6','K7','K8','K9','Date']];
+ const rows=[['Student','Grade','Window','Mode','Result','Overall','Questions','Path / Level','K1','K2','K3','K4','K5','K6','K7','K8','K9','Date']];
  r.forEach(x=>rows.push([
-   x.student,x.grade,x.window,x.placement,x.overall,x.questions,x.path,
+   x.student,x.grade,x.window,x.mode||'Adaptive Test',x.resultLabel||x.placement,x.overall,x.questions,x.path,
    x.k1,x.k2,x.k3,x.k4,x.k5,x.k6,x.k7,x.k8,x.k9,x.date
  ]));
  const csv=rows.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
@@ -595,20 +678,36 @@ returnHomeBtn.onclick=()=>{
  showView('home');
 };
 
+testMode.onchange=()=>{
+ const isIndividual=testMode.value==='individual';
+ individualLevelWrap.classList.toggle('hidden',!isIndividual);
+ questionCountWrap.classList.toggle('hidden',!isIndividual);
+};
+
 beginTestBtn.onclick=()=>{
  const name=studentName.value.trim();
  const grade=studentGrade.value;
  const window=testWindow.value;
+ const mode=testMode.value;
+
  if(!name||!grade){
    alert('Please enter student name and grade.');
    return;
  }
+
  state=fresh();
  state.studentName=name;
  state.grade=grade;
  state.window=window;
+ state.mode=mode;
+
  showView('test');
- beginLevel(4);
+
+ if(mode==='individual'){
+   beginIndividual(Number(individualLevel.value),questionCount.value);
+ }else{
+   beginLevel(4);
+ }
 };
 
 nextQuestionBtn.onclick=submit;
