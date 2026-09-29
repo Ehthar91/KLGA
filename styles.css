@@ -25,3 +25,21 @@
   background:#f1f5f9;
   color:#475569;
 }
+
+.session-panel{margin-bottom:28px}
+.inline-input-action{display:flex;gap:8px;align-items:center}
+.inline-input-action input{flex:1}
+.session-student-select{margin:18px 0}
+.roster-head.compact{margin-bottom:10px}
+.roster-head.compact h3{margin-bottom:4px}
+.student-checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:320px;overflow:auto;border:1px solid #dbe3ee;border-radius:14px;padding:12px;background:#fff}
+.student-check-item{display:flex;gap:10px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:10px;padding:10px;font-weight:400}
+.student-check-item input{width:auto;margin:4px 0 0}
+.student-check-item span{display:flex;flex-direction:column;gap:2px}
+.student-check-item small{color:#64748b}
+.session-password{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}
+.status-pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}
+.status-draft{background:#f1f5f9;color:#475569}
+.status-active{background:#dcfce7;color:#166534}
+.status-ended{background:#fee2e2;color:#991b1b}
+@media(max-width:850px){.student-checklist{grid-template-columns:1fr}}

@@ -1,23 +1,23 @@
-# KLGA 5-Level Adaptive + Student Roster + ID Assignment
+# KLGA 5-Level Adaptive + Student Roster + Testing Sessions
 
-Student Roster now supports two Student ID modes:
+This version adds a local prototype of the teacher testing-session workflow.
 
-## Auto Assign ID
-- Default mode for new students.
-- Starts at 1001 if no numeric IDs exist.
-- Otherwise assigns the next number after the highest numeric Student ID.
-- Example: 1001, 1002, 1003...
+Teacher can:
+- Create a session
+- Generate or enter Session Name
+- Generate or enter Session Password
+- Choose Adaptive Test or Individual Level Test
+- Select roster students
+- Save the session
+- Start the session
+- End the session
+- Edit or delete sessions
 
-## Manual ID
-- Teacher can type any Student ID.
-- Duplicate Student IDs are still blocked.
+Session statuses:
+- Draft
+- Active
+- Ended
 
-## Editing
-When editing an existing student, the ID opens in Manual mode so the existing ID can be preserved or changed.
-
-Other roster features remain:
-- Add student
-- Edit student
-- Delete student
-- Grade 6–8
-- Browser localStorage persistence
+Important:
+This version still uses browser localStorage. Sessions are not yet shared with student Chromebooks.
+Firebase will be required for real multi-device joining and teacher confirmation.

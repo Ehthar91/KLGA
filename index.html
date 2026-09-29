@@ -84,6 +84,88 @@
 
 
 <section id="teacherView" class="card hidden">
+
+<div class="session-panel">
+  <div class="roster-head">
+    <div>
+      <h2>Testing Sessions</h2>
+      <p>Create a session and choose which students can join.</p>
+    </div>
+    <div class="actions">
+      <button id="createSessionBtn" class="btn primary">Create Session</button>
+    </div>
+  </div>
+
+  <div id="sessionFormWrap" class="student-form-wrap hidden">
+    <div class="form-grid roster-form-grid">
+      <label>Session Name
+        <div class="inline-input-action">
+          <input id="sessionName" type="text" placeholder="Example: FALL-A">
+          <button id="generateSessionNameBtn" type="button" class="btn secondary mini">Generate</button>
+        </div>
+      </label>
+      <label>Session Password
+        <div class="inline-input-action">
+          <input id="sessionPassword" type="text" placeholder="Example: READ25">
+          <button id="generatePasswordBtn" type="button" class="btn secondary mini">Generate</button>
+        </div>
+      </label>
+      <label>Test Type
+        <select id="sessionTestType">
+          <option value="adaptive">Adaptive Test</option>
+          <option value="individual">Individual Level Test</option>
+        </select>
+      </label>
+      <label id="sessionLevelWrap" class="hidden">Level
+        <select id="sessionLevel">
+          <option value="1">Level 1 — Foundations</option>
+          <option value="2">Level 2 — Sound Building</option>
+          <option value="3">Level 3 — Blend Reading</option>
+          <option value="4">Level 4 — Advanced Sound Building</option>
+          <option value="5">Level 5 — Phrase Reading</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="session-student-select">
+      <div class="roster-head compact">
+        <div>
+          <h3>Select Students</h3>
+          <p>Choose the students allowed to join this session.</p>
+        </div>
+        <div class="actions">
+          <button id="selectAllSessionStudentsBtn" type="button" class="btn secondary mini">Select All</button>
+          <button id="clearSessionStudentsBtn" type="button" class="btn ghost mini">Clear</button>
+        </div>
+      </div>
+      <div id="sessionStudentChecklist" class="student-checklist"></div>
+    </div>
+
+    <div id="sessionFormError" class="session-error hidden"></div>
+    <div class="actions">
+      <button id="saveSessionBtn" class="btn primary">Save Session</button>
+      <button id="cancelSessionBtn" class="btn ghost">Cancel</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Session</th>
+          <th>Password</th>
+          <th>Test</th>
+          <th>Students</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="sessionTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="section-divider">
 <div class="roster-panel">
   <div class="roster-head">
     <div>

@@ -783,6 +783,172 @@ function finishIndividual(){
 }
 
 
+
+/* ---------------------------
+   TESTING SESSIONS
+---------------------------- */
+let editingSessionKey=null;
+
+function loadSessions(){
+  return JSON.parse(localStorage.getItem('klgaTestingSessions')||'[]');
+}
+function saveSessions(sessions){
+  localStorage.setItem('klgaTestingSessions',JSON.stringify(sessions));
+}
+function randomCode(length=6){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out='';
+  for(let i=0;i<length;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+function generateSessionName(){ return 'KLGA-'+randomCode(4); }
+function generateSessionPassword(){ return randomCode(6); }
+
+function renderSessionStudentChecklist(selectedKeys=[]){
+  const roster=loadRoster();
+  sessionStudentChecklist.innerHTML='';
+  if(!roster.length){
+    sessionStudentChecklist.innerHTML='<div class="empty-row">Add students to the roster first.</div>';
+    return;
+  }
+  roster.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(student=>{
+    const label=document.createElement('label');
+    label.className='student-check-item';
+    label.innerHTML=
+      `<input type="checkbox" value="${student.key}" ${selectedKeys.includes(student.key)?'checked':''}>`+
+      `<span><strong>${esc(student.name)}</strong><small>ID ${esc(student.studentId)} • Grade ${esc(student.grade)}</small></span>`;
+    sessionStudentChecklist.appendChild(label);
+  });
+}
+function selectedSessionStudentKeys(){
+  return [...sessionStudentChecklist.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value);
+}
+function openSessionForm(session=null){
+  sessionFormWrap.classList.remove('hidden');
+  sessionFormError.classList.add('hidden');
+  sessionFormError.textContent='';
+  if(session){
+    editingSessionKey=session.key;
+    sessionName.value=session.name;
+    sessionPassword.value=session.password;
+    sessionTestType.value=session.testType;
+    sessionLevel.value=session.level||'1';
+    sessionLevelWrap.classList.toggle('hidden',session.testType!=='individual');
+    renderSessionStudentChecklist(session.studentKeys||[]);
+    saveSessionBtn.textContent='Update Session';
+  }else{
+    editingSessionKey=null;
+    sessionName.value=generateSessionName();
+    sessionPassword.value=generateSessionPassword();
+    sessionTestType.value='adaptive';
+    sessionLevel.value='1';
+    sessionLevelWrap.classList.add('hidden');
+    renderSessionStudentChecklist([]);
+    saveSessionBtn.textContent='Save Session';
+  }
+}
+function closeSessionForm(){
+  sessionFormWrap.classList.add('hidden');
+  editingSessionKey=null;
+}
+function persistSession(){
+  const name=sessionName.value.trim();
+  const password=sessionPassword.value.trim();
+  const testType=sessionTestType.value;
+  const level=testType==='individual'?Number(sessionLevel.value):null;
+  const studentKeys=selectedSessionStudentKeys();
+
+  if(!name || !password){
+    sessionFormError.textContent='Please enter a session name and password.';
+    sessionFormError.classList.remove('hidden');
+    return;
+  }
+  if(!studentKeys.length){
+    sessionFormError.textContent='Select at least one student.';
+    sessionFormError.classList.remove('hidden');
+    return;
+  }
+
+  const sessions=loadSessions();
+  const duplicate=sessions.find(s=>s.name.toLowerCase()===name.toLowerCase() && s.key!==editingSessionKey);
+  if(duplicate){
+    sessionFormError.textContent='That session name is already being used.';
+    sessionFormError.classList.remove('hidden');
+    return;
+  }
+
+  if(editingSessionKey){
+    const idx=sessions.findIndex(s=>s.key===editingSessionKey);
+    if(idx>=0) sessions[idx]={...sessions[idx],name,password,testType,level,studentKeys};
+  }else{
+    sessions.push({
+      key:'ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+      name,password,testType,level,studentKeys,status:'Draft',
+      createdAt:new Date().toLocaleString()
+    });
+  }
+  saveSessions(sessions);
+  closeSessionForm();
+  renderSessions();
+}
+function editSession(key){
+  const session=loadSessions().find(s=>s.key===key);
+  if(session) openSessionForm(session);
+}
+function setSessionStatus(key,status){
+  const sessions=loadSessions();
+  const idx=sessions.findIndex(s=>s.key===key);
+  if(idx<0) return;
+  sessions[idx].status=status;
+  sessions[idx].updatedAt=new Date().toLocaleString();
+  saveSessions(sessions);
+  renderSessions();
+}
+function deleteSession(key){
+  const sessions=loadSessions();
+  const session=sessions.find(s=>s.key===key);
+  if(!session) return;
+  if(confirm(`Delete session ${session.name}?`)){
+    saveSessions(sessions.filter(s=>s.key!==key));
+    renderSessions();
+  }
+}
+function renderSessions(){
+  const sessions=loadSessions();
+  const roster=loadRoster();
+  sessionTableBody.innerHTML='';
+  if(!sessions.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="6" class="empty-row">No testing sessions created yet.</td>';
+    sessionTableBody.appendChild(tr);
+    return;
+  }
+  sessions.slice().reverse().forEach(s=>{
+    const studentNames=(s.studentKeys||[]).map(k=>roster.find(r=>r.key===k)?.name).filter(Boolean);
+    const testLabel=s.testType==='adaptive'?'Adaptive':`Level ${s.level}`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      `<td><strong>${esc(s.name)}</strong></td>`+
+      `<td><span class="session-password">${esc(s.password)}</span></td>`+
+      `<td>${testLabel}</td>`+
+      `<td>${studentNames.length}</td>`+
+      `<td><span class="status-pill status-${String(s.status).toLowerCase()}">${esc(s.status)}</span></td>`+
+      `<td class="row-actions">`+
+      `<button class="btn mini secondary" data-session-edit="${s.key}">Edit</button>`+
+      (s.status!=='Active'
+        ? `<button class="btn mini primary" data-session-start="${s.key}">Start</button>`
+        : `<button class="btn mini ghost" data-session-end="${s.key}">End</button>`)+
+      `<button class="btn mini danger" data-session-delete="${s.key}">Delete</button>`+
+      `</td>`;
+    sessionTableBody.appendChild(tr);
+  });
+
+  document.querySelectorAll('[data-session-edit]').forEach(btn=>btn.onclick=()=>editSession(btn.dataset.sessionEdit));
+  document.querySelectorAll('[data-session-start]').forEach(btn=>btn.onclick=()=>setSessionStatus(btn.dataset.sessionStart,'Active'));
+  document.querySelectorAll('[data-session-end]').forEach(btn=>btn.onclick=()=>setSessionStatus(btn.dataset.sessionEnd,'Ended'));
+  document.querySelectorAll('[data-session-delete]').forEach(btn=>btn.onclick=()=>deleteSession(btn.dataset.sessionDelete));
+}
+
 /* ---------------------------
    STUDENT ROSTER
 ---------------------------- */
@@ -1024,8 +1190,8 @@ function exportCsv(){
 
 startStudentBtn.onclick=()=>showView('setup');
 studentModeBtn.onclick=()=>showView('setup');
-startTeacherBtn.onclick=()=>{renderRoster();renderDashboard();showView('teacher')};
-teacherModeBtn.onclick=()=>{renderRoster();renderDashboard();showView('teacher')};
+startTeacherBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
+teacherModeBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
 
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
@@ -1066,6 +1232,16 @@ beginTestBtn.onclick=()=>{
   }
 };
 
+
+
+createSessionBtn.onclick=()=>openSessionForm();
+cancelSessionBtn.onclick=closeSessionForm;
+saveSessionBtn.onclick=persistSession;
+generateSessionNameBtn.onclick=()=>sessionName.value=generateSessionName();
+generatePasswordBtn.onclick=()=>sessionPassword.value=generateSessionPassword();
+sessionTestType.onchange=()=>sessionLevelWrap.classList.toggle('hidden',sessionTestType.value!=='individual');
+selectAllSessionStudentsBtn.onclick=()=>sessionStudentChecklist.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=true);
+clearSessionStudentsBtn.onclick=()=>sessionStudentChecklist.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=false);
 
 studentIdMode.onchange=()=>applyStudentIdMode(studentIdMode.value);
 addStudentBtn.onclick=()=>openStudentForm();
