@@ -239,94 +239,129 @@ function poolForLevel(level){
 }
 
 
-function tweakSound(sound){
+
+const validSoundGroups = {
+  // Common alphabet/base sound families used in the current reading guide
+  alphabet: [
+    'Ker','Kher','Ger','Nger','Ser','Cher','Sher','Nyer',
+    'Ter','Der','Ner','Per','Ber','Mer','Yer','Rer','Ler','Wer','Ther','Her','Ah'
+  ],
+
+  // Valid vowel-based syllable endings from the teacher-defined vowel system
+  vowelEndings: [
+    'ah','ee','uh','eu','oo','ay','eh','oe','aw'
+  ],
+
+  // Valid blend onsets currently used in the KLGA banks / reading guide
+  blendOnsets: [
+    'Ja','Cha','Kra','Kla','Kwa','Khra','Khla','Khwa',
+    'Chga','Tra','Twa','Tga','Dra','Dwa',
+    'Pya','Pra','Pla','Pwa','Pga',
+    'Bya','Bra','Bla','Bwa','Bga',
+    'Mya','Mra','Mla','Mwa','Mga',
+    'Ywa','Lwa','Thra','Thla','Thwa','Hwa'
+  ]
+};
+
+function replaceOneValidComponent(sound, mode){
  const tokens=sound.split(' ');
- if(tokens.length<2) return sound;
+ if(!tokens.length) return sound;
 
- const substitutions={
-  'May':['Meh','Myay','Mae'],
-  'Way':['Weh','Waw','Wey'],
-  'Koe':['Kaw','Kee','Koeh'],
-  'Joe':['Jee','Jaw','Juh'],
-  'Jee':['Joe','Juh','Jaw'],
-  'Juh':['Jee','Joe','Jah'],
-  'Poo':['Poe','Paw','Peu'],
-  'Poe':['Poo','Paw','Peu'],
-  'Law':['Luh','Loe','Lah'],
-  'Luh':['Law','Loe','Lah'],
-  'Taw':['Toe','Tee','Ter'],
-  'Toe':['Taw','Tee','Ter'],
-  'Kleh':['Klay','Klee','Klah'],
-  'Klay':['Kleh','Klee','Klah'],
-  'Pleh':['Play','Plee','Plah'],
-  'Play':['Pleh','Plee','Plaw'],
-  'Plaw':['Pleh','Play','Ploo'],
-  'Kwa':['Kwah','Kwee','Kwaw'],
-  'Kwah':['Kwa','Kweh','Kwaw'],
-  'Kweh':['Kwee','Kwa','Kwaw'],
-  'Kwee':['Kweh','Kwa','Kwaw'],
-  'Khwee':['Khweh','Khwa','Khwaw'],
-  'Pgee':['Pgeh','Pga','Pgaw'],
-  'Pgeh':['Pgee','Pga','Pgaw'],
-  'Bguh':['Bgaw','Bgeh','Bgee'],
-  'Chgeh':['Chgaw','Chgeu','Chgee']
- };
+ const order=shuffle(tokens.map((_,i)=>i));
 
- const idxs=shuffle(tokens.map((_,i)=>i));
- for(const idx of idxs){
-   const t=tokens[idx];
-   if(substitutions[t]){
-     const out=[...tokens];
-     out[idx]=shuffle(substitutions[t])[0];
-     return out.join(' ');
+ for(const idx of order){
+   const token=tokens[idx];
+
+   // 1) Change a bare alphabet sound to another real alphabet sound.
+   if(mode==='alphabet' || mode==='any'){
+     if(validSoundGroups.alphabet.includes(token)){
+       const options=validSoundGroups.alphabet.filter(x=>x!==token);
+       if(options.length){
+         const out=[...tokens];
+         out[idx]=shuffle(options)[0];
+         return out.join(' ');
+       }
+     }
+   }
+
+   // 2) Change only the vowel ending while keeping the onset.
+   if(mode==='vowel' || mode==='any'){
+     const lower=token.toLowerCase();
+     for(const ending of [...validSoundGroups.vowelEndings].sort((a,b)=>b.length-a.length)){
+       if(lower.endsWith(ending) && token.length>ending.length){
+         const onset=token.slice(0,token.length-ending.length);
+         const options=validSoundGroups.vowelEndings.filter(v=>v!==ending);
+         if(options.length){
+           const newEnding=shuffle(options)[0];
+           const out=[...tokens];
+           out[idx]=onset+newEnding;
+           return out.join(' ');
+         }
+       }
+     }
+   }
+
+   // 3) Swap a known blend syllable/onset with another valid blend sound.
+   if(mode==='blend' || mode==='any'){
+     for(const blend of validSoundGroups.blendOnsets){
+       if(token.startsWith(blend)){
+         const rest=token.slice(blend.length);
+         const options=validSoundGroups.blendOnsets.filter(x=>x!==blend);
+         if(options.length){
+           const out=[...tokens];
+           out[idx]=shuffle(options)[0]+rest;
+           return out.join(' ');
+         }
+       }
+     }
    }
  }
 
- // Fallback: swap one syllable with a near vowel variation.
- const idx=idxs[0];
- const t=tokens[idx];
- const endings=[
-   ['a','eh'],['aw','oe'],['ee','eh'],['oe','aw'],['uh','ah'],['oo','oe'],
-   ['ay','eh'],['eh','ay']
- ];
- let replacement=t;
- for(const [a,b] of endings){
-   if(t.toLowerCase().endsWith(a)){
-     replacement=t.slice(0,t.length-a.length)+b;
-     replacement=replacement[0].toUpperCase()+replacement.slice(1);
-     break;
-   }
- }
- if(replacement===t) replacement=t+'h';
-
- const out=[...tokens];
- out[idx]=replacement;
- return out.join(' ');
+ return sound;
 }
 
 function makeCloseDistractors(correct){
  const choices=new Set([correct]);
 
- // Two very close distractors: one syllable changed.
- let guard=0;
- while(choices.size<3 && guard<30){
-   choices.add(tweakSound(correct));
-   guard++;
- }
+ // First close distractor: valid vowel change when possible.
+ let d1=replaceOneValidComponent(correct,'vowel');
+ if(d1===correct) d1=replaceOneValidComponent(correct,'any');
+ choices.add(d1);
 
- // Fourth choice: use another real reading sound, preferably same length.
+ // Second close distractor: valid alphabet/blend change when possible.
+ let d2=replaceOneValidComponent(correct,'blend');
+ if(d2===correct || choices.has(d2)) d2=replaceOneValidComponent(correct,'alphabet');
+ if(d2===correct || choices.has(d2)) d2=replaceOneValidComponent(correct,'any');
+ choices.add(d2);
+
+ // Third distractor: another real reading sound of similar length.
  const tokenCount=correct.split(' ').length;
  const candidates=k9Bank
    .map(x=>x.sound)
-   .filter(s=>s!==correct && Math.abs(s.split(' ').length-tokenCount)<=1);
- const far=shuffle(candidates)[0] || shuffle(k9Bank.map(x=>x.sound).filter(s=>s!==correct))[0];
- choices.add(far);
+   .filter(s=>s!==correct && !choices.has(s) && Math.abs(s.split(' ').length-tokenCount)<=1);
 
- while(choices.size<4){
-   choices.add(tweakSound(correct));
+ if(candidates.length) choices.add(shuffle(candidates)[0]);
+
+ // Safety fallback: keep generating only from valid component swaps.
+ let guard=0;
+ while(choices.size<4 && guard<30){
+   const d=replaceOneValidComponent(correct,'any');
+   if(d!==correct) choices.add(d);
+   guard++;
  }
+
+ // Final fallback from real K9 answers only.
+ if(choices.size<4){
+   const realChoices=shuffle(k9Bank.map(x=>x.sound).filter(s=>s!==correct && !choices.has(s)));
+   for(const s of realChoices){
+     choices.add(s);
+     if(choices.size>=4) break;
+   }
+ }
+
  return shuffle([...choices]).slice(0,4);
 }
+
 
 function makeK9Pool(){
  return shuffle(k9Bank).map(x=>{
