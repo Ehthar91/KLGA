@@ -19,17 +19,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyBRdCZ6-kst-fRR9TW633hw6BTwAVS2osA",
+  authDomain: "kgla-32aef.firebaseapp.com",
+  projectId: "kgla-32aef",
+  storageBucket: "kgla-32aef.firebasestorage.app",
+  messagingSenderId: "673924203306",
+  appId: "1:673924203306:web:fa1ce5c55bcf17f6e3d453",
+  measurementId: "G-ZCRPG19P8B"
 };
 
-const configured =
-  firebaseConfig.apiKey !== "PASTE_API_KEY_HERE" &&
-  firebaseConfig.projectId !== "PASTE_PROJECT_ID";
+const configured = true;
 
 let db=null;
 

@@ -1,41 +1,30 @@
-# KLGA 5-Level — Firebase Ready
+# KLGA 5-Level — Connected to Firebase project kgla-32aef
 
-This build adds a Firebase/Firestore integration layer.
+This build is preconfigured with the Firebase Web App values shown in the Firebase Console.
 
-## What is wired for Firebase
+## What now uses Firestore
 - Student roster
 - Testing sessions
-- Session lookup by Session Name + Password
-- Student session status
+- Student join status
 - Assessment results
 
-## Student flow
-1. Student clicks Join Testing Session.
-2. Enters Session Name + Password.
-3. Selects their roster name.
-4. Session/student status is written to Firestore.
-5. Student proceeds to the assigned assessment.
+## Before using the site
 
-## Setup
+1. In Firebase Console, create/enable Firestore Database.
+2. Open Firestore Database -> Rules.
+3. Paste the contents of `firestore.rules`.
+4. Publish the rules.
+5. Upload these site files to the GitHub Pages repository.
 
-1. Create or open your Firebase project.
-2. In Firebase Console:
-   Project settings -> Your apps -> Add Web App
-3. Copy your firebaseConfig values.
-4. Open `firebase-app.js`.
-5. Replace all PASTE_... placeholders.
-6. Enable Firestore Database.
-7. For MVP testing, paste `firestore.rules` into Firestore Rules and publish.
+## Test
 
-IMPORTANT:
-The included Firestore rules are intentionally open for development/testing.
-Do NOT use those rules for a production system containing real student data.
-The next step should be Firebase Authentication + locked-down rules.
+1. Open KLGA on GitHub Pages.
+2. Open Teacher Dashboard.
+3. Add a TEST student (do not use real student data yet).
+4. Go to Firebase Console -> Firestore Database -> Data.
+5. A `students` collection should appear.
+6. Create a testing session in KLGA.
+7. A `sessions` collection should appear.
 
-## Collections
-- students
-- sessions
-- sessionStudents
-- results
-
-If Firebase config is not filled in, the site falls back to browser localStorage.
+The included rules are development-only and are intentionally open.
+Before using real student information, add Firebase Authentication and secure the rules.

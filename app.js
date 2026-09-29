@@ -16,7 +16,7 @@ async function cloudLoadRoster(){
 
 async function cloudSaveStudent(student){
   if(await fbReady()) return await window.KLGAFirebase.saveStudent(student);
-  const roster=loadRoster();
+  const roster=await cloudLoadRoster();
   const i=roster.findIndex(s=>s.key===student.key);
   if(i>=0) roster[i]=student; else roster.push(student);
   saveRoster(roster);
@@ -34,7 +34,7 @@ async function cloudLoadSessions(){
 
 async function cloudSaveSession(session){
   if(await fbReady()) return await window.KLGAFirebase.saveSession(session);
-  const sessions=loadSessions();
+  const sessions=await cloudLoadSessions();
   const i=sessions.findIndex(s=>s.key===session.key);
   if(i>=0) sessions[i]=session; else sessions.push(session);
   saveSessions(sessions);
@@ -54,7 +54,7 @@ async function cloudSaveResult(result){
 
 async function cloudJoinSession(name,password){
   if(await fbReady()) return await window.KLGAFirebase.findActiveSession(name,password);
-  const sessions=loadSessions();
+  const sessions=await cloudLoadSessions();
   return sessions.find(s=>s.status==='Active' && s.name===name && s.password===password) || null;
 }
 
@@ -873,8 +873,8 @@ function randomCode(length=6){
 function generateSessionName(){ return 'KLGA-'+randomCode(4); }
 function generateSessionPassword(){ return randomCode(6); }
 
-function renderSessionStudentChecklist(selectedKeys=[]){
-  const roster=loadRoster();
+async function renderSessionStudentChecklist(selectedKeys=[]){
+  const roster=await cloudLoadRoster();
   sessionStudentChecklist.innerHTML='';
   if(!roster.length){
     sessionStudentChecklist.innerHTML='<div class="empty-row">Add students to the roster first.</div>';
@@ -892,7 +892,7 @@ function renderSessionStudentChecklist(selectedKeys=[]){
 function selectedSessionStudentKeys(){
   return [...sessionStudentChecklist.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value);
 }
-function openSessionForm(session=null){
+async function openSessionForm(session=null){
   sessionFormWrap.classList.remove('hidden');
   sessionFormError.classList.add('hidden');
   sessionFormError.textContent='';
@@ -903,7 +903,7 @@ function openSessionForm(session=null){
     sessionTestType.value=session.testType;
     sessionLevel.value=session.level||'1';
     sessionLevelWrap.classList.toggle('hidden',session.testType!=='individual');
-    renderSessionStudentChecklist(session.studentKeys||[]);
+    await renderSessionStudentChecklist(session.studentKeys||[]);
     saveSessionBtn.textContent='Update Session';
   }else{
     editingSessionKey=null;
@@ -912,7 +912,7 @@ function openSessionForm(session=null){
     sessionTestType.value='adaptive';
     sessionLevel.value='1';
     sessionLevelWrap.classList.add('hidden');
-    renderSessionStudentChecklist([]);
+    await renderSessionStudentChecklist([]);
     saveSessionBtn.textContent='Save Session';
   }
 }
@@ -920,7 +920,7 @@ function closeSessionForm(){
   sessionFormWrap.classList.add('hidden');
   editingSessionKey=null;
 }
-function persistSession(){
+async function persistSession(){
   const name=sessionName.value.trim();
   const password=sessionPassword.value.trim();
   const testType=sessionTestType.value;
@@ -938,7 +938,7 @@ function persistSession(){
     return;
   }
 
-  const sessions=loadSessions();
+  const sessions=await cloudLoadSessions();
   const duplicate=sessions.find(s=>s.name.toLowerCase()===name.toLowerCase() && s.key!==editingSessionKey);
   if(duplicate){
     sessionFormError.textContent='That session name is already being used.';
@@ -946,45 +946,46 @@ function persistSession(){
     return;
   }
 
+  let session;
   if(editingSessionKey){
-    const idx=sessions.findIndex(s=>s.key===editingSessionKey);
-    if(idx>=0) sessions[idx]={...sessions[idx],name,password,testType,level,studentKeys};
+    const existing=sessions.find(s=>s.key===editingSessionKey);
+    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,studentKeys};
   }else{
-    sessions.push({
+    session={
       key:'ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
       name,password,testType,level,studentKeys,status:'Draft',
       createdAt:new Date().toLocaleString()
-    });
+    };
   }
-  saveSessions(sessions);
+  await cloudSaveSession(session);
   closeSessionForm();
   renderSessions();
 }
-function editSession(key){
-  const session=loadSessions().find(s=>s.key===key);
+async function editSession(key){
+  const session=(await cloudLoadSessions()).find(s=>s.key===key);
   if(session) openSessionForm(session);
 }
-function setSessionStatus(key,status){
+async function setSessionStatus(key,status){
   const sessions=loadSessions();
   const idx=sessions.findIndex(s=>s.key===key);
   if(idx<0) return;
   sessions[idx].status=status;
   sessions[idx].updatedAt=new Date().toLocaleString();
-  saveSessions(sessions);
+  await cloudSaveSession(sessions[idx]);
   renderSessions();
 }
-function deleteSession(key){
+async function deleteSession(key){
   const sessions=loadSessions();
   const session=sessions.find(s=>s.key===key);
   if(!session) return;
   if(confirm(`Delete session ${session.name}?`)){
-    saveSessions(sessions.filter(s=>s.key!==key));
+    await cloudDeleteSession(key);
     renderSessions();
   }
 }
-function renderSessions(){
-  const sessions=loadSessions();
-  const roster=loadRoster();
+async function renderSessions(){
+  const sessions=await cloudLoadSessions();
+  const roster=await cloudLoadRoster();
   sessionTableBody.innerHTML='';
   if(!sessions.length){
     const tr=document.createElement('tr');
@@ -1032,8 +1033,8 @@ function saveRoster(roster){
   localStorage.setItem('klgaStudentRoster',JSON.stringify(roster));
 }
 
-function renderRoster(){
-  const roster=loadRoster();
+async function renderRoster(){
+  const roster=await cloudLoadRoster();
   rosterTableBody.innerHTML='';
 
   if(!roster.length){
@@ -1069,7 +1070,7 @@ function renderRoster(){
 }
 
 
-function getNextAutoStudentId(){
+async function getNextAutoStudentId(){
   const roster=loadRoster();
 
   // Find numeric IDs and continue from the highest.
@@ -1082,12 +1083,12 @@ function getNextAutoStudentId(){
   return String(next);
 }
 
-function applyStudentIdMode(mode){
+async function applyStudentIdMode(mode){
   if(mode==='auto'){
     rosterStudentId.readOnly=true;
     rosterStudentId.placeholder='Auto-generated';
     if(!editingStudentKey){
-      rosterStudentId.value=getNextAutoStudentId();
+      rosterStudentId.value=await getNextAutoStudentId();
     }
   }else{
     rosterStudentId.readOnly=false;
@@ -1098,7 +1099,7 @@ function applyStudentIdMode(mode){
   }
 }
 
-function openStudentForm(student=null){
+async function openStudentForm(student=null){
   studentFormWrap.classList.remove('hidden');
   studentFormError.classList.add('hidden');
   studentFormError.textContent='';
@@ -1111,7 +1112,7 @@ function openStudentForm(student=null){
 
     // Existing IDs remain editable through Manual mode.
     studentIdMode.value='manual';
-    applyStudentIdMode('manual');
+    await applyStudentIdMode('manual');
 
     saveStudentBtn.textContent='Update Student';
   }else{
@@ -1120,7 +1121,7 @@ function openStudentForm(student=null){
     rosterStudentGrade.value='';
 
     studentIdMode.value='auto';
-    applyStudentIdMode('auto');
+    await applyStudentIdMode('auto');
 
     saveStudentBtn.textContent='Save Student';
   }
@@ -1131,26 +1132,26 @@ function closeStudentForm(){
   editingStudentKey=null;
 }
 
-function editStudent(key){
-  const roster=loadRoster();
+async function editStudent(key){
+  const roster=await cloudLoadRoster();
   const student=roster.find(s=>s.key===key);
   if(student) openStudentForm(student);
 }
 
-function deleteStudent(key){
-  const roster=loadRoster();
+async function deleteStudent(key){
+  const roster=await cloudLoadRoster();
   const student=roster.find(s=>s.key===key);
   if(!student) return;
 
   if(confirm(`Delete ${student.name} from the roster?`)){
-    saveRoster(roster.filter(s=>s.key!==key));
+    await cloudDeleteStudent(key);
     renderRoster();
   }
 }
 
-function persistStudent(){
+async function persistStudent(){
   if(studentIdMode.value==='auto' && !editingStudentKey){
-    rosterStudentId.value=getNextAutoStudentId();
+    rosterStudentId.value=await getNextAutoStudentId();
   }
 
   const studentId=rosterStudentId.value.trim();
@@ -1163,7 +1164,7 @@ function persistStudent(){
     return;
   }
 
-  const roster=loadRoster();
+  const roster=await cloudLoadRoster();
 
   const duplicate=roster.find(
     s=>s.studentId.toLowerCase()===studentId.toLowerCase() && s.key!==editingStudentKey
@@ -1175,26 +1176,26 @@ function persistStudent(){
     return;
   }
 
+  let student;
   if(editingStudentKey){
-    const idx=roster.findIndex(s=>s.key===editingStudentKey);
-    if(idx>=0){
-      roster[idx]={
-        ...roster[idx],
-        studentId,
-        name,
-        grade
-      };
-    }
+    const existing=roster.find(s=>s.key===editingStudentKey);
+    student={
+      ...(existing||{}),
+      key:editingStudentKey,
+      studentId,
+      name,
+      grade
+    };
   }else{
-    roster.push({
+    student={
       key:'stu_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
       studentId,
       name,
       grade
-    });
+    };
   }
 
-  saveRoster(roster);
+  await cloudSaveStudent(student);
   closeStudentForm();
   renderRoster();
 }
