@@ -6,7 +6,15 @@
 ---------------------------- */
 
 async function fbReady(){
-  return !!(window.KLGAFirebase && window.KLGAFirebase.ready);
+  // firebase-app.js is a module and may finish a moment after app.js.
+  // Wait briefly so we do not accidentally fall back to localStorage.
+  for(let i=0;i<50;i++){
+    if(window.KLGAFirebase){
+      return !!window.KLGAFirebase.ready;
+    }
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  return false;
 }
 
 async function cloudLoadRoster(){
@@ -16,7 +24,7 @@ async function cloudLoadRoster(){
 
 async function cloudSaveStudent(student){
   if(await fbReady()) return await window.KLGAFirebase.saveStudent(student);
-  const roster=await cloudLoadRoster();
+  const roster=loadRoster();
   const i=roster.findIndex(s=>s.key===student.key);
   if(i>=0) roster[i]=student; else roster.push(student);
   saveRoster(roster);
@@ -1034,7 +1042,15 @@ function saveRoster(roster){
 }
 
 async function renderRoster(){
-  const roster=await cloudLoadRoster();
+  rosterTableBody.innerHTML='<tr><td colspan="4" class="empty-row">Loading roster…</td></tr>';
+  let roster=[];
+  try{
+    roster=await cloudLoadRoster();
+  }catch(err){
+    console.error('Roster load failed:',err);
+    rosterTableBody.innerHTML='<tr><td colspan="4" class="empty-row">Could not load roster from Firebase. Check Firestore setup and rules.</td></tr>';
+    return;
+  }
   rosterTableBody.innerHTML='';
 
   if(!roster.length){
@@ -1071,7 +1087,7 @@ async function renderRoster(){
 
 
 async function getNextAutoStudentId(){
-  const roster=loadRoster();
+  const roster=await cloudLoadRoster();
 
   // Find numeric IDs and continue from the highest.
   const nums=roster
@@ -1145,7 +1161,7 @@ async function deleteStudent(key){
 
   if(confirm(`Delete ${student.name} from the roster?`)){
     await cloudDeleteStudent(key);
-    renderRoster();
+    await renderRoster();
   }
 }
 
@@ -1195,9 +1211,15 @@ async function persistStudent(){
     };
   }
 
-  await cloudSaveStudent(student);
-  closeStudentForm();
-  renderRoster();
+  try{
+    await cloudSaveStudent(student);
+    closeStudentForm();
+    await renderRoster();
+  }catch(err){
+    console.error('Student save failed:',err);
+    studentFormError.textContent='Could not save student to Firebase. Check Firestore Database and Rules.';
+    studentFormError.classList.remove('hidden');
+  }
 }
 
 

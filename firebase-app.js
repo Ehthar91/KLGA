@@ -115,3 +115,9 @@ window.KLGAFirebase={
     );
   }
 };
+
+
+// Notify the main app that Firebase initialization has completed.
+window.dispatchEvent(new CustomEvent('klga-firebase-ready', {
+  detail: { ready: configured }
+}));

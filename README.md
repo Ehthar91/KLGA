@@ -1,30 +1,19 @@
-# KLGA 5-Level — Connected to Firebase project kgla-32aef
+# KLGA Firebase Roster Fix
 
-This build is preconfigured with the Firebase Web App values shown in the Firebase Console.
+This version fixes the Firebase-connected student roster.
 
-## What now uses Firestore
-- Student roster
-- Testing sessions
-- Student join status
-- Assessment results
+Fixes:
+- Auto Assign ID now reads the Firestore roster, not the old local browser roster.
+- App waits for Firebase initialization before deciding whether to use Firestore.
+- Roster displays a useful error if Firestore cannot be reached.
+- Student saves show a clear Firebase/Rules error instead of silently failing.
 
-## Before using the site
-
-1. In Firebase Console, create/enable Firestore Database.
-2. Open Firestore Database -> Rules.
-3. Paste the contents of `firestore.rules`.
-4. Publish the rules.
-5. Upload these site files to the GitHub Pages repository.
-
-## Test
-
-1. Open KLGA on GitHub Pages.
-2. Open Teacher Dashboard.
-3. Add a TEST student (do not use real student data yet).
-4. Go to Firebase Console -> Firestore Database -> Data.
-5. A `students` collection should appear.
-6. Create a testing session in KLGA.
-7. A `sessions` collection should appear.
-
-The included rules are development-only and are intentionally open.
-Before using real student information, add Firebase Authentication and secure the rules.
+Testing:
+1. Make sure Firestore Database exists.
+2. Publish the development Firestore rules.
+3. Upload this build to GitHub Pages.
+4. Open Teacher Dashboard.
+5. Add a fake student.
+6. Confirm the student appears in Firestore -> Data -> students.
+7. Refresh the website and confirm the student remains visible.
+8. Add a second student with Auto Assign ID and confirm IDs increment.
