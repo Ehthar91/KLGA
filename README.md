@@ -1,12 +1,20 @@
-# KLGA Live Session — Start/End Fix
+# KLGA — Firestore Results Dashboard
 
-Fixed a Firebase session bug:
+This build moves the Teacher Dashboard result workflow to Firestore.
 
-- Start Session now loads the session from Firestore.
-- End Session now loads/updates the session in Firestore.
-- Delete Session now loads/deletes the session from Firestore.
-- Starting a session automatically opens the Live Session Monitor.
-- Helpful error messages are shown if Firestore cannot update the session.
+## Fixed
+- Teacher Dashboard loads results from the Firestore `results` collection.
+- Results update live when a student finishes on another Chromebook.
+- CSV export uses the Firestore results.
+- Clear Results deletes the Firestore result documents.
+- Newest results are shown first when timestamps are available.
+- localStorage is only used as a fallback if Firebase is unavailable.
 
-The previous version still used localStorage inside the Start/End/Delete handlers,
-which caused Firebase-created sessions to appear but not start.
+## Test
+1. Upload this version to your site.
+2. Open Teacher Dashboard on the teacher computer.
+3. Complete a test as a fake student on another device/browser.
+4. The result should appear automatically without refreshing the teacher page.
+5. Verify the same result in Firebase -> Firestore Database -> Data -> results.
+
+Continue using fake student data until Firebase Authentication and secure Firestore rules are added.

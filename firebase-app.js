@@ -127,6 +127,25 @@ window.KLGAFirebase={
       snap=>callback(snap.docs.map(d=>({key:d.id,...d.data()}))),
       err=>console.error("Session monitor listener failed:",err)
     );
+  },
+
+  async getResults(){
+    return await getCollection("results");
+  },
+
+  subscribeResults(callback){
+    if(!db) return ()=>{};
+    return onSnapshot(
+      collection(db,"results"),
+      snap=>callback(snap.docs.map(d=>({key:d.id,...d.data()}))),
+      err=>console.error("Results listener failed:",err)
+    );
+  },
+
+  async clearResults(){
+    if(!db) return;
+    const snap=await getDocs(collection(db,"results"));
+    await Promise.all(snap.docs.map(d=>deleteDoc(d.ref)));
   }
 };
 

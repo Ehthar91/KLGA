@@ -60,6 +60,29 @@ async function cloudSaveResult(result){
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
 }
 
+async function cloudLoadResults(){
+  if(await fbReady() && window.KLGAFirebase.getResults){
+    return await window.KLGAFirebase.getResults();
+  }
+  return JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+}
+
+async function cloudSubscribeResults(callback){
+  if(await fbReady() && window.KLGAFirebase.subscribeResults){
+    return window.KLGAFirebase.subscribeResults(callback);
+  }
+  callback(JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]'));
+  return ()=>{};
+}
+
+async function cloudClearResults(){
+  if(await fbReady() && window.KLGAFirebase.clearResults){
+    return await window.KLGAFirebase.clearResults();
+  }
+  localStorage.removeItem('klgaFiveLevelResults');
+}
+
+
 async function cloudJoinSession(name,password){
   if(await fbReady()) return await window.KLGAFirebase.findActiveSession(name,password);
   const sessions=await cloudLoadSessions();
@@ -1365,24 +1388,42 @@ async function persistStudent(){
 }
 
 
-function renderDashboard(){
-  const r=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
-  resultsTableBody.innerHTML='';
+function resultSortTime(x){
+  if(x.createdAt?.seconds) return x.createdAt.seconds*1000;
+  if(x.createdAt?.toMillis) return x.createdAt.toMillis();
+  return Date.parse(x.date||'')||0;
+}
 
-  r.slice().reverse().forEach(x=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=
-      `<td>${esc(x.student)}</td>`+
-      `<td>${x.grade}</td>`+
-      `<td>${x.window}</td>`+
-      `<td>${x.mode}</td>`+
-      `<td>${x.questions}</td>`+
-      `<td>${x.path}</td>`+
-      `<td><strong>${x.resultLabel}</strong></td>`+
-      `<td>${x.overall}%</td>`+
-      `<td>${x.date}</td>`;
-    resultsTableBody.appendChild(tr);
-  });
+async function renderDashboard(resultsOverride=null){
+  try{
+    const r=resultsOverride || await cloudLoadResults();
+    resultsTableBody.innerHTML='';
+
+    const sorted=[...r].sort((a,b)=>resultSortTime(b)-resultSortTime(a));
+
+    if(!sorted.length){
+      resultsTableBody.innerHTML='<tr><td colspan="9" class="empty-row">No KLGA results yet.</td></tr>';
+      return;
+    }
+
+    sorted.forEach(x=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=
+        `<td>${esc(x.student||'')}</td>`+
+        `<td>${esc(x.grade||'')}</td>`+
+        `<td>${esc(x.window||'')}</td>`+
+        `<td>${esc(x.mode||'')}</td>`+
+        `<td>${esc(x.questions??'')}</td>`+
+        `<td>${esc(x.path||'')}</td>`+
+        `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
+        `<td>${esc(x.overall??'')}%</td>`+
+        `<td>${esc(x.date||'')}</td>`;
+      resultsTableBody.appendChild(tr);
+    });
+  }catch(err){
+    console.error('Results load failed:',err);
+    resultsTableBody.innerHTML='<tr><td colspan="9" class="empty-row">Could not load results from Firebase. Check Firestore and Rules.</td></tr>';
+  }
 }
 
 function esc(s=''){
@@ -1391,8 +1432,8 @@ function esc(s=''){
   }[c]));
 }
 
-function exportCsv(){
-  const r=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+async function exportCsv(){
+  const r=await cloudLoadResults();
 
   const rows=[[
     'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
@@ -1422,10 +1463,24 @@ function exportCsv(){
   URL.revokeObjectURL(url);
 }
 
+
+let stopResultsListener=null;
+
+async function startResultsListener(){
+  if(stopResultsListener){
+    stopResultsListener();
+    stopResultsListener=null;
+  }
+
+  stopResultsListener=await cloudSubscribeResults(results=>{
+    renderDashboard(results);
+  });
+}
+
 startStudentBtn.onclick=()=>showView('join');
 studentModeBtn.onclick=()=>showView('join');
-startTeacherBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
-teacherModeBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();showView('teacher')};
+startTeacherBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();startResultsListener();showView('teacher')};
+teacherModeBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();startResultsListener();showView('teacher')};
 
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
@@ -1582,9 +1637,14 @@ confirmStudentJoinBtn.onclick=async()=>{
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
 
-clearResultsBtn.onclick=()=>{
-  if(confirm('Clear all saved KLGA results?')){
-    localStorage.removeItem('klgaFiveLevelResults');
-    renderDashboard();
+clearResultsBtn.onclick=async()=>{
+  if(confirm('Clear all saved KLGA results from Firebase? This cannot be undone.')){
+    try{
+      await cloudClearResults();
+      await renderDashboard();
+    }catch(err){
+      console.error('Clear results failed:',err);
+      alert('Could not clear Firebase results. Check Firestore connection and rules.');
+    }
   }
 };
