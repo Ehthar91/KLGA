@@ -1699,8 +1699,12 @@ googleTeacherSignInBtn.onclick=async()=>{
   }
 };
 
-closeTeacherResultDetailBtn.onclick=closeTeacherResultDetail;
-document.querySelectorAll('[data-close-result-detail]').forEach(el=>el.onclick=closeTeacherResultDetail);
+if(window.closeTeacherResultDetailBtn){
+  closeTeacherResultDetailBtn.onclick=closeTeacherResultDetail;
+}
+document.querySelectorAll('[data-close-result-detail]').forEach(el=>{
+  el.onclick=closeTeacherResultDetail;
+});
 
 teacherSignOutBtn.onclick=async()=>{
   await cloudSignOut();

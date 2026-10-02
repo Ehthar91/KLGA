@@ -1,9 +1,19 @@
-# KLGA Teacher Result Details
+# KLGA — Teacher Dashboard Startup Fix
 
-Each result in the Teacher Dashboard now has a View Details button.
+Fixed the regression introduced by the Teacher Result Details feature.
 
-The detail window shows student, grade, window, mode, question count, overall score,
-placed level, date, placement path, and all saved internal skill scores.
+Cause:
+The result-details modal was placed after app.js in index.html. app.js attempted
+to bind events to modal elements before those elements existed, causing a
+runtime error and preventing Teacher Dashboard authentication handlers from
+finishing initialization.
 
-Existing Google teacher sign-in, anonymous student authentication, Firestore security,
-roster, sessions, live monitoring, and grade-separated results remain intact.
+Fixes:
+- Moved Teacher Result Details modal before Firebase/app scripts.
+- Added defensive close-button event binding.
+- Preserved Google teacher sign-in.
+- Preserved teacher allowlist authorization.
+- Preserved anonymous student authentication.
+- Preserved roster, sessions, live monitor, grade-separated results, and View Details.
+
+No Firestore data or authentication configuration needs to be changed.
