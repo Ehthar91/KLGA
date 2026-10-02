@@ -1011,17 +1011,36 @@ function generateSessionPassword(){ return randomCode(6); }
 async function renderSessionStudentChecklist(selectedKeys=[]){
   const roster=await cloudLoadRoster();
   sessionStudentChecklist.innerHTML='';
-  if(!roster.length){
-    sessionStudentChecklist.innerHTML='<div class="empty-row">Add students to the roster first.</div>';
-    return;
-  }
-  roster.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(student=>{
-    const label=document.createElement('label');
-    label.className='student-check-item';
-    label.innerHTML=
-      `<input type="checkbox" value="${student.key}" ${selectedKeys.includes(student.key)?'checked':''}>`+
-      `<span><strong>${esc(student.name)}</strong><small>ID ${esc(student.studentId)} • Grade ${esc(student.grade)}</small></span>`;
-    sessionStudentChecklist.appendChild(label);
+
+  ["6","7","8"].forEach(grade=>{
+    const students=roster
+      .filter(s=>String(s.grade)===grade)
+      .sort((a,b)=>a.name.localeCompare(b.name));
+
+    const section=document.createElement('div');
+    section.className='session-grade-group';
+
+    const header=document.createElement('div');
+    header.className='session-grade-header';
+    header.innerHTML=`<strong>Grade ${grade}</strong><span>${students.length} student${students.length===1?'':'s'}</span>`;
+    section.appendChild(header);
+
+    if(!students.length){
+      const empty=document.createElement('div');
+      empty.className='empty-grade-note';
+      empty.textContent='No students';
+      section.appendChild(empty);
+    }else{
+      students.forEach(student=>{
+        const label=document.createElement('label');
+        label.className='student-check-row';
+        label.innerHTML=
+          `<input type="checkbox" value="${student.key}" ${selectedKeys.includes(student.key)?'checked':''}>`+
+          `<span><strong>${esc(student.name)}</strong><small>ID ${esc(student.studentId)}</small></span>`;
+        section.appendChild(label);
+      });
+    }
+    sessionStudentChecklist.appendChild(section);
   });
 }
 function selectedSessionStudentKeys(){
@@ -1207,44 +1226,53 @@ function saveRoster(roster){
 }
 
 async function renderRoster(){
-  rosterTableBody.innerHTML='<tr><td colspan="4" class="empty-row">Loading roster…</td></tr>';
+  const bodies={"6":grade6RosterBody,"7":grade7RosterBody,"8":grade8RosterBody};
+  const counts={"6":grade6Count,"7":grade7Count,"8":grade8Count};
+
+  Object.values(bodies).forEach(body=>{
+    body.innerHTML='<tr><td colspan="3" class="empty-row">Loading roster…</td></tr>';
+  });
+
   let roster=[];
   try{
     roster=await cloudLoadRoster();
   }catch(err){
     console.error('Roster load failed:',err);
-    rosterTableBody.innerHTML='<tr><td colspan="4" class="empty-row">Could not load roster from Firebase. Check Firestore setup and rules.</td></tr>';
-    return;
-  }
-  rosterTableBody.innerHTML='';
-
-  if(!roster.length){
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td colspan="4" class="empty-row">No students added yet.</td>';
-    rosterTableBody.appendChild(tr);
+    Object.values(bodies).forEach(body=>{
+      body.innerHTML='<tr><td colspan="3" class="empty-row">Could not load roster from Firebase.</td></tr>';
+    });
     return;
   }
 
-  roster
-    .slice()
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .forEach(student=>{
+  ["6","7","8"].forEach(grade=>{
+    const students=roster
+      .filter(s=>String(s.grade)===grade)
+      .sort((a,b)=>a.name.localeCompare(b.name));
+
+    counts[grade].textContent=`${students.length} student${students.length===1?'':'s'}`;
+    bodies[grade].innerHTML='';
+
+    if(!students.length){
+      bodies[grade].innerHTML='<tr><td colspan="3" class="empty-row">No students in this grade.</td></tr>';
+      return;
+    }
+
+    students.forEach(student=>{
       const tr=document.createElement('tr');
       tr.innerHTML=
         `<td>${esc(student.studentId)}</td>`+
-        `<td>${esc(student.name)}</td>`+
-        `<td>${esc(student.grade)}</td>`+
-        `<td class="row-actions">`+
-          `<button class="btn mini secondary" data-edit-student="${student.key}">Edit</button>`+
+        `<td><strong>${esc(student.name)}</strong></td>`+
+        `<td>`+
+          `<button class="btn mini secondary" data-edit-student="${student.key}">Edit</button> `+
           `<button class="btn mini danger" data-delete-student="${student.key}">Delete</button>`+
         `</td>`;
-      rosterTableBody.appendChild(tr);
+      bodies[grade].appendChild(tr);
     });
+  });
 
   document.querySelectorAll('[data-edit-student]').forEach(btn=>{
     btn.onclick=()=>editStudent(btn.dataset.editStudent);
   });
-
   document.querySelectorAll('[data-delete-student]').forEach(btn=>{
     btn.onclick=()=>deleteStudent(btn.dataset.deleteStudent);
   });
