@@ -78,3 +78,12 @@
 .grade-results-section{border:1px solid #dbe3ee;border-radius:16px;background:#fff;overflow:hidden}
 .grade-results-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e2e8f0;background:#f8fafc}
 .grade-results-title h3{margin:0}
+
+.auth-card{max-width:680px;margin:0 auto}
+.auth-message{margin:16px 0;padding:14px;border:1px solid #fbbf24;background:#fffbeb;border-radius:12px;color:#78350f}
+.uid-box{margin:16px 0;padding:16px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px}
+.uid-box p{margin:8px 0}
+.uid-box code{word-break:break-all}
+.teacher-account-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;margin-bottom:18px;border:1px solid #dbe3ee;border-radius:14px;background:#f8fafc}
+.teacher-account-bar div{display:flex;flex-direction:column;gap:2px}
+.teacher-account-bar small{color:#64748b}

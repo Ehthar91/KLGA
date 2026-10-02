@@ -6,10 +6,19 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInAnonymously,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import {
   getFirestore,
   collection,
   doc,
   getDocs,
+  getDoc,
   setDoc,
   deleteDoc,
   query,
@@ -32,10 +41,12 @@ const firebaseConfig = {
 const configured = true;
 
 let db=null;
+let auth=null;
 
 if(configured){
   const app=initializeApp(firebaseConfig);
   db=getFirestore(app);
+  auth=getAuth(app);
 }
 
 async function getCollection(name){
@@ -44,8 +55,56 @@ async function getCollection(name){
   return snap.docs.map(d=>({key:d.id,...d.data()}));
 }
 
+
+function providerIdForUser(user){
+  if(!user) return null;
+  if(user.isAnonymous) return "anonymous";
+  return user.providerData?.[0]?.providerId || null;
+}
+
+async function teacherAuthorization(user){
+  if(!db || !user || user.isAnonymous) return false;
+  const provider=providerIdForUser(user);
+  if(provider!=="google.com") return false;
+  const snap=await getDoc(doc(db,"teachers",user.uid));
+  return snap.exists();
+}
+
 window.KLGAFirebase={
   ready:configured,
+
+  currentUser(){
+    return auth?.currentUser || null;
+  },
+
+  onAuth(callback){
+    if(!auth) return ()=>{};
+    return onAuthStateChanged(auth,callback);
+  },
+
+  async signInTeacher(){
+    if(!auth) throw new Error("Firebase Auth is not available.");
+    const provider=new GoogleAuthProvider();
+    provider.setCustomParameters({prompt:"select_account"});
+    const result=await signInWithPopup(auth,provider);
+    const authorized=await teacherAuthorization(result.user);
+    return {user:result.user,authorized};
+  },
+
+  async isAuthorizedTeacher(){
+    return await teacherAuthorization(auth?.currentUser || null);
+  },
+
+  async ensureStudentAuth(){
+    if(!auth) throw new Error("Firebase Auth is not available.");
+    if(auth.currentUser) return auth.currentUser;
+    const result=await signInAnonymously(auth);
+    return result.user;
+  },
+
+  async signOut(){
+    if(auth) await signOut(auth);
+  },
 
   async getRoster(){
     return await getCollection("students");
@@ -81,8 +140,10 @@ window.KLGAFirebase={
   async saveResult(result){
     if(!db) return;
     const id="result_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+    const user=auth?.currentUser || null;
     await setDoc(doc(db,"results",id),{
       ...result,
+      authUid:user?.uid || null,
       createdAt:serverTimestamp()
     });
   },
@@ -103,9 +164,12 @@ window.KLGAFirebase={
 
   async setStudentStatus(sessionKey,studentKey,status){
     if(!db) return;
+    const user=auth?.currentUser || null;
+    const payload={ sessionKey, studentKey, status, updatedAt:serverTimestamp() };
+    if(user?.isAnonymous) payload.authUid=user.uid;
     await setDoc(
       doc(db,"sessionStudents",sessionKey+"_"+studentKey),
-      { sessionKey, studentKey, status, updatedAt:serverTimestamp() },
+      payload,
       {merge:true}
     );
   },

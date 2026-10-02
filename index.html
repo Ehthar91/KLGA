@@ -25,6 +25,28 @@
 </section>
 
 
+
+<section id="teacherAuthView" class="card hidden">
+  <div class="auth-card">
+    <div class="eyebrow">Teacher Access</div>
+    <h2>Sign in with Google</h2>
+    <p class="subtitle">Teachers must sign in with an authorized Google account to open the KLGA Teacher Dashboard.</p>
+
+    <div id="teacherAuthMessage" class="auth-message hidden"></div>
+
+    <div id="teacherUidBox" class="uid-box hidden">
+      <strong>Teacher authorization needed</strong>
+      <p>Create a document in Firestore collection <code>teachers</code> using this UID as the document ID:</p>
+      <code id="teacherUidText"></code>
+    </div>
+
+    <div class="actions">
+      <button id="googleTeacherSignInBtn" class="btn primary">Sign in with Google</button>
+      <button class="btn ghost" data-home>Back</button>
+    </div>
+  </div>
+</section>
+
 <section id="joinSessionView" class="card hidden">
   <div class="session-login">
     <div class="eyebrow">KLGA Student Login</div>
@@ -120,6 +142,15 @@
 
 
 <section id="teacherView" class="card hidden">
+<div class="teacher-account-bar">
+  <div>
+    <span class="eyebrow">Signed in as</span>
+    <strong id="teacherAccountName">Teacher</strong>
+    <small id="teacherAccountEmail"></small>
+  </div>
+  <button id="teacherSignOutBtn" class="btn ghost mini">Sign Out</button>
+</div>
+
 
 <div class="session-panel">
   <div class="roster-head">

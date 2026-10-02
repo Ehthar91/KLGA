@@ -17,6 +17,30 @@ async function fbReady(){
   return false;
 }
 
+
+async function cloudSignInTeacher(){
+  if(!(await fbReady())) throw new Error("Firebase is not ready.");
+  return await window.KLGAFirebase.signInTeacher();
+}
+
+async function cloudTeacherAuthorized(){
+  if(!(await fbReady())) return false;
+  return await window.KLGAFirebase.isAuthorizedTeacher();
+}
+
+async function cloudEnsureStudentAuth(){
+  if(!(await fbReady())) throw new Error("Firebase is not ready.");
+  return await window.KLGAFirebase.ensureStudentAuth();
+}
+
+async function cloudSignOut(){
+  if(await fbReady()) return await window.KLGAFirebase.signOut();
+}
+
+function cloudCurrentUser(){
+  return window.KLGAFirebase?.currentUser?.() || null;
+}
+
 async function cloudLoadRoster(){
   if(await fbReady()) return await window.KLGAFirebase.getRoster();
   return loadRoster();
@@ -540,6 +564,7 @@ const SKILL_NAMES = {
 
 const views={
   home:homeView,
+  auth:teacherAuthView,
   join:joinSessionView,
   setup:studentSetupView,
   test:testView,
@@ -1080,6 +1105,11 @@ async function persistSession(){
   const testType=sessionTestType.value;
   const level=testType==='individual'?Number(sessionLevel.value):null;
   const studentKeys=selectedSessionStudentKeys();
+  const rosterForSession=await cloudLoadRoster();
+  const studentSummaries=studentKeys
+    .map(key=>rosterForSession.find(s=>s.key===key))
+    .filter(Boolean)
+    .map(s=>({key:s.key,studentId:s.studentId,name:s.name,grade:s.grade}));
 
   if(!name || !password){
     sessionFormError.textContent='Please enter a session name and password.';
@@ -1103,11 +1133,11 @@ async function persistSession(){
   let session;
   if(editingSessionKey){
     const existing=sessions.find(s=>s.key===editingSessionKey);
-    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,studentKeys};
+    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,studentKeys,studentSummaries};
   }else{
     session={
       key:'ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-      name,password,testType,level,studentKeys,status:'Draft',
+      name,password,testType,level,studentKeys,studentSummaries,status:'Draft',
       createdAt:new Date().toLocaleString()
     };
   }
@@ -1171,6 +1201,22 @@ async function deleteSession(key){
     alert('Could not delete the session. Check your Firestore connection and rules.');
   }
 }
+
+async function backfillSessionStudentSummaries(){
+  const sessions=await cloudLoadSessions();
+  const needs=sessions.filter(s=>!Array.isArray(s.studentSummaries) || s.studentSummaries.length!==(s.studentKeys||[]).length);
+  if(!needs.length) return;
+
+  const roster=await cloudLoadRoster();
+  for(const session of needs){
+    const studentSummaries=(session.studentKeys||[])
+      .map(key=>roster.find(s=>s.key===key))
+      .filter(Boolean)
+      .map(s=>({key:s.key,studentId:s.studentId,name:s.name,grade:s.grade}));
+    await cloudSaveSession({...session,studentSummaries});
+  }
+}
+
 async function renderSessions(){
   const sessions=await cloudLoadSessions();
   const roster=await cloudLoadRoster();
@@ -1526,9 +1572,73 @@ async function startResultsListener(){
 }
 
 startStudentBtn.onclick=()=>showView('join');
+
+async function openTeacherDashboard(){
+  teacherAuthMessage.classList.add('hidden');
+  teacherUidBox.classList.add('hidden');
+
+  try{
+    const user=cloudCurrentUser();
+    if(!user || user.isAnonymous){
+      showView('auth');
+      return;
+    }
+
+    const authorized=await cloudTeacherAuthorized();
+    if(!authorized){
+      teacherAuthMessage.textContent=`Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized as a KLGA teacher yet.`;
+      teacherAuthMessage.classList.remove('hidden');
+      teacherUidText.textContent=user.uid;
+      teacherUidBox.classList.remove('hidden');
+      googleTeacherSignInBtn.textContent='Choose Another Google Account';
+      showView('auth');
+      return;
+    }
+
+    teacherAccountName.textContent=user.displayName||'Teacher';
+    teacherAccountEmail.textContent=user.email||'';
+    await backfillSessionStudentSummaries();
+    await Promise.all([renderSessions(),renderRoster(),renderDashboard()]);
+    await startResultsListener();
+    showView('teacher');
+  }catch(err){
+    console.error('Teacher access failed:',err);
+    teacherAuthMessage.textContent='Could not verify teacher access. Check Firebase Authentication and Firestore rules.';
+    teacherAuthMessage.classList.remove('hidden');
+    showView('auth');
+  }
+}
+
+googleTeacherSignInBtn.onclick=async()=>{
+  teacherAuthMessage.classList.add('hidden');
+  teacherUidBox.classList.add('hidden');
+  try{
+    const {user,authorized}=await cloudSignInTeacher();
+    if(!authorized){
+      teacherAuthMessage.textContent=`Google sign-in worked, but ${user.email||'this account'} is not in the KLGA teacher allowlist yet.`;
+      teacherAuthMessage.classList.remove('hidden');
+      teacherUidText.textContent=user.uid;
+      teacherUidBox.classList.remove('hidden');
+      googleTeacherSignInBtn.textContent='Choose Another Google Account';
+      return;
+    }
+    googleTeacherSignInBtn.textContent='Sign in with Google';
+    await openTeacherDashboard();
+  }catch(err){
+    console.error('Google sign-in failed:',err);
+    teacherAuthMessage.textContent='Google sign-in did not complete. Make sure Google is enabled in Firebase Authentication and your website domain is authorized.';
+    teacherAuthMessage.classList.remove('hidden');
+  }
+};
+
+teacherSignOutBtn.onclick=async()=>{
+  await cloudSignOut();
+  showView('home');
+};
+
 studentModeBtn.onclick=()=>showView('join');
-startTeacherBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();startResultsListener();showView('teacher')};
-teacherModeBtn.onclick=()=>{renderSessions();renderRoster();renderDashboard();startResultsListener();showView('teacher')};
+startTeacherBtn.onclick=openTeacherDashboard;
+teacherModeBtn.onclick=openTeacherDashboard;
 
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
@@ -1596,6 +1706,14 @@ let joinedStudent=null;
 
 joinSessionBtn.onclick=async()=>{
   joinSessionError.classList.add('hidden');
+  try{
+    await cloudEnsureStudentAuth();
+  }catch(err){
+    console.error('Student authentication failed:',err);
+    joinSessionError.textContent='Could not connect to Firebase Authentication.';
+    joinSessionError.classList.remove('hidden');
+    return;
+  }
   const name=joinSessionName.value.trim();
   const password=joinSessionPassword.value.trim();
 
@@ -1614,10 +1732,7 @@ joinSessionBtn.onclick=async()=>{
 
   joinedSession=session;
 
-  const roster=await cloudLoadRoster();
-  const allowed=(session.studentKeys||[])
-    .map(key=>roster.find(s=>s.key===key))
-    .filter(Boolean)
+  const allowed=[...(session.studentSummaries||[])]
     .sort((a,b)=>a.name.localeCompare(b.name));
 
   joinStudentSelect.innerHTML='';
@@ -1640,8 +1755,8 @@ joinSessionBtn.onclick=async()=>{
 };
 
 confirmStudentJoinBtn.onclick=async()=>{
-  const roster=await cloudLoadRoster();
-  const student=roster.find(s=>s.key===joinStudentSelect.value);
+  const student=(joinedSession?.studentSummaries||[])
+    .find(s=>s.key===joinStudentSelect.value);
   if(!student || !joinedSession) return;
 
   joinedStudent=student;
