@@ -1468,25 +1468,88 @@ function resultSortTime(x){
   return Date.parse(x.date||'')||0;
 }
 
+
+let teacherResultCache=[];
+
+function normalizeSkillScore(value){
+  if(value===null || value===undefined || value==='') return '—';
+  const n=Number(value);
+  return Number.isFinite(n) ? `${n}%` : String(value);
+}
+
+function teacherResultSkills(result){
+  const labels={
+    skill1:'Alphabet Recognition',
+    skill2:'Letter Sounds',
+    skill3:'Vowel Recognition',
+    skill4:'Alphabet + Vowel',
+    skill5:'Tone Recognition',
+    skill6:'Blend Sound Recognition',
+    skill7:'Alphabet + Blend',
+    skill8:'Alphabet + Blend + Vowel',
+    skill9:'Phrase Reading'
+  };
+  return Object.entries(labels)
+    .map(([key,label])=>({label,value:result[key]}))
+    .filter(x=>x.value!==undefined && x.value!==null && x.value!=='');
+}
+
+function openTeacherResultDetail(resultKey){
+  const result=teacherResultCache.find(r=>String(r.key)===String(resultKey));
+  if(!result) return;
+
+  teacherResultDetailTitle.textContent=`${result.student||'Student'} — ${result.resultLabel||'Result'}`;
+
+  const items=[
+    ['Student',result.student||'—'],
+    ['Grade',result.grade||'—'],
+    ['Window',result.window||'—'],
+    ['Mode',result.mode||'—'],
+    ['Questions',result.questions??'—'],
+    ['Overall',result.overall!==undefined?`${result.overall}%`:'—'],
+    ['Result',result.resultLabel||'—'],
+    ['Date',result.date||'—']
+  ];
+
+  teacherResultSummary.innerHTML=items.map(([label,value]) =>
+    `<div class="result-summary-item"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
+  ).join('');
+
+  teacherResultPath.textContent=result.path||result.resultLabel||'—';
+
+  const skills=teacherResultSkills(result);
+  teacherResultSkillsBody.innerHTML='';
+  if(!skills.length){
+    teacherResultSkillsBody.innerHTML='<tr><td colspan="2" class="empty-row">No skill breakdown saved for this result.</td></tr>';
+  }else{
+    skills.forEach(s=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${esc(s.label)}</td><td><strong>${esc(normalizeSkillScore(s.value))}</strong></td>`;
+      teacherResultSkillsBody.appendChild(tr);
+    });
+  }
+
+  teacherResultDetailModal.classList.remove('hidden');
+  teacherResultDetailModal.setAttribute('aria-hidden','false');
+}
+
+function closeTeacherResultDetail(){
+  teacherResultDetailModal.classList.add('hidden');
+  teacherResultDetailModal.setAttribute('aria-hidden','true');
+}
+
 async function renderDashboard(resultsOverride=null){
-  const bodies={
-    "6":grade6ResultsBody,
-    "7":grade7ResultsBody,
-    "8":grade8ResultsBody
-  };
-  const counts={
-    "6":grade6ResultsCount,
-    "7":grade7ResultsCount,
-    "8":grade8ResultsCount
-  };
+  const bodies={"6":grade6ResultsBody,"7":grade7ResultsBody,"8":grade8ResultsBody};
+  const counts={"6":grade6ResultsCount,"7":grade7ResultsCount,"8":grade8ResultsCount};
 
   Object.values(bodies).forEach(body=>{
-    body.innerHTML='<tr><td colspan="8" class="empty-row">Loading results…</td></tr>';
+    body.innerHTML='<tr><td colspan="9" class="empty-row">Loading results…</td></tr>';
   });
 
   try{
     const r=resultsOverride || await cloudLoadResults();
     const sorted=[...r].sort((a,b)=>resultSortTime(b)-resultSortTime(a));
+    teacherResultCache=sorted;
 
     ["6","7","8"].forEach(grade=>{
       const gradeResults=sorted.filter(x=>String(x.grade)===grade);
@@ -1494,7 +1557,7 @@ async function renderDashboard(resultsOverride=null){
       bodies[grade].innerHTML='';
 
       if(!gradeResults.length){
-        bodies[grade].innerHTML='<tr><td colspan="8" class="empty-row">No results for this grade yet.</td></tr>';
+        bodies[grade].innerHTML='<tr><td colspan="9" class="empty-row">No results for this grade yet.</td></tr>';
         return;
       }
 
@@ -1508,14 +1571,19 @@ async function renderDashboard(resultsOverride=null){
           `<td>${esc(x.path||'')}</td>`+
           `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
           `<td>${esc(x.overall??'')}%</td>`+
-          `<td>${esc(x.date||'')}</td>`;
+          `<td>${esc(x.date||'')}</td>`+
+          `<td><button class="btn mini secondary" data-result-detail="${x.key}">View Details</button></td>`;
         bodies[grade].appendChild(tr);
       });
+    });
+
+    document.querySelectorAll('[data-result-detail]').forEach(btn=>{
+      btn.onclick=()=>openTeacherResultDetail(btn.dataset.resultDetail);
     });
   }catch(err){
     console.error('Results load failed:',err);
     Object.values(bodies).forEach(body=>{
-      body.innerHTML='<tr><td colspan="8" class="empty-row">Could not load results from Firebase.</td></tr>';
+      body.innerHTML='<tr><td colspan="9" class="empty-row">Could not load results from Firebase.</td></tr>';
     });
   }
 }
@@ -1630,6 +1698,9 @@ googleTeacherSignInBtn.onclick=async()=>{
     teacherAuthMessage.classList.remove('hidden');
   }
 };
+
+closeTeacherResultDetailBtn.onclick=closeTeacherResultDetail;
+document.querySelectorAll('[data-close-result-detail]').forEach(el=>el.onclick=closeTeacherResultDetail);
 
 teacherSignOutBtn.onclick=async()=>{
   await cloudSignOut();

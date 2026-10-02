@@ -352,7 +352,7 @@
     <div class="grade-results-title"><h3>Grade 6 Results</h3><span id="grade6ResultsCount" class="grade-count">0 results</span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th></tr></thead>
+        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th><th>Details</th></tr></thead>
         <tbody id="grade6ResultsBody"></tbody>
       </table>
     </div>
@@ -362,7 +362,7 @@
     <div class="grade-results-title"><h3>Grade 7 Results</h3><span id="grade7ResultsCount" class="grade-count">0 results</span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th></tr></thead>
+        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th><th>Details</th></tr></thead>
         <tbody id="grade7ResultsBody"></tbody>
       </table>
     </div>
@@ -372,7 +372,7 @@
     <div class="grade-results-title"><h3>Grade 8 Results</h3><span id="grade8ResultsCount" class="grade-count">0 results</span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th></tr></thead>
+        <thead><tr><th>Student</th><th>Window</th><th>Mode</th><th>Questions</th><th>Path / Level</th><th>Result</th><th>Overall</th><th>Date</th><th>Details</th></tr></thead>
         <tbody id="grade8ResultsBody"></tbody>
       </table>
     </div>
@@ -383,4 +383,23 @@
 </div>
 <script type="module" src="firebase-app.js"></script>
 <script src="app.js"></script>
+
+<div id="teacherResultDetailModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-backdrop" data-close-result-detail></div>
+  <div class="modal-card result-detail-card">
+    <div class="modal-head">
+      <div><div class="eyebrow">Assessment Result</div><h2 id="teacherResultDetailTitle">Student Result Details</h2></div>
+      <button id="closeTeacherResultDetailBtn" class="btn ghost mini">Close</button>
+    </div>
+    <div id="teacherResultSummary" class="result-summary-grid"></div>
+    <div class="detail-section"><h3>Placement Path</h3><div id="teacherResultPath" class="result-path-box"></div></div>
+    <div class="detail-section">
+      <h3>Skill Breakdown</h3>
+      <div class="table-wrap">
+        <table><thead><tr><th>Skill</th><th>Score</th></tr></thead><tbody id="teacherResultSkillsBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body></html>
