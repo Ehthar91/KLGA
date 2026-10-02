@@ -1,7 +1,9 @@
-# KLGA — Students Separated by Grade
+# KLGA — Results Separated by Grade
 
-- Teacher roster now has separate Grade 6, Grade 7, and Grade 8 sections.
-- Each section shows a student count.
-- Students remain alphabetized within their grade.
-- Testing-session student selection is also grouped by grade.
-- Firebase roster, sessions, live monitoring, and Firestore results remain intact.
+Changes:
+- Results are now separated into Grade 6, Grade 7, and Grade 8 sections.
+- Each grade shows its own result count.
+- Newest results appear first within each grade.
+- Firestore live updates still work.
+- CSV export and Clear Results still use Firestore.
+- Student roster and session student selection remain grouped by grade.

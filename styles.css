@@ -73,3 +73,8 @@
 .student-check-row span{display:flex;flex-direction:column;gap:2px}
 .student-check-row small{color:#64748b}
 .empty-grade-note{padding:12px;color:#94a3b8;font-size:13px}
+
+.grade-results-grid{display:grid;gap:22px}
+.grade-results-section{border:1px solid #dbe3ee;border-radius:16px;background:#fff;overflow:hidden}
+.grade-results-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+.grade-results-title h3{margin:0}

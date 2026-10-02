@@ -1423,34 +1423,54 @@ function resultSortTime(x){
 }
 
 async function renderDashboard(resultsOverride=null){
+  const bodies={
+    "6":grade6ResultsBody,
+    "7":grade7ResultsBody,
+    "8":grade8ResultsBody
+  };
+  const counts={
+    "6":grade6ResultsCount,
+    "7":grade7ResultsCount,
+    "8":grade8ResultsCount
+  };
+
+  Object.values(bodies).forEach(body=>{
+    body.innerHTML='<tr><td colspan="8" class="empty-row">Loading results…</td></tr>';
+  });
+
   try{
     const r=resultsOverride || await cloudLoadResults();
-    resultsTableBody.innerHTML='';
-
     const sorted=[...r].sort((a,b)=>resultSortTime(b)-resultSortTime(a));
 
-    if(!sorted.length){
-      resultsTableBody.innerHTML='<tr><td colspan="9" class="empty-row">No KLGA results yet.</td></tr>';
-      return;
-    }
+    ["6","7","8"].forEach(grade=>{
+      const gradeResults=sorted.filter(x=>String(x.grade)===grade);
+      counts[grade].textContent=`${gradeResults.length} result${gradeResults.length===1?'':'s'}`;
+      bodies[grade].innerHTML='';
 
-    sorted.forEach(x=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=
-        `<td>${esc(x.student||'')}</td>`+
-        `<td>${esc(x.grade||'')}</td>`+
-        `<td>${esc(x.window||'')}</td>`+
-        `<td>${esc(x.mode||'')}</td>`+
-        `<td>${esc(x.questions??'')}</td>`+
-        `<td>${esc(x.path||'')}</td>`+
-        `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
-        `<td>${esc(x.overall??'')}%</td>`+
-        `<td>${esc(x.date||'')}</td>`;
-      resultsTableBody.appendChild(tr);
+      if(!gradeResults.length){
+        bodies[grade].innerHTML='<tr><td colspan="8" class="empty-row">No results for this grade yet.</td></tr>';
+        return;
+      }
+
+      gradeResults.forEach(x=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=
+          `<td>${esc(x.student||'')}</td>`+
+          `<td>${esc(x.window||'')}</td>`+
+          `<td>${esc(x.mode||'')}</td>`+
+          `<td>${esc(x.questions??'')}</td>`+
+          `<td>${esc(x.path||'')}</td>`+
+          `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
+          `<td>${esc(x.overall??'')}%</td>`+
+          `<td>${esc(x.date||'')}</td>`;
+        bodies[grade].appendChild(tr);
+      });
     });
   }catch(err){
     console.error('Results load failed:',err);
-    resultsTableBody.innerHTML='<tr><td colspan="9" class="empty-row">Could not load results from Firebase. Check Firestore and Rules.</td></tr>';
+    Object.values(bodies).forEach(body=>{
+      body.innerHTML='<tr><td colspan="8" class="empty-row">Could not load results from Firebase.</td></tr>';
+    });
   }
 }
 
