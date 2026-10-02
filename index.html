@@ -199,6 +199,32 @@
       <tbody id="sessionTableBody"></tbody>
     </table>
   </div>
+
+  <div id="liveSessionMonitor" class="live-monitor hidden">
+    <div class="roster-head">
+      <div>
+        <div class="eyebrow">Live Session Monitor</div>
+        <h3 id="liveSessionTitle">Session</h3>
+        <p id="liveSessionMeta"></p>
+      </div>
+      <button id="closeLiveMonitorBtn" class="btn ghost">Close Monitor</button>
+    </div>
+
+    <div class="monitor-stats">
+      <div class="monitor-stat"><span>Assigned</span><strong id="monitorAssigned">0</strong></div>
+      <div class="monitor-stat"><span>Waiting</span><strong id="monitorWaiting">0</strong></div>
+      <div class="monitor-stat"><span>Approved</span><strong id="monitorApproved">0</strong></div>
+      <div class="monitor-stat"><span>Testing</span><strong id="monitorTesting">0</strong></div>
+      <div class="monitor-stat"><span>Finished</span><strong id="monitorFinished">0</strong></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>ID</th><th>Grade</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="liveSessionStudentsBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <hr class="section-divider">

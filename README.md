@@ -1,19 +1,20 @@
-# KLGA Firebase Roster Fix
+# KLGA Live Session Confirmation
 
-This version fixes the Firebase-connected student roster.
+Student flow:
+1. Enter Session Name + Password.
+2. Select roster name.
+3. Status becomes Waiting.
+4. Teacher sees the student live in Session Monitor.
+5. Teacher clicks Confirm.
+6. Student is released to the assigned test.
+7. Status changes to Testing when the test begins.
+8. Status changes to Finished when the test is completed.
 
-Fixes:
-- Auto Assign ID now reads the Firestore roster, not the old local browser roster.
-- App waits for Firebase initialization before deciding whether to use Firestore.
-- Roster displays a useful error if Firestore cannot be reached.
-- Student saves show a clear Firebase/Rules error instead of silently failing.
+Teacher flow:
+1. Start a testing session.
+2. Click Monitor.
+3. See Not Joined / Waiting / Approved / Testing / Finished live.
+4. Confirm Waiting students.
 
-Testing:
-1. Make sure Firestore Database exists.
-2. Publish the development Firestore rules.
-3. Upload this build to GitHub Pages.
-4. Open Teacher Dashboard.
-5. Add a fake student.
-6. Confirm the student appears in Firestore -> Data -> students.
-7. Refresh the website and confirm the student remains visible.
-8. Add a second student with Auto Assign ID and confirm IDs increment.
+Requires Firebase/Firestore.
+Use fake student data until Authentication and secure Firestore rules are added.

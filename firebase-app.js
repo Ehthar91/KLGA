@@ -15,7 +15,8 @@ import {
   query,
   where,
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -102,16 +103,29 @@ window.KLGAFirebase={
 
   async setStudentStatus(sessionKey,studentKey,status){
     if(!db) return;
-    const ref=doc(db,"sessions",sessionKey);
     await setDoc(
       doc(db,"sessionStudents",sessionKey+"_"+studentKey),
-      {
-        sessionKey,
-        studentKey,
-        status,
-        updatedAt:serverTimestamp()
-      },
+      { sessionKey, studentKey, status, updatedAt:serverTimestamp() },
       {merge:true}
+    );
+  },
+
+  subscribeStudentStatus(sessionKey,studentKey,callback){
+    if(!db) return ()=>{};
+    return onSnapshot(
+      doc(db,"sessionStudents",sessionKey+"_"+studentKey),
+      snap=>callback(snap.exists()?{key:snap.id,...snap.data()}:null),
+      err=>console.error("Student status listener failed:",err)
+    );
+  },
+
+  subscribeSessionStudents(sessionKey,callback){
+    if(!db) return ()=>{};
+    const q=query(collection(db,"sessionStudents"),where("sessionKey","==",sessionKey));
+    return onSnapshot(
+      q,
+      snap=>callback(snap.docs.map(d=>({key:d.id,...d.data()}))),
+      err=>console.error("Session monitor listener failed:",err)
     );
   }
 };

@@ -71,6 +71,21 @@ async function cloudSetStudentJoin(sessionKey,studentKey,status){
   return true;
 }
 
+async function cloudSubscribeStudentStatus(sessionKey,studentKey,callback){
+  if(await fbReady() && window.KLGAFirebase.subscribeStudentStatus){
+    return window.KLGAFirebase.subscribeStudentStatus(sessionKey,studentKey,callback);
+  }
+  return ()=>{};
+}
+
+async function cloudSubscribeSessionStudents(sessionKey,callback){
+  if(await fbReady() && window.KLGAFirebase.subscribeSessionStudents){
+    return window.KLGAFirebase.subscribeSessionStudents(sessionKey,callback);
+  }
+  return ()=>{};
+}
+
+
 
 const consonants=[
 {l:'က',s:'Ka'},{l:'ခ',s:'Ka'},{l:'ဂ',s:'Ga'},{l:'ဃ',s:'Kha'},{l:'င',s:'Ngah'},{l:'စ',s:'Sa'},{l:'ဆ',s:'Cha'},{l:'ရှ',s:'Sha'},{l:'ည',s:'Nya'},{l:'တ',s:'Ta'},{l:'ထ',s:'Ta'},{l:'ဒ',s:'Da'},{l:'န',s:'Na'},{l:'ပ',s:'Pa'},{l:'ဖ',s:'Pa'},{l:'ဘ',s:'Ba'},{l:'မ',s:'Ma'},{l:'ယ',s:'Ya'},{l:'ရ',s:'Ra'},{l:'လ',s:'La'},{l:'ဝ',s:'Wa'},{l:'သ',s:'Tha'},{l:'ဟ',s:'Ha'},{l:'အ',s:'Ah'},{l:'ဧ',s:'Ahh'}
@@ -803,6 +818,9 @@ function finishAdaptive(level){
   saved.push(result);
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
   cloudSaveResult(result).catch(()=>{});
+  if(joinedSession && joinedStudent){
+    cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"finished").catch(()=>{});
+  }
   showView('result');
 }
 
@@ -856,6 +874,9 @@ function finishIndividual(){
   saved.push(result);
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
   cloudSaveResult(result).catch(()=>{});
+  if(joinedSession && joinedStudent){
+    cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"finished").catch(()=>{});
+  }
   showView('result');
 }
 
@@ -865,6 +886,89 @@ function finishIndividual(){
    TESTING SESSIONS
 ---------------------------- */
 let editingSessionKey=null;
+
+let activeMonitorSession=null;
+let stopSessionMonitor=null;
+let stopStudentStatusListener=null;
+
+function statusLabel(s){
+  return ({
+    "not joined":"Not Joined",
+    waiting:"Waiting",
+    approved:"Approved",
+    testing:"Testing",
+    finished:"Finished"
+  })[s] || s;
+}
+
+async function openLiveMonitor(sessionKey){
+  const sessions=await cloudLoadSessions();
+  const session=sessions.find(s=>s.key===sessionKey);
+  if(!session) return;
+
+  activeMonitorSession=session;
+  liveSessionMonitor.classList.remove("hidden");
+  liveSessionTitle.textContent=session.name;
+  liveSessionMeta.textContent=(session.testType==="adaptive"?"Adaptive Test":"Level "+session.level)+" • "+session.status;
+
+  if(stopSessionMonitor) stopSessionMonitor();
+  stopSessionMonitor=await cloudSubscribeSessionStudents(session.key,statuses=>{
+    renderLiveSessionStudents(session,statuses);
+  });
+}
+
+function closeLiveMonitor(){
+  liveSessionMonitor.classList.add("hidden");
+  if(stopSessionMonitor) stopSessionMonitor();
+  stopSessionMonitor=null;
+  activeMonitorSession=null;
+}
+
+async function renderLiveSessionStudents(session,statuses){
+  const roster=await cloudLoadRoster();
+  const assigned=(session.studentKeys||[])
+    .map(k=>roster.find(r=>r.key===k))
+    .filter(Boolean)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  const map={};
+  (statuses||[]).forEach(x=>map[x.studentKey]=x);
+
+  let waiting=0,approved=0,testing=0,finished=0;
+  liveSessionStudentsBody.innerHTML="";
+
+  assigned.forEach(student=>{
+    const status=map[student.key]?.status || "not joined";
+    if(status==="waiting") waiting++;
+    if(status==="approved") approved++;
+    if(status==="testing") testing++;
+    if(status==="finished") finished++;
+
+    const action=status==="waiting"
+      ? `<button class="btn mini primary" data-confirm-live="${student.key}">Confirm</button>`
+      : `<span class="muted">${statusLabel(status)}</span>`;
+
+    const tr=document.createElement("tr");
+    tr.innerHTML=
+      `<td><strong>${esc(student.name)}</strong></td>`+
+      `<td>${esc(student.studentId)}</td>`+
+      `<td>${esc(student.grade)}</td>`+
+      `<td><span class="status-pill status-${status.replace(" ","-")}">${statusLabel(status)}</span></td>`+
+      `<td>${action}</td>`;
+    liveSessionStudentsBody.appendChild(tr);
+  });
+
+  monitorAssigned.textContent=assigned.length;
+  monitorWaiting.textContent=waiting;
+  monitorApproved.textContent=approved;
+  monitorTesting.textContent=testing;
+  monitorFinished.textContent=finished;
+
+  document.querySelectorAll("[data-confirm-live]").forEach(btn=>{
+    btn.onclick=()=>cloudSetStudentJoin(session.key,btn.dataset.confirmLive,"approved");
+  });
+}
+
 
 function loadSessions(){
   return JSON.parse(localStorage.getItem('klgaTestingSessions')||'[]');
@@ -1013,6 +1117,9 @@ async function renderSessions(){
       `<td><span class="status-pill status-${String(s.status).toLowerCase()}">${esc(s.status)}</span></td>`+
       `<td class="row-actions">`+
       `<button class="btn mini secondary" data-session-edit="${s.key}">Edit</button>`+
+      (s.status==='Active'
+        ? `<button class="btn mini secondary" data-session-monitor="${s.key}">Monitor</button>`
+        : '')+
       (s.status!=='Active'
         ? `<button class="btn mini primary" data-session-start="${s.key}">Start</button>`
         : `<button class="btn mini ghost" data-session-end="${s.key}">End</button>`)+
@@ -1022,6 +1129,7 @@ async function renderSessions(){
   });
 
   document.querySelectorAll('[data-session-edit]').forEach(btn=>btn.onclick=()=>editSession(btn.dataset.sessionEdit));
+  document.querySelectorAll('[data-session-monitor]').forEach(btn=>btn.onclick=()=>openLiveMonitor(btn.dataset.sessionMonitor));
   document.querySelectorAll('[data-session-start]').forEach(btn=>btn.onclick=()=>setSessionStatus(btn.dataset.sessionStart,'Active'));
   document.querySelectorAll('[data-session-end]').forEach(btn=>btn.onclick=()=>setSessionStatus(btn.dataset.sessionEnd,'Ended'));
   document.querySelectorAll('[data-session-delete]').forEach(btn=>btn.onclick=()=>deleteSession(btn.dataset.sessionDelete));
@@ -1315,6 +1423,10 @@ beginTestBtn.onclick=()=>{
   state.window=window;
   state.mode=mode;
 
+  if(joinedSession && joinedStudent){
+    cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"testing").catch(()=>{});
+  }
+
   showView('test');
 
   if(mode==='individual'){
@@ -1326,6 +1438,7 @@ beginTestBtn.onclick=()=>{
 
 
 
+closeLiveMonitorBtn.onclick=closeLiveMonitor;
 createSessionBtn.onclick=()=>openSessionForm();
 cancelSessionBtn.onclick=closeSessionForm;
 saveSessionBtn.onclick=persistSession;
@@ -1395,31 +1508,40 @@ confirmStudentJoinBtn.onclick=async()=>{
   if(!student || !joinedSession) return;
 
   joinedStudent=student;
-  await cloudSetStudentJoin(joinedSession.key,student.key,'waiting');
+  await cloudSetStudentJoin(joinedSession.key,student.key,"waiting");
 
-  waitingApprovalWrap.classList.remove('hidden');
-  confirmStudentJoinBtn.classList.add('hidden');
+  waitingApprovalWrap.classList.remove("hidden");
+  confirmStudentJoinBtn.classList.add("hidden");
 
-  // Local prototype proceeds after a short delay.
-  // With Firebase configured, teacher-side approval can later replace this.
-  setTimeout(()=>{
-    studentName.value=student.name;
-    studentGrade.value=student.grade;
-    testWindow.value='Fall';
+  if(stopStudentStatusListener) stopStudentStatusListener();
 
-    if(joinedSession.testType==='individual'){
-      testMode.value='individual';
-      individualLevelWrap.classList.remove('hidden');
-      questionCountWrap.classList.remove('hidden');
-      individualLevel.value=String(joinedSession.level||1);
-    }else{
-      testMode.value='adaptive';
-      individualLevelWrap.classList.add('hidden');
-      questionCountWrap.classList.add('hidden');
+  stopStudentStatusListener=await cloudSubscribeStudentStatus(
+    joinedSession.key,
+    student.key,
+    statusRecord=>{
+      if(statusRecord?.status!=="approved") return;
+
+      if(stopStudentStatusListener) stopStudentStatusListener();
+      stopStudentStatusListener=null;
+
+      studentName.value=student.name;
+      studentGrade.value=student.grade;
+
+      if(joinedSession.testType==="individual"){
+        testMode.value="individual";
+        individualLevelWrap.classList.remove("hidden");
+        questionCountWrap.classList.remove("hidden");
+        individualLevel.value=String(joinedSession.level||1);
+      }else{
+        testMode.value="adaptive";
+        individualLevelWrap.classList.add("hidden");
+        questionCountWrap.classList.add("hidden");
+      }
+
+      waitingApprovalWrap.classList.add("hidden");
+      showView("setup");
     }
-
-    showView('setup');
-  },700);
+  );
 };
 
 
