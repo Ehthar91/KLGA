@@ -1,20 +1,12 @@
-# KLGA Live Session Confirmation
+# KLGA Live Session — Start/End Fix
 
-Student flow:
-1. Enter Session Name + Password.
-2. Select roster name.
-3. Status becomes Waiting.
-4. Teacher sees the student live in Session Monitor.
-5. Teacher clicks Confirm.
-6. Student is released to the assigned test.
-7. Status changes to Testing when the test begins.
-8. Status changes to Finished when the test is completed.
+Fixed a Firebase session bug:
 
-Teacher flow:
-1. Start a testing session.
-2. Click Monitor.
-3. See Not Joined / Waiting / Approved / Testing / Finished live.
-4. Confirm Waiting students.
+- Start Session now loads the session from Firestore.
+- End Session now loads/updates the session in Firestore.
+- Delete Session now loads/deletes the session from Firestore.
+- Starting a session automatically opens the Live Session Monitor.
+- Helpful error messages are shown if Firestore cannot update the session.
 
-Requires Firebase/Firestore.
-Use fake student data until Authentication and secure Firestore rules are added.
+The previous version still used localStorage inside the Start/End/Delete handlers,
+which caused Firebase-created sessions to appear but not start.

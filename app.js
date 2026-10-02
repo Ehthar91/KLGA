@@ -1078,21 +1078,55 @@ async function editSession(key){
   if(session) openSessionForm(session);
 }
 async function setSessionStatus(key,status){
-  const sessions=loadSessions();
-  const idx=sessions.findIndex(s=>s.key===key);
-  if(idx<0) return;
-  sessions[idx].status=status;
-  sessions[idx].updatedAt=new Date().toLocaleString();
-  await cloudSaveSession(sessions[idx]);
-  renderSessions();
+  try{
+    const sessions=await cloudLoadSessions();
+    const idx=sessions.findIndex(s=>s.key===key);
+
+    if(idx<0){
+      alert('Session could not be found in Firebase. Refresh the page and try again.');
+      return;
+    }
+
+    const updated={
+      ...sessions[idx],
+      status,
+      updatedAt:new Date().toLocaleString()
+    };
+
+    await cloudSaveSession(updated);
+    await renderSessions();
+
+    if(status==='Active'){
+      await openLiveMonitor(key);
+    }else if(activeMonitorSession?.key===key){
+      closeLiveMonitor();
+    }
+  }catch(err){
+    console.error('Session status update failed:',err);
+    alert('Could not update the session. Check your Firestore connection and rules.');
+  }
 }
 async function deleteSession(key){
-  const sessions=loadSessions();
-  const session=sessions.find(s=>s.key===key);
-  if(!session) return;
-  if(confirm(`Delete session ${session.name}?`)){
-    await cloudDeleteSession(key);
-    renderSessions();
+  try{
+    const sessions=await cloudLoadSessions();
+    const session=sessions.find(s=>s.key===key);
+    if(!session){
+      alert('Session could not be found in Firebase.');
+      return;
+    }
+
+    if(confirm(`Delete session ${session.name}?`)){
+      await cloudDeleteSession(key);
+
+      if(activeMonitorSession?.key===key){
+        closeLiveMonitor();
+      }
+
+      await renderSessions();
+    }
+  }catch(err){
+    console.error('Session delete failed:',err);
+    alert('Could not delete the session. Check your Firestore connection and rules.');
   }
 }
 async function renderSessions(){
