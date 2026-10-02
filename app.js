@@ -1538,53 +1538,181 @@ function closeTeacherResultDetail(){
   teacherResultDetailModal.setAttribute('aria-hidden','true');
 }
 
-async function renderDashboard(resultsOverride=null){
-  const bodies={"6":grade6ResultsBody,"7":grade7ResultsBody,"8":grade8ResultsBody};
-  const counts={"6":grade6ResultsCount,"7":grade7ResultsCount,"8":grade8ResultsCount};
 
-  Object.values(bodies).forEach(body=>{
-    body.innerHTML='<tr><td colspan="9" class="empty-row">Loading results…</td></tr>';
-  });
+function schoolYearFromResult(result){
+  // Prefer a saved schoolYear value if one exists.
+  if(result.schoolYear) return String(result.schoolYear);
+
+  // Derive a school year from the saved result date.
+  // July-Dec belongs to year -> year+1; Jan-Jun belongs to year-1 -> year.
+  const raw=result.date || result.createdAt;
+  let d=null;
+
+  if(result.createdAt?.seconds){
+    d=new Date(result.createdAt.seconds*1000);
+  }else if(raw){
+    d=new Date(raw);
+  }
+
+  if(!d || Number.isNaN(d.getTime())) return 'Unknown Year';
+
+  const y=d.getFullYear();
+  const m=d.getMonth()+1;
+  return m>=7 ? `${y}–${String(y+1).slice(-2)}` : `${y-1}–${String(y).slice(-2)}`;
+}
+
+function seasonFromResult(result){
+  const value=String(result.window||'').trim();
+  if(/^fall$/i.test(value)) return 'Fall';
+  if(/^spring$/i.test(value)) return 'Spring';
+  if(/^winter$/i.test(value)) return 'Winter';
+  return value || 'Unspecified';
+}
+
+function yearSortValue(label){
+  const m=String(label).match(/^(\d{4})/);
+  return m ? Number(m[1]) : -1;
+}
+
+function seasonSortValue(season){
+  const order={Fall:1,Winter:2,Spring:3,Unspecified:4};
+  return order[season] || 9;
+}
+
+async function renderDashboard(resultsOverride=null){
+  resultsHierarchy.innerHTML='<div class="empty-row">Loading results…</div>';
 
   try{
     const r=resultsOverride || await cloudLoadResults();
     const sorted=[...r].sort((a,b)=>resultSortTime(b)-resultSortTime(a));
     teacherResultCache=sorted;
 
-    ["6","7","8"].forEach(grade=>{
-      const gradeResults=sorted.filter(x=>String(x.grade)===grade);
-      counts[grade].textContent=`${gradeResults.length} result${gradeResults.length===1?'':'s'}`;
-      bodies[grade].innerHTML='';
+    if(!sorted.length){
+      resultsHierarchy.innerHTML='<div class="empty-row">No KLGA results yet.</div>';
+      return;
+    }
 
-      if(!gradeResults.length){
-        bodies[grade].innerHTML='<tr><td colspan="9" class="empty-row">No results for this grade yet.</td></tr>';
-        return;
-      }
+    const grouped={};
 
-      gradeResults.forEach(x=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=
-          `<td>${esc(x.student||'')}</td>`+
-          `<td>${esc(x.window||'')}</td>`+
-          `<td>${esc(x.mode||'')}</td>`+
-          `<td>${esc(x.questions??'')}</td>`+
-          `<td>${esc(x.path||'')}</td>`+
-          `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
-          `<td>${esc(x.overall??'')}%</td>`+
-          `<td>${esc(x.date||'')}</td>`+
-          `<td><button class="btn mini secondary" data-result-detail="${x.key}">View Details</button></td>`;
-        bodies[grade].appendChild(tr);
+    sorted.forEach(result=>{
+      const year=schoolYearFromResult(result);
+      const season=seasonFromResult(result);
+      const grade=String(result.grade||'Unknown');
+
+      grouped[year] ??= {};
+      grouped[year][season] ??= {};
+      grouped[year][season][grade] ??= [];
+      grouped[year][season][grade].push(result);
+    });
+
+    const years=Object.keys(grouped).sort((a,b)=>yearSortValue(b)-yearSortValue(a));
+    resultsHierarchy.innerHTML='';
+
+    years.forEach(year=>{
+      const yearSection=document.createElement('section');
+      yearSection.className='results-year-section';
+
+      const totalForYear=Object.values(grouped[year])
+        .flatMap(seasons=>Object.values(seasons))
+        .reduce((sum,arr)=>sum+arr.length,0);
+
+      yearSection.innerHTML=
+        `<div class="results-year-header">`+
+          `<div><div class="eyebrow">School Year</div><h2>${esc(year)}</h2></div>`+
+          `<span class="grade-count">${totalForYear} result${totalForYear===1?'':'s'}</span>`+
+        `</div>`;
+
+      const seasonsWrap=document.createElement('div');
+      seasonsWrap.className='results-seasons-wrap';
+
+      const seasons=Object.keys(grouped[year]).sort((a,b)=>seasonSortValue(a)-seasonSortValue(b));
+
+      seasons.forEach(season=>{
+        const seasonSection=document.createElement('section');
+        seasonSection.className='results-season-section';
+
+        const seasonTotal=Object.values(grouped[year][season])
+          .reduce((sum,arr)=>sum+arr.length,0);
+
+        seasonSection.innerHTML=
+          `<div class="results-season-header">`+
+            `<h3>${esc(season)}</h3>`+
+            `<span class="grade-count">${seasonTotal} result${seasonTotal===1?'':'s'}</span>`+
+          `</div>`;
+
+        const gradesWrap=document.createElement('div');
+        gradesWrap.className='results-grade-grid';
+
+        ['6','7','8'].forEach(grade=>{
+          const gradeResults=(grouped[year][season][grade]||[])
+            .slice()
+            .sort((a,b)=>resultSortTime(b)-resultSortTime(a));
+
+          const gradeSection=document.createElement('section');
+          gradeSection.className='grade-results-section';
+          gradeSection.innerHTML=
+            `<div class="grade-results-title">`+
+              `<h4>Grade ${grade}</h4>`+
+              `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
+            `</div>`;
+
+          const tableWrap=document.createElement('div');
+          tableWrap.className='table-wrap';
+
+          tableWrap.innerHTML=
+            `<table>`+
+              `<thead><tr>`+
+                `<th>Student</th>`+
+                `<th>Mode</th>`+
+                `<th>Questions</th>`+
+                `<th>Path / Level</th>`+
+                `<th>Result</th>`+
+                `<th>Overall</th>`+
+                `<th>Date</th>`+
+                `<th>Details</th>`+
+              `</tr></thead>`+
+              `<tbody></tbody>`+
+            `</table>`;
+
+          const tbody=tableWrap.querySelector('tbody');
+
+          if(!gradeResults.length){
+            tbody.innerHTML='<tr><td colspan="8" class="empty-row">No results for this grade.</td></tr>';
+          }else{
+            gradeResults.forEach(x=>{
+              const tr=document.createElement('tr');
+              tr.innerHTML=
+                `<td>${esc(x.student||'')}</td>`+
+                `<td>${esc(x.mode||'')}</td>`+
+                `<td>${esc(x.questions??'')}</td>`+
+                `<td>${esc(x.path||'')}</td>`+
+                `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
+                `<td>${esc(x.overall??'')}%</td>`+
+                `<td>${esc(x.date||'')}</td>`+
+                `<td><button class="btn mini secondary" data-result-detail="${x.key}">View Details</button></td>`;
+              tbody.appendChild(tr);
+            });
+          }
+
+          gradeSection.appendChild(tableWrap);
+          gradesWrap.appendChild(gradeSection);
+        });
+
+        seasonSection.appendChild(gradesWrap);
+        seasonsWrap.appendChild(seasonSection);
       });
+
+      yearSection.appendChild(seasonsWrap);
+      resultsHierarchy.appendChild(yearSection);
     });
 
     document.querySelectorAll('[data-result-detail]').forEach(btn=>{
       btn.onclick=()=>openTeacherResultDetail(btn.dataset.resultDetail);
     });
+
   }catch(err){
     console.error('Results load failed:',err);
-    Object.values(bodies).forEach(body=>{
-      body.innerHTML='<tr><td colspan="9" class="empty-row">Could not load results from Firebase.</td></tr>';
-    });
+    resultsHierarchy.innerHTML='<div class="empty-row">Could not load results from Firebase.</div>';
   }
 }
 

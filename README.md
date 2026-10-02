@@ -1,19 +1,28 @@
-# KLGA — Teacher Dashboard Startup Fix
+# KLGA — Results Sorted by School Year, Season, and Grade
 
-Fixed the regression introduced by the Teacher Result Details feature.
+Teacher results are now organized in this hierarchy:
 
-Cause:
-The result-details modal was placed after app.js in index.html. app.js attempted
-to bind events to modal elements before those elements existed, causing a
-runtime error and preventing Teacher Dashboard authentication handlers from
-finishing initialization.
+School Year
+- Fall
+  - Grade 6
+  - Grade 7
+  - Grade 8
+- Winter (shown only if existing data uses Winter)
+  - Grade 6
+  - Grade 7
+  - Grade 8
+- Spring
+  - Grade 6
+  - Grade 7
+  - Grade 8
 
-Fixes:
-- Moved Teacher Result Details modal before Firebase/app scripts.
-- Added defensive close-button event binding.
-- Preserved Google teacher sign-in.
-- Preserved teacher allowlist authorization.
-- Preserved anonymous student authentication.
-- Preserved roster, sessions, live monitor, grade-separated results, and View Details.
+School year is derived from the saved result date:
+- July–December -> current year to next year
+- January–June -> previous year to current year
 
-No Firestore data or authentication configuration needs to be changed.
+Example:
+September 2026 -> 2026–27
+March 2027 -> 2026–27
+
+Existing View Details, Google teacher sign-in, Firestore live updates,
+CSV export, sessions, roster, and student authentication remain intact.

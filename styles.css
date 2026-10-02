@@ -99,3 +99,19 @@
 .detail-section{margin-top:20px}
 .result-path-box{border:1px solid #dbe3ee;border-radius:12px;padding:14px;background:#f8fafc;font-weight:600}
 @media(max-width:800px){.result-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.results-hierarchy{display:grid;gap:28px}
+.results-year-section{border:1px solid #cbd5e1;border-radius:18px;background:#fff;overflow:hidden}
+.results-year-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.results-year-header h2{margin:2px 0 0}
+.results-seasons-wrap{display:grid;gap:22px;padding:18px}
+.results-season-section{border:1px solid #dbe3ee;border-radius:16px;overflow:hidden}
+.results-season-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:#f1f5f9;border-bottom:1px solid #dbe3ee}
+.results-season-header h3{margin:0}
+.results-grade-grid{display:grid;gap:18px;padding:16px}
+.grade-results-section{border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff}
+.grade-results-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.grade-results-title h4{margin:0;font-size:16px}
+@media(max-width:900px){
+  .results-seasons-wrap,.results-grade-grid{padding:12px}
+}
