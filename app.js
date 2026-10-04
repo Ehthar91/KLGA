@@ -1333,7 +1333,10 @@ async function openSessionForm(session=null){
     sessionPassword.value=session.password;
     sessionTestType.value=session.testType;
     sessionLevel.value=session.level||'1';
-    sessionLevelWrap.classList.toggle('hidden',session.testType!=='individual');
+    sessionQuestionCount.value=String(session.questionCount||'8');
+    const isIndividual=session.testType==='individual';
+    sessionLevelWrap.classList.toggle('hidden',!isIndividual);
+    sessionQuestionCountWrap.classList.toggle('hidden',!isIndividual);
     await renderSessionStudentChecklist(session.studentKeys||[]);
     saveSessionBtn.textContent='Update Session';
   }else{
@@ -1342,7 +1345,9 @@ async function openSessionForm(session=null){
     sessionPassword.value=generateSessionPassword();
     sessionTestType.value='adaptive';
     sessionLevel.value='1';
+    sessionQuestionCount.value='8';
     sessionLevelWrap.classList.add('hidden');
+    sessionQuestionCountWrap.classList.add('hidden');
     await renderSessionStudentChecklist([]);
     saveSessionBtn.textContent='Save Session';
   }
@@ -1356,6 +1361,7 @@ async function persistSession(){
   const password=sessionPassword.value.trim();
   const testType=sessionTestType.value;
   const level=testType==='individual'?Number(sessionLevel.value):null;
+  const questionCount=testType==='individual'?sessionQuestionCount.value:null;
   const studentKeys=selectedSessionStudentKeys();
   const rosterForSession=await cloudLoadRoster();
   const studentSummaries=studentKeys
@@ -1385,11 +1391,11 @@ async function persistSession(){
   let session;
   if(editingSessionKey){
     const existing=sessions.find(s=>s.key===editingSessionKey);
-    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,studentKeys,studentSummaries};
+    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,questionCount,studentKeys,studentSummaries};
   }else{
     session={
       key:'ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-      name,password,testType,level,studentKeys,studentSummaries,status:'Draft',
+      name,password,testType,level,questionCount,studentKeys,studentSummaries,status:'Draft',
       createdAt:new Date().toLocaleString()
     };
   }
@@ -1481,7 +1487,9 @@ async function renderSessions(){
   }
   sessions.slice().reverse().forEach(s=>{
     const studentNames=(s.studentKeys||[]).map(k=>roster.find(r=>r.key===k)?.name).filter(Boolean);
-    const testLabel=s.testType==='adaptive'?'Adaptive':`Level ${s.level}`;
+    const testLabel=s.testType==='adaptive'
+      ? 'Adaptive • 40 questions'
+      : `Level ${s.level} • ${s.questionCount||8} question${String(s.questionCount||8)==='1'?'':'s'}`;
     const tr=document.createElement('tr');
     tr.innerHTML=
       `<td><strong>${esc(s.name)}</strong></td>`+
@@ -2616,10 +2624,60 @@ document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home
 
 returnHomeBtn.onclick=()=>{
   state=fresh();
+  joinedSession=null;
+  joinedStudent=null;
+  applyStudentSessionAssignment();
   showView('home');
 };
 
+
+function applyStudentSessionAssignment(){
+  const inSession=Boolean(joinedSession && joinedStudent);
+
+  if(!inSession){
+    testModeWrap.classList.remove('hidden');
+    assignedAssessmentWrap.classList.add('hidden');
+    testMode.disabled=false;
+    individualLevel.disabled=false;
+    questionCount.disabled=false;
+    return;
+  }
+
+  testModeWrap.classList.add('hidden');
+  assignedAssessmentWrap.classList.remove('hidden');
+
+  const isIndividual=joinedSession.testType==='individual';
+  testMode.value=isIndividual?'individual':'adaptive';
+  testMode.disabled=true;
+
+  if(isIndividual){
+    const assignedLevel=Number(joinedSession.level||1);
+    const assignedCount=String(joinedSession.questionCount||'8');
+    individualLevel.value=String(assignedLevel);
+    questionCount.value=assignedCount;
+    individualLevel.disabled=true;
+    questionCount.disabled=true;
+    individualLevelWrap.classList.remove('hidden');
+    questionCountWrap.classList.remove('hidden');
+
+    assignedAssessmentType.textContent=`Individual Level Test — Level ${assignedLevel}`;
+    assignedAssessmentDetails.textContent=`${assignedCount==='all'?'All available':assignedCount} questions • Assigned by teacher`;
+  }else{
+    individualLevelWrap.classList.add('hidden');
+    questionCountWrap.classList.add('hidden');
+    individualLevel.disabled=false;
+    questionCount.disabled=false;
+
+    assignedAssessmentType.textContent='Adaptive Test';
+    assignedAssessmentDetails.textContent='40 questions • Assigned by teacher';
+  }
+}
+
 testMode.onchange=()=>{
+  if(joinedSession && joinedStudent){
+    applyStudentSessionAssignment();
+    return;
+  }
   const isIndividual=testMode.value==='individual';
   individualLevelWrap.classList.toggle('hidden',!isIndividual);
   questionCountWrap.classList.toggle('hidden',!isIndividual);
@@ -2629,7 +2687,9 @@ beginTestBtn.onclick=()=>{
   const name=studentName.value.trim();
   const grade=studentGrade.value;
   const window=testWindow.value;
-  const mode=testMode.value;
+  const mode=(joinedSession && joinedStudent)
+    ? (joinedSession.testType==='individual'?'individual':'adaptive')
+    : testMode.value;
 
   if(!name||!grade){
     alert('Please enter student name and grade.');
@@ -2649,7 +2709,13 @@ beginTestBtn.onclick=()=>{
   showView('test');
 
   if(mode==='individual'){
-    beginIndividual(Number(individualLevel.value),questionCount.value);
+    const level=(joinedSession && joinedStudent)
+      ? Number(joinedSession.level||1)
+      : Number(individualLevel.value);
+    const count=(joinedSession && joinedStudent)
+      ? String(joinedSession.questionCount||'8')
+      : questionCount.value;
+    beginIndividual(level,count);
   }else{
     beginLevel(2);
   }
@@ -2663,7 +2729,11 @@ cancelSessionBtn.onclick=closeSessionForm;
 saveSessionBtn.onclick=persistSession;
 generateSessionNameBtn.onclick=()=>sessionName.value=generateSessionName();
 generatePasswordBtn.onclick=()=>sessionPassword.value=generateSessionPassword();
-sessionTestType.onchange=()=>sessionLevelWrap.classList.toggle('hidden',sessionTestType.value!=='individual');
+sessionTestType.onchange=()=>{
+  const isIndividual=sessionTestType.value==='individual';
+  sessionLevelWrap.classList.toggle('hidden',!isIndividual);
+  sessionQuestionCountWrap.classList.toggle('hidden',!isIndividual);
+};
 selectAllSessionStudentsBtn.onclick=()=>sessionStudentChecklist.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=true);
 clearSessionStudentsBtn.onclick=()=>sessionStudentChecklist.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=false);
 
@@ -2751,16 +2821,7 @@ confirmStudentJoinBtn.onclick=async()=>{
       studentName.value=student.name;
       studentGrade.value=student.grade;
 
-      if(joinedSession.testType==="individual"){
-        testMode.value="individual";
-        individualLevelWrap.classList.remove("hidden");
-        questionCountWrap.classList.remove("hidden");
-        individualLevel.value=String(joinedSession.level||1);
-      }else{
-        testMode.value="adaptive";
-        individualLevelWrap.classList.add("hidden");
-        questionCountWrap.classList.add("hidden");
-      }
+      applyStudentSessionAssignment();
 
       waitingApprovalWrap.classList.add("hidden");
       showView("setup");

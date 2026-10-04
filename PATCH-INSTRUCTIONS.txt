@@ -1,19 +1,16 @@
-KLGA CLEAR RESULTS BY GRADE PATCH
+KLGA SESSION-CONTROLLED TEST MODE PATCH
 
-Replace these files:
+Replace:
+- index.html
 - app.js
-- firebase-app.js
 - styles.css
 
-New behavior:
-- Each School Year > Season > Grade result card has its own Clear Results button.
-- It only deletes results from that exact grade card.
-- A warning popup shows:
-  • School year
-  • Season
-  • Grade
-  • Number of results
-- Cancel or Escape closes the warning without deleting.
-- The main Clear Results button also uses the same stronger warning popup.
+Fixes:
+- Students joining a session can no longer choose Adaptive vs Individual.
+- Adaptive sessions are locked to Adaptive Test and 40 questions.
+- Individual sessions are locked to the teacher-selected level.
+- Individual sessions now also let the teacher choose question count.
+- Students can see the assigned assessment settings, but cannot change them.
+- The session settings are enforced in app.js, not just hidden in the UI.
 
-No Firestore rules changes are required.
+No Firebase or Firestore changes are required.

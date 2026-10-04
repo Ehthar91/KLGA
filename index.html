@@ -123,12 +123,17 @@
 <label>Student Name<input id="studentName" type="text" placeholder="Enter your name"></label>
 <label>Grade<select id="studentGrade"><option value="">Select grade</option><option>6</option><option>7</option><option>8</option></select></label>
 <label>Testing Window<select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select></label>
-<label>Test Mode
+<label id="testModeWrap">Test Mode
 <select id="testMode">
 <option value="adaptive">Adaptive Test</option>
 <option value="individual">Individual Level Test</option>
 </select>
 </label>
+<div id="assignedAssessmentWrap" class="assigned-assessment-card hidden">
+  <span class="assigned-assessment-label">Assigned Assessment</span>
+  <strong id="assignedAssessmentType">Adaptive Test</strong>
+  <small id="assignedAssessmentDetails">Teacher assigned</small>
+</div>
 <label id="individualLevelWrap" class="hidden">Choose Level
 <select id="individualLevel">
 <option value="1">Level 1 — Foundations</option>
@@ -310,6 +315,16 @@
           <option value="3">Level 3 — Blend Reading</option>
           <option value="4">Level 4 — Advanced Sound Building</option>
           <option value="5">Level 5 — Phrase Reading</option>
+        </select>
+      </label>
+      <label id="sessionQuestionCountWrap" class="hidden">Question Count
+        <select id="sessionQuestionCount">
+          <option value="5">5 Random Questions</option>
+          <option value="8" selected>8 Random Questions</option>
+          <option value="10">10 Random Questions</option>
+          <option value="15">15 Random Questions</option>
+          <option value="20">20 Random Questions</option>
+          <option value="all">All Questions</option>
         </select>
       </label>
     </div>
