@@ -2363,3 +2363,61 @@ body.theme-dark .live-monitor.is-screen-open .live-progress-table thead th{
     top:112px;
   }
 }
+
+
+/* ===== TRUE DEDICATED MONITOR MODE ===== */
+body.dedicated-monitor-mode #homeView,
+body.dedicated-monitor-mode #joinSessionView,
+body.dedicated-monitor-mode #studentSetupView,
+body.dedicated-monitor-mode #testView,
+body.dedicated-monitor-mode #resultView{
+  display:none !important;
+}
+
+body.dedicated-monitor-mode #teacherView{
+  display:block !important;
+}
+
+body.dedicated-monitor-mode #teacherView > .workspace-banner,
+body.dedicated-monitor-mode #teacherView > .teacher-account-bar,
+body.dedicated-monitor-mode .teacher-tab-nav,
+body.dedicated-monitor-mode #teacherOverviewPanel,
+body.dedicated-monitor-mode #teacherStudentsPanel,
+body.dedicated-monitor-mode #teacherResultsPanel,
+body.dedicated-monitor-mode #teacherSessionsPanel > .roster-head,
+body.dedicated-monitor-mode #teacherSessionsPanel > .student-form-wrap,
+body.dedicated-monitor-mode #teacherSessionsPanel > .table-wrap:not(.live-progress-table-wrap),
+body.dedicated-monitor-mode #teacherSessionsPanel > hr{
+  display:none !important;
+}
+
+body.dedicated-monitor-mode #teacherSessionsPanel{
+  display:block !important;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+
+body.dedicated-monitor-mode #liveSessionMonitor{
+  display:block;
+}
+
+body.dedicated-monitor-loading #homeView{
+  visibility:hidden;
+}
+
+body.dedicated-monitor-mode .app-shell{
+  max-width:none;
+  width:100%;
+  padding:0;
+  margin:0;
+}
+
+body.dedicated-monitor-mode .topbar{
+  display:none;
+}
+
+body.dedicated-monitor-mode .live-monitor.is-screen-open{
+  z-index:1600;
+}

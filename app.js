@@ -1806,14 +1806,21 @@ function clearMonitorUrlParam(){
 }
 
 function closeLiveMonitor(){
+  const wasDedicated=isDedicatedMonitorMode();
+
   setLiveMonitorFullScreen(false);
   liveSessionMonitor.classList.add("hidden");
   if(stopSessionMonitor) stopSessionMonitor();
   stopSessionMonitor=null;
   activeMonitorSession=null;
 
-  if(monitorSessionKeyFromUrl()){
+  if(wasDedicated){
     clearMonitorUrlParam();
+    document.body.classList.remove('dedicated-monitor-mode','dedicated-monitor-loading');
+    if(window.openLiveMonitorTabBtn) openLiveMonitorTabBtn.classList.remove('hidden');
+    if(window.closeLiveMonitorBtn) closeLiveMonitorBtn.textContent='Close Monitor';
+    showView('teacher');
+    setTeacherTab('sessions');
   }
 }
 
@@ -3304,6 +3311,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-overview-go]').forEach(btn=>{
     btn.addEventListener('click',()=>setTeacherTab(btn.dataset.overviewGo));
   });
+
+  if(monitorSessionKeyFromUrl()){
+    bootstrapDedicatedMonitorMode();
+  }
 });
 
 let stopResultsListener=null;
@@ -3324,33 +3335,111 @@ startStudentBtn.onclick=()=>showView('join');
 
 
 let monitorUrlAutoOpened=false;
+let dedicatedMonitorBootstrapped=false;
 
-async function openMonitorFromUrlIfRequested(){
-  const sessionKey=monitorSessionKeyFromUrl();
-  if(!sessionKey || monitorUrlAutoOpened) return;
+function isDedicatedMonitorMode(){
+  return Boolean(monitorSessionKeyFromUrl());
+}
+
+async function waitForFirebaseAuthRestore(timeoutMs=3500){
+  await fbReady();
+
+  const existing=cloudCurrentUser();
+  if(existing) return existing;
+
+  if(!window.KLGAFirebase?.onAuth) return null;
+
+  return await new Promise(resolve=>{
+    let done=false;
+    let stop=()=>{};
+
+    const finish=user=>{
+      if(done) return;
+      done=true;
+      try{ stop(); }catch(err){}
+      resolve(user||null);
+    };
+
+    stop=window.KLGAFirebase.onAuth(user=>finish(user));
+    setTimeout(()=>finish(cloudCurrentUser()),timeoutMs);
+  });
+}
+
+async function openDedicatedMonitor(sessionKey){
+  if(!sessionKey) return false;
+
+  const sessions=await cloudLoadSessions();
+  const session=sessions.find(s=>s.key===sessionKey);
+
+  if(!session){
+    teacherAuthMessage.textContent='This KLGA testing session could not be found.';
+    teacherAuthMessage.classList.remove('hidden');
+    return false;
+  }
+
+  showView('teacher');
+  setTeacherTab('sessions');
+  document.body.classList.add('dedicated-monitor-mode');
+
+  await openLiveMonitor(sessionKey);
+  setLiveMonitorFullScreen(true);
+
+  if(window.openLiveMonitorTabBtn){
+    openLiveMonitorTabBtn.classList.add('hidden');
+  }
+  if(window.closeLiveMonitorBtn){
+    closeLiveMonitorBtn.textContent='Exit Monitor';
+  }
 
   monitorUrlAutoOpened=true;
+  return true;
+}
+
+async function bootstrapDedicatedMonitorMode(){
+  const sessionKey=monitorSessionKeyFromUrl();
+  if(!sessionKey || dedicatedMonitorBootstrapped) return false;
+
+  dedicatedMonitorBootstrapped=true;
+  document.body.classList.add('dedicated-monitor-mode','dedicated-monitor-loading');
 
   try{
-    const sessions=await cloudLoadSessions();
-    const session=sessions.find(s=>s.key===sessionKey);
+    await waitForFirebaseAuthRestore();
 
-    if(!session){
-      alert('This testing session could not be found.');
-      clearMonitorUrlParam();
-      monitorUrlAutoOpened=false;
-      return;
+    const user=cloudCurrentUser();
+    if(!user || user.isAnonymous){
+      showView('auth');
+      document.body.classList.remove('dedicated-monitor-loading');
+      return true;
     }
 
-    // Open the monitor even if the session has ended so the teacher can still
-    // inspect status; live controls remain based on session status/data.
-    await openLiveMonitor(sessionKey);
+    const authorized=await cloudTeacherAuthorized();
+    if(!authorized){
+      teacherAuthMessage.textContent=`Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized as a KLGA teacher yet.`;
+      teacherAuthMessage.classList.remove('hidden');
+      teacherUidText.textContent=user.uid;
+      teacherUidBox.classList.remove('hidden');
+      showView('auth');
+      document.body.classList.remove('dedicated-monitor-loading');
+      return true;
+    }
 
-    // In a dedicated monitor URL, maximize the monitor automatically.
-    setLiveMonitorFullScreen(true);
+    teacherAccountName.textContent=user.displayName||'Teacher';
+    teacherAccountEmail.textContent=user.email||'';
+
+    await backfillSessionStudentSummaries();
+    await Promise.all([renderSessions(),renderRoster(),renderDashboard()]);
+    await startResultsListener();
+
+    await openDedicatedMonitor(sessionKey);
+    document.body.classList.remove('dedicated-monitor-loading');
+    return true;
   }catch(err){
-    console.error('Could not reopen monitor from URL:',err);
-    monitorUrlAutoOpened=false;
+    console.error('Dedicated monitor startup failed:',err);
+    teacherAuthMessage.textContent='Could not open the dedicated session monitor. Check your Firebase connection and try again.';
+    teacherAuthMessage.classList.remove('hidden');
+    showView('auth');
+    document.body.classList.remove('dedicated-monitor-loading');
+    return true;
   }
 }
 
@@ -3381,8 +3470,14 @@ async function openTeacherDashboard(){
     await backfillSessionStudentSummaries();
     await Promise.all([renderSessions(),renderRoster(),renderDashboard()]);
     await startResultsListener();
-    showView('teacher');
-    setTeacherTab('overview');
+
+    const monitorSessionKey=monitorSessionKeyFromUrl();
+    if(monitorSessionKey){
+      await openDedicatedMonitor(monitorSessionKey);
+    }else{
+      showView('teacher');
+      setTeacherTab('overview');
+    }
   }catch(err){
     console.error('Teacher access failed:',err);
     teacherAuthMessage.textContent='Could not verify teacher access. Check Firebase Authentication and Firestore rules.';
@@ -3422,14 +3517,26 @@ document.querySelectorAll('[data-close-result-detail]').forEach(el=>{
 
 teacherSignOutBtn.onclick=async()=>{
   await cloudSignOut();
-  showView('home');
+  if(isDedicatedMonitorMode()){
+    setLiveMonitorFullScreen(false);
+    liveSessionMonitor.classList.add('hidden');
+    showView('auth');
+  }else{
+    showView('home');
+  }
 };
 
 studentModeBtn.onclick=()=>showView('join');
 startTeacherBtn.onclick=openTeacherDashboard;
 teacherModeBtn.onclick=openTeacherDashboard;
 
-document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>{
+  if(isDedicatedMonitorMode()){
+    bootstrapDedicatedMonitorMode();
+    return;
+  }
+  showView('home');
+});
 
 returnHomeBtn.onclick=()=>{
   stopStudentRuntimeWatch();
@@ -3704,7 +3811,6 @@ clearResultsBtn.onclick=async()=>{
   try{
     await cloudClearResults();
     await renderDashboard();
-  await openMonitorFromUrlIfRequested();
 
   }catch(err){
     console.error('Clear results failed:',err);
@@ -3731,3 +3837,9 @@ document.addEventListener('keydown',event=>{
   const btn=section.querySelector('.grade-fullscreen-btn');
   if(btn) btn.textContent='Full Screen';
 });
+
+
+/* Dedicated monitor refresh fallback. */
+if(document.readyState!=='loading' && monitorSessionKeyFromUrl()){
+  bootstrapDedicatedMonitorMode();
+}
