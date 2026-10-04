@@ -1,25 +1,34 @@
-KLGA INDIVIDUAL STUDENT TEST CONTROLS PATCH
+KLGA LIVE PROGRESS + SPEED REVIEW PATCH
 
 Replace:
 - app.js
 - firebase-app.js
+- index.html
 - styles.css
 
-New Live Monitor actions:
+NEW TEACHER LIVE MONITOR
+- Questions answered / total
+- Percent complete
+- Current level
+- Recent average response time
+- Speed Review count/status
 
-END TEST
-- Stops only the selected student.
-- Keeps their saved progress.
-- Student can rejoin and resume later.
+AUTOMATIC SPEED REVIEW
+KLGA pauses a session student only after a sustained unusually-fast pattern:
+- at least 8 questions answered
+- 6 of the latest 8 under 2.5 seconds
+- average of latest 8 under 3.0 seconds
 
-TERMINATE & RESTART
-- Stops only the selected student.
-- Permanently clears their saved in-progress attempt.
-- Student status becomes Terminated.
-- After they rejoin and the teacher approves them again, they start from Question 1.
+When flagged:
+- student is paused automatically
+- progress is saved
+- teacher chooses:
+  • Resume Test
+  • Restart from Question 1
 
-Safety:
-- Both actions show a confirmation popup before taking effect.
-- Terminate & Restart is visually marked as the destructive option.
+Resume resets the recent pace window so the student is evaluated on a fresh pattern.
+Restart clears the saved attempt.
+
+This is a review heuristic, not a cheating determination.
 
 No Firestore rules changes are required.

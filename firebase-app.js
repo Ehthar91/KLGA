@@ -200,6 +200,8 @@ window.KLGAFirebase={
 
     if(action==="end"){
       payload.status="paused";
+    }else if(action==="resume"){
+      payload.status="testing";
     }else if(action==="terminate"){
       payload.status="terminated";
       payload.testProgress=null;

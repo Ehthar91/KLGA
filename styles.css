@@ -2165,3 +2165,115 @@ body.theme-dark .student-control-card p{
     grid-template-columns:1fr;
   }
 }
+
+
+/* ===== LIVE STUDENT PROGRESS + AUTOMATIC SPEED REVIEW ===== */
+.live-progress-table{
+  min-width:980px;
+}
+
+.monitor-stats{
+  grid-template-columns:repeat(6,minmax(0,1fr));
+}
+
+.speed-review-stat{
+  border-color:#fed7aa;
+  background:#fff7ed;
+}
+
+.speed-review-stat strong{
+  color:#c2410c;
+}
+
+.live-progress-cell{
+  min-width:150px;
+}
+
+.live-progress-text{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:6px;
+  font-size:12px;
+}
+
+.live-progress-text span{
+  color:#64748b;
+  white-space:nowrap;
+}
+
+.live-mini-progress{
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e2e8f0;
+}
+
+.live-mini-progress span{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:#2563eb;
+}
+
+.pace-value{
+  display:inline-flex;
+  align-items:center;
+  white-space:nowrap;
+  font-size:12px;
+  font-weight:800;
+  color:#475569;
+}
+
+.pace-value.pace-alert{
+  color:#c2410c;
+  background:#ffedd5;
+  border:1px solid #fed7aa;
+  padding:4px 7px;
+  border-radius:999px;
+}
+
+.status-pill.status-speed-review{
+  background:#ffedd5;
+  color:#c2410c;
+  border:1px solid #fed7aa;
+}
+
+.speed-review-actions .primary{
+  background:#2563eb;
+  color:#fff;
+}
+
+body.theme-dark .speed-review-stat{
+  background:rgba(154,52,18,.18);
+  border-color:#9a3412;
+}
+
+body.theme-dark .live-progress-text span,
+body.theme-dark .pace-value{
+  color:#94a3b8;
+}
+
+body.theme-dark .live-mini-progress{
+  background:#334155;
+}
+
+body.theme-dark .pace-value.pace-alert,
+body.theme-dark .status-pill.status-speed-review{
+  background:rgba(154,52,18,.24);
+  border-color:#c2410c;
+  color:#fdba74;
+}
+
+@media(max-width:1050px){
+  .monitor-stats{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media(max-width:650px){
+  .monitor-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

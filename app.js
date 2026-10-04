@@ -703,6 +703,15 @@ let state={};
 
 const ADAPTIVE_TOTAL_QUESTIONS=40;
 
+// Conservative pace-review heuristic.
+// KLGA only checks after 8 answered questions.
+// A student is paused when at least 6 of the last 8 answers were under 2.5 seconds
+// AND the average of those 8 answers was under 3 seconds.
+const SPEED_REVIEW_MIN_ANSWERS=8;
+const SPEED_REVIEW_WINDOW=8;
+const SPEED_REVIEW_FAST_MS=2500;
+const SPEED_REVIEW_AVG_MS=3000;
+
 function fresh(){
   return {
     studentName:'',
@@ -721,7 +730,10 @@ function fresh(){
     highestPassed:0,
     lowestFailed:6,
     totalQuestions:0,
-    usedQuestionKeys:new Set()
+    usedQuestionKeys:new Set(),
+    recentDurations:[],
+    questionStartedAt:0,
+    speedReviewCount:0
   };
 }
 state=fresh();
@@ -841,7 +853,9 @@ function serializeCurrentTestProgress(){
       highestPassed:state.highestPassed,
       lowestFailed:state.lowestFailed,
       totalQuestions:state.totalQuestions,
-      usedQuestionKeys:[...state.usedQuestionKeys]
+      usedQuestionKeys:[...state.usedQuestionKeys],
+      recentDurations:state.recentDurations,
+      speedReviewCount:state.speedReviewCount
     }
   };
 }
@@ -881,8 +895,11 @@ function restoreTestProgress(progress){
   state.lowestFailed=Number(saved.lowestFailed||6);
   state.totalQuestions=Number(saved.totalQuestions||0);
   state.usedQuestionKeys=new Set(Array.isArray(saved.usedQuestionKeys)?saved.usedQuestionKeys:[]);
+  state.recentDurations=Array.isArray(saved.recentDurations)?saved.recentDurations.map(Number).filter(Number.isFinite).slice(-SPEED_REVIEW_WINDOW):[];
+  state.speedReviewCount=Number(saved.speedReviewCount||0);
+  state.questionStartedAt=0;
 
-  return Boolean(state.currentBatch.length && state.currentIndex < state.currentBatch.length);
+  return Boolean(state.currentBatch.length && state.currentIndex <= state.currentBatch.length);
 }
 
 async function saveCurrentSessionProgress(){
@@ -1095,6 +1112,8 @@ async function startStudentRuntimeWatch(){
 
       if(action==='end'){
         endIndividualStudentTest();
+      }else if(action==='resume'){
+        resumeSpeedReviewedStudent();
       }else if(action==='terminate'){
         terminateIndividualStudentTest();
       }
@@ -1128,9 +1147,150 @@ function beginIndividual(level,countChoice){
   render();
 }
 
+
+function currentQuestionTotal(){
+  if(state.mode==='individual'){
+    return state.currentBatch.length;
+  }
+  return ADAPTIVE_TOTAL_QUESTIONS;
+}
+
+function recentPaceStatsFromDurations(durations){
+  const recent=(Array.isArray(durations)?durations:[])
+    .map(Number)
+    .filter(ms=>Number.isFinite(ms) && ms>=0)
+    .slice(-SPEED_REVIEW_WINDOW);
+
+  if(!recent.length){
+    return {count:0,averageMs:null,fastCount:0};
+  }
+
+  const averageMs=Math.round(recent.reduce((sum,ms)=>sum+ms,0)/recent.length);
+  const fastCount=recent.filter(ms=>ms<SPEED_REVIEW_FAST_MS).length;
+  return {count:recent.length,averageMs,fastCount};
+}
+
+function shouldPauseForSpeedReview(){
+  if(!joinedSession || !joinedStudent) return false;
+  if(state.totalQuestions<SPEED_REVIEW_MIN_ANSWERS) return false;
+
+  const pace=recentPaceStatsFromDurations(state.recentDurations);
+  return pace.count>=SPEED_REVIEW_WINDOW &&
+    pace.fastCount>=6 &&
+    pace.averageMs<SPEED_REVIEW_AVG_MS;
+}
+
+function formatPaceMs(ms){
+  if(ms===null || ms===undefined || !Number.isFinite(Number(ms))) return '—';
+  return `${(Number(ms)/1000).toFixed(1)}s avg`;
+}
+
+async function flagStudentForSpeedReview(){
+  if(sessionPausedByTeacher || !joinedSession || !joinedStudent) return;
+
+  sessionPausedByTeacher=true;
+  state.speedReviewCount=Number(state.speedReviewCount||0)+1;
+
+  const pace=recentPaceStatsFromDurations(state.recentDurations);
+
+  try{
+    await saveCurrentSessionProgress();
+    await cloudSetStudentJoin(joinedSession.key,joinedStudent.key,'speed-review');
+  }catch(err){
+    console.warn('Could not save speed-review pause:',err);
+  }
+
+  nextQuestionBtn.disabled=true;
+  answerChoices.querySelectorAll('button').forEach(btn=>btn.disabled=true);
+
+  const modal=ensureIndividualStopModal();
+  modal.querySelector('#individualStopEyebrow').textContent='Teacher Review Needed';
+  modal.querySelector('#individualStopTitle').textContent='Your test is temporarily paused.';
+  modal.querySelector('#individualStopMessage').textContent=
+    'KLGA noticed a consistently very fast answering pattern. Your teacher will decide whether you should resume or restart.';
+  modal.querySelector('#individualStopProgress').textContent=
+    `Progress saved at ${state.totalQuestions} of ${currentQuestionTotal()} questions • ${formatPaceMs(pace.averageMs)} recently.`;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
+
+function continueAfterTeacherResume(){
+  if(state.currentIndex>=state.currentBatch.length){
+    if(state.mode==='individual'){
+      finishIndividual();
+    }else{
+      evaluateLevel();
+    }
+  }else{
+    render();
+  }
+}
+
+async function resumeSpeedReviewedStudent(){
+  sessionPausedByTeacher=false;
+
+  // Reset the recent pace window after teacher review so KLGA collects
+  // a fresh pattern instead of immediately re-flagging old timings.
+  state.recentDurations=[];
+  state.questionStartedAt=0;
+
+  const modal=document.getElementById('individualStopModal');
+  if(modal){
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  await saveCurrentSessionProgress();
+  continueAfterTeacherResume();
+}
+
+function progressDetailsForRecord(session,record){
+  const progress=record?.testProgress?.state;
+  if(!progress){
+    return {
+      answered:0,
+      total:session.testType==='individual'
+        ? String(session.questionCount||8)
+        : ADAPTIVE_TOTAL_QUESTIONS,
+      percent:0,
+      level:'—',
+      paceMs:null
+    };
+  }
+
+  const answered=Number(progress.totalQuestions||0);
+  let total;
+
+  if(session.testType==='individual'){
+    if(String(session.questionCount||'8')==='all'){
+      total=Math.max(answered,Array.isArray(progress.currentBatch)?progress.currentBatch.length:answered);
+    }else{
+      total=Number(session.questionCount||8);
+    }
+  }else{
+    total=ADAPTIVE_TOTAL_QUESTIONS;
+  }
+
+  total=Math.max(1,Number(total)||1);
+  const percent=Math.max(0,Math.min(100,Math.round(answered/total*100)));
+  const responses=Array.isArray(progress.responses)?progress.responses:[];
+  const durations=responses.map(r=>Number(r.elapsedMs)).filter(ms=>Number.isFinite(ms) && ms>=0);
+  const pace=recentPaceStatsFromDurations(durations);
+
+  return {
+    answered,
+    total,
+    percent,
+    level:progress.currentLevel?`Level ${progress.currentLevel}`:'—',
+    paceMs:pace.averageMs
+  };
+}
+
 function render(){
   const z=state.currentBatch[state.currentIndex];
+  if(!z) return;
   state.selected=null;
+  state.questionStartedAt=Date.now();
 
   questionDomain.textContent='Level '+state.currentLevel+' — '+LEVELS[state.currentLevel].name;
   questionNumber.textContent=state.totalQuestions+1;
@@ -1167,23 +1327,38 @@ function render(){
   }
 }
 
-function submit(){
+async function submit(){
   if(sessionPausedByTeacher) return;
   if(state.selected===null) return;
 
   const z=state.currentBatch[state.currentIndex];
   const correct=state.selected===z.answer;
+  const elapsedMs=state.questionStartedAt
+    ? Math.max(0,Date.now()-state.questionStartedAt)
+    : null;
 
   state.responses.push({
     visibleLevel:state.currentLevel,
     internalSkill:z.internalSkill,
     skill:z.skill,
     type:z.type,
-    correct
+    correct,
+    elapsedMs
   });
+
+  if(Number.isFinite(elapsedMs)){
+    state.recentDurations.push(elapsedMs);
+    state.recentDurations=state.recentDurations.slice(-SPEED_REVIEW_WINDOW);
+  }
 
   state.totalQuestions++;
   state.currentIndex++;
+  state.questionStartedAt=0;
+
+  if(shouldPauseForSpeedReview()){
+    await flagStudentForSpeedReview();
+    return;
+  }
 
   if(state.currentIndex>=state.currentBatch.length){
     if(state.mode==='individual'){
@@ -1557,6 +1732,7 @@ function statusLabel(s){
     approved:"Approved",
     testing:"Testing",
     paused:"Paused",
+    "speed-review":"Speed Review",
     terminated:"Terminated",
     finished:"Finished"
   })[s] || s;
@@ -1665,22 +1841,30 @@ async function renderLiveSessionStudents(session,statuses){
   const map={};
   (statuses||[]).forEach(x=>map[x.studentKey]=x);
 
-  let waiting=0,approved=0,testing=0,finished=0;
+  let waiting=0,approved=0,testing=0,speedReview=0,finished=0;
   liveSessionStudentsBody.innerHTML="";
 
   assigned.forEach(student=>{
     const record=map[student.key]||{};
     const status=record.status || "not joined";
+    const progress=progressDetailsForRecord(session,record);
 
     if(status==="waiting") waiting++;
     if(status==="approved") approved++;
     if(status==="testing") testing++;
+    if(status==="speed-review") speedReview++;
     if(status==="finished") finished++;
 
     let action='';
 
     if(status==="waiting"){
       action=`<button class="btn mini primary" data-confirm-live="${student.key}">Confirm</button>`;
+    }else if(status==="speed-review"){
+      action=
+        `<div class="student-test-actions speed-review-actions">`+
+          `<button class="btn mini primary" data-resume-speed-review="${student.key}">Resume</button>`+
+          `<button class="btn mini danger" data-terminate-student-test="${student.key}">Restart from Question 1</button>`+
+        `</div>`;
     }else if(status==="testing" || status==="approved"){
       action=
         `<div class="student-test-actions">`+
@@ -1700,11 +1884,19 @@ async function renderLiveSessionStudents(session,statuses){
     }
 
     const safeStatus=String(status).replace(/\s+/g,"-");
+    const paceClass=status==="speed-review"?'pace-alert':'';
     const tr=document.createElement("tr");
     tr.innerHTML=
       `<td><strong>${esc(student.name)}</strong></td>`+
       `<td>${esc(student.studentId)}</td>`+
       `<td>${esc(student.grade)}</td>`+
+      `<td>`+
+        `<div class="live-progress-cell">`+
+          `<div class="live-progress-text"><strong>${progress.answered}/${progress.total}</strong><span>${progress.percent}% • ${esc(progress.level)}</span></div>`+
+          `<div class="live-mini-progress"><span style="width:${progress.percent}%"></span></div>`+
+        `</div>`+
+      `</td>`+
+      `<td><span class="pace-value ${paceClass}">${esc(formatPaceMs(progress.paceMs))}</span></td>`+
       `<td><span class="status-pill status-${safeStatus}">${statusLabel(status)}</span></td>`+
       `<td>${action}</td>`;
     liveSessionStudentsBody.appendChild(tr);
@@ -1714,10 +1906,36 @@ async function renderLiveSessionStudents(session,statuses){
   monitorWaiting.textContent=waiting;
   monitorApproved.textContent=approved;
   monitorTesting.textContent=testing;
+  monitorSpeedReview.textContent=speedReview;
   monitorFinished.textContent=finished;
 
   document.querySelectorAll("[data-confirm-live]").forEach(btn=>{
     btn.onclick=()=>cloudSetStudentJoin(session.key,btn.dataset.confirmLive,"approved");
+  });
+
+  document.querySelectorAll("[data-resume-speed-review]").forEach(btn=>{
+    btn.onclick=async()=>{
+      const studentKey=btn.dataset.resumeSpeedReview;
+      const student=assigned.find(s=>s.key===studentKey);
+      if(!student) return;
+
+      const approved=await confirmStudentTestControl({
+        title:`Resume ${student.name}'s Test?`,
+        message:'The student will continue from the saved question. KLGA will reset the recent pace window and begin monitoring a fresh answering pattern.',
+        confirmLabel:'Resume Test',
+        danger:false
+      });
+      if(!approved) return;
+
+      btn.disabled=true;
+      try{
+        await cloudSetStudentTestControl(session.key,studentKey,'resume');
+      }catch(err){
+        console.error('Resume speed-reviewed test failed:',err);
+        alert('Could not resume this student test. Check Firebase connection and permissions.');
+        btn.disabled=false;
+      }
+    };
   });
 
   document.querySelectorAll("[data-end-student-test]").forEach(btn=>{
@@ -1752,9 +1970,9 @@ async function renderLiveSessionStudents(session,statuses){
       if(!student) return;
 
       const approved=await confirmStudentTestControl({
-        title:`Terminate ${student.name}'s Test?`,
-        message:'This permanently deletes this student’s saved in-progress attempt. The next time you approve them, they will start again from Question 1.',
-        confirmLabel:'Terminate & Restart',
+        title:`Restart ${student.name} from Question 1?`,
+        message:'This permanently deletes this student’s saved in-progress attempt. The next time you approve them, they will start again from the beginning.',
+        confirmLabel:'Restart from Question 1',
         danger:true
       });
       if(!approved) return;
@@ -1764,7 +1982,7 @@ async function renderLiveSessionStudents(session,statuses){
         await cloudSetStudentTestControl(session.key,studentKey,'terminate');
       }catch(err){
         console.error('Terminate student test failed:',err);
-        alert('Could not terminate this student test. Check Firebase connection and permissions.');
+        alert('Could not restart this student test. Check Firebase connection and permissions.');
         btn.disabled=false;
       }
     };
