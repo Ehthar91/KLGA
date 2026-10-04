@@ -1846,3 +1846,120 @@ html[data-theme="dark"] .growth-score-card{
 @media(max-width:720px){
   .growth-score-grid{grid-template-columns:1fr}
 }
+
+
+/* ===== GRADE-SCOPED CLEAR RESULTS + SAFETY CONFIRMATION ===== */
+.grade-title-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+
+.grade-clear-btn{
+  min-height:32px;
+  padding:6px 10px;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+.grade-clear-btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+
+.clear-results-confirm-card{
+  width:min(500px,94vw);
+  text-align:center;
+  padding:28px;
+}
+
+.clear-results-warning-icon{
+  width:52px;
+  height:52px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fee2e2;
+  color:#b91c1c;
+  font-size:30px;
+  font-weight:900;
+  border:1px solid #fecaca;
+}
+
+.danger-eyebrow{
+  color:#b91c1c;
+}
+
+.clear-results-confirm-card h2{
+  margin:4px 0 8px;
+}
+
+.clear-results-confirm-message{
+  margin:0 auto 14px;
+  max-width:420px;
+  color:#475569;
+  line-height:1.5;
+}
+
+.clear-results-confirm-scope{
+  padding:12px 14px;
+  margin:0 0 12px;
+  border-radius:12px;
+  border:1px solid #fecaca;
+  background:#fff7f7;
+  color:#991b1b;
+  font-weight:800;
+  line-height:1.4;
+}
+
+.clear-results-confirm-note{
+  margin:0;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.clear-results-confirm-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:22px;
+}
+
+.clear-results-confirm-actions .btn{
+  width:100%;
+}
+
+body.theme-dark .clear-results-confirm-card{
+  background:#111827;
+  color:#e5e7eb;
+}
+
+body.theme-dark .clear-results-confirm-message,
+body.theme-dark .clear-results-confirm-note{
+  color:#94a3b8;
+}
+
+body.theme-dark .clear-results-confirm-scope{
+  background:rgba(127,29,29,.22);
+  border-color:#7f1d1d;
+  color:#fecaca;
+}
+
+@media(max-width:700px){
+  .grade-results-topline{
+    align-items:flex-start;
+  }
+
+  .grade-title-actions{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .clear-results-confirm-actions{
+    grid-template-columns:1fr;
+  }
+}

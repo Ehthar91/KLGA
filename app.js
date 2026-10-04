@@ -155,6 +155,34 @@ async function cloudClearResults(){
   localStorage.removeItem('klgaFiveLevelResults');
 }
 
+async function cloudClearGradeResults(year,season,grade){
+  const all=await cloudLoadResults();
+  const targets=all.filter(x=>
+    schoolYearFromResult(x)===year &&
+    seasonFromResult(x)===season &&
+    String(x.grade||'Unknown')===String(grade)
+  );
+
+  if(!targets.length) return 0;
+
+  if(await fbReady() && window.KLGAFirebase.deleteResults){
+    const ids=targets.map(x=>x.key).filter(Boolean);
+    if(ids.length!==targets.length){
+      throw new Error('One or more Firebase results are missing document IDs.');
+    }
+    await window.KLGAFirebase.deleteResults(ids);
+    return targets.length;
+  }
+
+  const kept=all.filter(x=>!(
+    schoolYearFromResult(x)===year &&
+    seasonFromResult(x)===season &&
+    String(x.grade||'Unknown')===String(grade)
+  ));
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify(kept));
+  return targets.length;
+}
+
 
 async function cloudJoinSession(name,password){
   if(await fbReady()) return await window.KLGAFirebase.findActiveSession(name,password);
@@ -1805,6 +1833,75 @@ function seasonSortValue(season){
   return order[season] || 9;
 }
 
+
+function ensureClearResultsConfirmModal(){
+  let modal=document.getElementById('clearResultsConfirmModal');
+  if(modal) return modal;
+
+  modal=document.createElement('div');
+  modal.id='clearResultsConfirmModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+  modal.innerHTML=
+    `<div class="modal-backdrop" data-clear-results-cancel></div>`+
+    `<div class="modal-card clear-results-confirm-card" role="dialog" aria-modal="true" aria-labelledby="clearResultsConfirmTitle">`+
+      `<div class="clear-results-warning-icon" aria-hidden="true">!</div>`+
+      `<div class="eyebrow danger-eyebrow">Permanent Action</div>`+
+      `<h2 id="clearResultsConfirmTitle">Clear Results?</h2>`+
+      `<p id="clearResultsConfirmMessage" class="clear-results-confirm-message"></p>`+
+      `<div id="clearResultsConfirmScope" class="clear-results-confirm-scope"></div>`+
+      `<p class="clear-results-confirm-note"><strong>This cannot be undone.</strong> Export the results first if you may need them later.</p>`+
+      `<div class="clear-results-confirm-actions">`+
+        `<button type="button" class="btn ghost" data-clear-results-cancel>Cancel</button>`+
+        `<button type="button" class="btn danger clear-results-confirm-delete">Clear Results</button>`+
+      `</div>`+
+    `</div>`;
+
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function confirmClearResults({title='Clear Results?',message='',scope='',confirmLabel='Clear Results'}={}){
+  const modal=ensureClearResultsConfirmModal();
+  const titleEl=modal.querySelector('#clearResultsConfirmTitle');
+  const messageEl=modal.querySelector('#clearResultsConfirmMessage');
+  const scopeEl=modal.querySelector('#clearResultsConfirmScope');
+  const confirmBtn=modal.querySelector('.clear-results-confirm-delete');
+  const cancelEls=modal.querySelectorAll('[data-clear-results-cancel]');
+
+  titleEl.textContent=title;
+  messageEl.textContent=message;
+  scopeEl.textContent=scope;
+  confirmBtn.textContent=confirmLabel;
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+
+  return new Promise(resolve=>{
+    let finished=false;
+
+    const cleanup=answer=>{
+      if(finished) return;
+      finished=true;
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden','true');
+      confirmBtn.onclick=null;
+      cancelEls.forEach(el=>el.onclick=null);
+      document.removeEventListener('keydown',onKey);
+      resolve(answer);
+    };
+
+    const onKey=event=>{
+      if(event.key==='Escape') cleanup(false);
+    };
+
+    confirmBtn.onclick=()=>cleanup(true);
+    cancelEls.forEach(el=>el.onclick=()=>cleanup(false));
+    document.addEventListener('keydown',onKey);
+    confirmBtn.focus();
+  });
+}
+
 async function renderDashboard(resultsOverride=null){
   resultsHierarchy.innerHTML='<div class="empty-row">Loading results…</div>';
 
@@ -1887,10 +1984,13 @@ async function renderDashboard(resultsOverride=null){
                   `<span class="grade-label-text">Grade ${grade}</span>`+
                   `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
                 `</div>`+
-                `<button class="grade-expand-btn" type="button" aria-expanded="false" title="Expand Grade ${grade} results">`+
-                  `<span class="grade-expand-icon">›</span>`+
-                  `<span class="grade-expand-text">Expand</span>`+
-                `</button>`+
+                `<div class="grade-title-actions">`+
+                  `<button class="btn mini danger grade-clear-btn" type="button" ${gradeResults.length?'':'disabled'}>Clear Results</button>`+
+                  `<button class="grade-expand-btn" type="button" aria-expanded="false" title="Expand Grade ${grade} results">`+
+                    `<span class="grade-expand-icon">›</span>`+
+                    `<span class="grade-expand-text">Expand</span>`+
+                  `</button>`+
+                `</div>`+
               `</div>`+
               `<div class="grade-results-actions">`+
                 `<button class="btn mini ghost grade-fullscreen-btn" type="button" ${gradeResults.length?'':'disabled'}>Full Screen</button>`+
@@ -1997,6 +2097,44 @@ async function renderDashboard(resultsOverride=null){
             expandBtn.setAttribute('aria-expanded','true');
             expandBtn.title=`Collapse Grade ${section.dataset.grade} results`;
           }
+        }
+      };
+    });
+
+    document.querySelectorAll('.grade-clear-btn').forEach(btn=>{
+      btn.onclick=async()=>{
+        const section=btn.closest('.grade-results-section');
+        if(!section || btn.disabled) return;
+
+        const year=section.dataset.year;
+        const season=section.dataset.season;
+        const grade=section.dataset.grade;
+
+        const subset=teacherResultCache.filter(x=>
+          schoolYearFromResult(x)===year &&
+          seasonFromResult(x)===season &&
+          String(x.grade||'Unknown')===grade
+        );
+
+        if(!subset.length) return;
+
+        const approved=await confirmClearResults({
+          title:`Clear Grade ${grade} Results?`,
+          message:'You are about to permanently delete this result group.',
+          scope:`${year} • ${season} • Grade ${grade} • ${subset.length} result${subset.length===1?'':'s'}`,
+          confirmLabel:`Clear ${subset.length} Result${subset.length===1?'':'s'}`
+        });
+
+        if(!approved) return;
+
+        btn.disabled=true;
+        try{
+          await cloudClearGradeResults(year,season,grade);
+          await renderDashboard();
+        }catch(err){
+          console.error('Clear grade results failed:',err);
+          btn.disabled=false;
+          alert('Could not clear these results. Check the Firebase connection and Firestore rules.');
         }
       };
     });
@@ -2635,14 +2773,27 @@ nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
 
 clearResultsBtn.onclick=async()=>{
-  if(confirm('Clear all saved KLGA results from Firebase? This cannot be undone.')){
-    try{
-      await cloudClearResults();
-      await renderDashboard();
-    }catch(err){
-      console.error('Clear results failed:',err);
-      alert('Could not clear Firebase results. Check Firestore connection and rules.');
-    }
+  const count=teacherResultCache.length;
+  if(!count) return;
+
+  const approved=await confirmClearResults({
+    title:'Clear ALL KLGA Results?',
+    message:'This will permanently delete every saved assessment result across all school years, seasons, and grades.',
+    scope:`ALL RESULTS • ${count} result${count===1?'':'s'}`,
+    confirmLabel:`Clear All ${count} Result${count===1?'':'s'}`
+  });
+
+  if(!approved) return;
+
+  clearResultsBtn.disabled=true;
+  try{
+    await cloudClearResults();
+    await renderDashboard();
+  }catch(err){
+    console.error('Clear results failed:',err);
+    alert('Could not clear Firebase results. Check Firestore connection and rules.');
+  }finally{
+    clearResultsBtn.disabled=false;
   }
 };
 

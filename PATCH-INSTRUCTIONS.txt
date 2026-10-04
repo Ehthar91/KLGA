@@ -1,17 +1,19 @@
-KLGA 40-QUESTION ADAPTIVE TEST PATCH
+KLGA CLEAR RESULTS BY GRADE PATCH
 
-Replace:
+Replace these files:
 - app.js
-- index.html
+- firebase-app.js
+- styles.css
 
-What changed:
-- Every Adaptive Test now contains exactly 40 questions.
-- Adaptive testing still starts at Level 2 and moves up/down by performance.
-- Once KLGA finds the placement boundary, remaining questions collect more evidence near that boundary.
-- Overall % = total correct / 40.
-- Placement still uses the 75% level benchmark.
-- KGS and skill diagnostics continue to work with the larger evidence set.
-- Adaptive question progress now displays Question X of 40.
-- Individual Level Tests remain unchanged with selectable question counts.
+New behavior:
+- Each School Year > Season > Grade result card has its own Clear Results button.
+- It only deletes results from that exact grade card.
+- A warning popup shows:
+  • School year
+  • Season
+  • Grade
+  • Number of results
+- Cancel or Escape closes the warning without deleting.
+- The main Clear Results button also uses the same stronger warning popup.
 
-No Firebase or Firestore rule changes are required.
+No Firestore rules changes are required.

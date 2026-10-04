@@ -206,6 +206,12 @@ window.KLGAFirebase={
     );
   },
 
+  async deleteResults(resultIds=[]){
+    if(!db) return;
+    const ids=[...new Set((resultIds||[]).filter(Boolean))];
+    await Promise.all(ids.map(id=>deleteDoc(doc(db,"results",id))));
+  },
+
   async clearResults(){
     if(!db) return;
     const snap=await getDocs(collection(db,"results"));
