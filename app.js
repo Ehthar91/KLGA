@@ -1698,15 +1698,27 @@ async function renderDashboard(resultsOverride=null){
             .sort((a,b)=>resultSortTime(b)-resultSortTime(a));
 
           const gradeSection=document.createElement('section');
-          gradeSection.className='grade-results-section';
+          gradeSection.className='grade-results-section is-collapsed';
+          gradeSection.dataset.year=year;
+          gradeSection.dataset.season=season;
+          gradeSection.dataset.grade=grade;
+
           gradeSection.innerHTML=
             `<div class="grade-results-title">`+
-              `<h4>Grade ${grade}</h4>`+
-              `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
+              `<div class="grade-results-heading">`+
+                `<button class="grade-expand-btn" type="button" aria-expanded="false" title="Expand Grade ${grade} results">`+
+                  `<span class="grade-expand-icon">›</span>`+
+                  `<span>Grade ${grade}</span>`+
+                `</button>`+
+                `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
+              `</div>`+
+              `<div class="grade-results-actions">`+
+                `<button class="btn mini secondary grade-export-btn" type="button" ${gradeResults.length?'':'disabled'}>Export CSV</button>`+
+              `</div>`+
             `</div>`;
 
           const tableWrap=document.createElement('div');
-          tableWrap.className='table-wrap';
+          tableWrap.className='table-wrap grade-results-body';
 
           tableWrap.innerHTML=
             `<table>`+
@@ -1759,6 +1771,41 @@ async function renderDashboard(resultsOverride=null){
       btn.onclick=()=>openTeacherResultDetail(btn.dataset.resultDetail);
     });
 
+    document.querySelectorAll('.grade-expand-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const section=btn.closest('.grade-results-section');
+        if(!section) return;
+
+        const willExpand=section.classList.contains('is-collapsed');
+        section.classList.toggle('is-collapsed',!willExpand);
+        btn.setAttribute('aria-expanded',String(willExpand));
+        btn.title=(willExpand?'Collapse ':'Expand ')+`Grade ${section.dataset.grade} results`;
+      };
+    });
+
+    document.querySelectorAll('.grade-export-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const section=btn.closest('.grade-results-section');
+        if(!section) return;
+
+        const year=section.dataset.year;
+        const season=section.dataset.season;
+        const grade=section.dataset.grade;
+
+        const subset=teacherResultCache.filter(x=>
+          schoolYearFromResult(x)===year &&
+          seasonFromResult(x)===season &&
+          String(x.grade||'Unknown')===grade
+        );
+
+        if(!subset.length) return;
+        downloadResultsCsv(
+          subset,
+          `KLGA-${safeFilePart(year)}-${safeFilePart(season)}-Grade-${safeFilePart(grade)}-Results.csv`
+        );
+      };
+    });
+
   }catch(err){
     console.error('Results load failed:',err);
     resultsHierarchy.innerHTML='<div class="empty-row">Could not load results from Firebase.</div>';
@@ -1771,9 +1818,16 @@ function esc(s=''){
   }[c]));
 }
 
-async function exportCsv(){
-  const r=await cloudLoadResults();
+function safeFilePart(value){
+  return String(value??'')
+    .trim()
+    .replace(/[–—]/g,'-')
+    .replace(/[^A-Za-z0-9._-]+/g,'-')
+    .replace(/-+/g,'-')
+    .replace(/^-|-$/g,'') || 'Unknown';
+}
 
+function downloadResultsCsv(results,filename='KLGA-5-Level-Results.csv'){
   const rows=[[
     'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
     'Level 1','Level 2','Level 3','Level 4','Level 5',
@@ -1782,7 +1836,7 @@ async function exportCsv(){
     'Alphabet + Blend','Alphabet + Blend + Vowel','Phrase Reading','Date'
   ]];
 
-  r.forEach(x=>rows.push([
+  results.forEach(x=>rows.push([
     x.student,x.grade,x.window,x.mode,x.resultLabel,x.overall,x.questions,x.path,
     x.level1,x.level2,x.level3,x.level4,x.level5,
     x.skill1,x.skill2,x.skill3,x.skill4,x.skill5,x.skill6,x.skill7,x.skill8,x.skill9,
@@ -1793,13 +1847,20 @@ async function exportCsv(){
     row.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')
   ).join('\n');
 
-  const blob=new Blob([csv],{type:'text/csv'});
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download='KLGA-5-Level-Results.csv';
+  a.download=filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   URL.revokeObjectURL(url);
+}
+
+async function exportCsv(){
+  const r=await cloudLoadResults();
+  downloadResultsCsv(r,'KLGA-5-Level-Results.csv');
 }
 
 

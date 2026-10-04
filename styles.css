@@ -1150,3 +1150,123 @@ html[data-theme="dark"] .student-content-panel{
   .workspace-steps span,.teacher-nav-btn{padding:8px 11px;font-size:12px}
   .student-content-panel{padding:18px}
 }
+
+
+/* ===== EXPANDABLE / SEPARATE GRADE RESULT EXPORT ===== */
+.grade-results-title{
+  gap:16px;
+}
+
+.grade-results-heading{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.grade-expand-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  background:transparent;
+  color:var(--text);
+  padding:4px 2px;
+  margin:0;
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+  border-radius:10px;
+}
+
+.grade-expand-btn:hover{
+  color:var(--primary);
+}
+
+.grade-expand-btn:focus-visible{
+  outline:3px solid rgba(49,94,251,.20);
+  outline-offset:3px;
+}
+
+.grade-expand-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  color:var(--primary);
+  font-size:22px;
+  line-height:1;
+  transition:transform .2s ease, background .2s ease;
+}
+
+.grade-results-section:not(.is-collapsed) .grade-expand-icon{
+  transform:rotate(90deg);
+}
+
+.grade-results-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:auto;
+}
+
+.grade-results-body{
+  max-height:900px;
+  opacity:1;
+  overflow:auto;
+  transition:max-height .28s ease, opacity .2s ease, border-color .2s ease;
+}
+
+.grade-results-section.is-collapsed .grade-results-body{
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  border-top:0;
+  border-left:0;
+  border-right:0;
+  border-bottom:0;
+  border-radius:0;
+}
+
+.grade-results-section.is-collapsed{
+  box-shadow:none;
+}
+
+.grade-export-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+html[data-theme="dark"] .grade-expand-btn{
+  color:var(--text);
+}
+
+html[data-theme="dark"] .grade-expand-btn:hover{
+  color:#a9bdff;
+}
+
+html[data-theme="dark"] .grade-expand-icon{
+  background:#1d2e54;
+  color:#a9bdff;
+}
+
+@media(max-width:720px){
+  .grade-results-title{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .grade-results-actions{
+    margin-left:0;
+    width:100%;
+  }
+
+  .grade-results-actions .btn{
+    width:100%;
+  }
+}
