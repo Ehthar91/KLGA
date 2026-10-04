@@ -1705,12 +1705,15 @@ async function renderDashboard(resultsOverride=null){
 
           gradeSection.innerHTML=
             `<div class="grade-results-title">`+
-              `<div class="grade-results-heading">`+
+              `<div class="grade-results-topline">`+
+                `<div class="grade-results-label">`+
+                  `<span class="grade-label-text">Grade ${grade}</span>`+
+                  `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
+                `</div>`+
                 `<button class="grade-expand-btn" type="button" aria-expanded="false" title="Expand Grade ${grade} results">`+
                   `<span class="grade-expand-icon">›</span>`+
-                  `<span>Grade ${grade}</span>`+
+                  `<span class="grade-expand-text">Expand</span>`+
                 `</button>`+
-                `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
               `</div>`+
               `<div class="grade-results-actions">`+
                 `<button class="btn mini ghost grade-fullscreen-btn" type="button" ${gradeResults.length?'':'disabled'}>Full Screen</button>`+
@@ -1782,6 +1785,8 @@ async function renderDashboard(resultsOverride=null){
         section.classList.toggle('is-collapsed',!willExpand);
         btn.setAttribute('aria-expanded',String(willExpand));
         btn.title=(willExpand?'Collapse ':'Expand ')+`Grade ${section.dataset.grade} results`;
+        const label=btn.querySelector('.grade-expand-text');
+        if(label) label.textContent=willExpand?'Collapse':'Expand';
       };
     });
 
