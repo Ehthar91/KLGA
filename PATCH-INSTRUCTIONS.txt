@@ -1,15 +1,15 @@
-KLGA DARK MODE SESSION MONITOR FIX
+KLGA SESSION MONITOR PASSWORD PATCH
 
 Replace:
+- app.js
 - styles.css
 
-What this fixes:
-- Dedicated session monitor looked odd in dark mode
-- Light / white sticky header area in fullscreen monitor
-- Dark-mode monitor colors not applying consistently
-- Low-contrast header/action area in the monitor
+New behavior:
+- Session password is shown in the Live Session Monitor.
+- Hidden by default as ••••••.
+- Show button reveals the real password.
+- Hide button masks it again.
+- Password returns to hidden after refresh/reopening the monitor.
+- Works in both normal and dedicated monitor tabs.
 
-Cause:
-Recent monitor dark-mode rules were using `body.theme-dark`, but KLGA currently switches themes with `html[data-theme="dark"]`.
-
-No Firebase changes are needed.
+No Firebase or Firestore changes are required.

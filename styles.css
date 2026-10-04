@@ -2441,3 +2441,55 @@ html[data-theme="dark"] .live-progress-table-wrap{
   background:linear-gradient(180deg,#0f1b31,#0d1728);
   border-color:#24344d;
 }
+
+
+/* ===== SESSION MONITOR PASSWORD TOGGLE ===== */
+#liveSessionMeta{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.monitor-password-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 8px;
+  border-radius:10px;
+  background:#f8fafc;
+  border:1px solid #dbe3ee;
+}
+
+.monitor-password-label{
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+
+.monitor-password-value{
+  min-width:54px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-weight:800;
+  letter-spacing:.04em;
+  color:#0f172a;
+}
+
+.monitor-password-toggle{
+  padding:4px 8px;
+  min-height:28px;
+  font-size:11px;
+}
+
+html[data-theme="dark"] .monitor-password-wrap{
+  background:#101a2c;
+  border-color:#334155;
+}
+
+html[data-theme="dark"] .monitor-password-label{
+  color:#94a3b8;
+}
+
+html[data-theme="dark"] .monitor-password-value{
+  color:#e2e8f0;
+}

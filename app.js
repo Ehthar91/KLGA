@@ -1746,7 +1746,30 @@ async function openLiveMonitor(sessionKey){
   activeMonitorSession=session;
   liveSessionMonitor.classList.remove("hidden");
   liveSessionTitle.textContent=session.name;
-  liveSessionMeta.textContent=(session.testType==="adaptive"?"Adaptive Test":"Level "+session.level)+" • "+session.status;
+  liveSessionMeta.innerHTML=
+    `<span>${esc(session.testType==="adaptive"?"Adaptive Test":"Level "+session.level)} • ${esc(session.status)}</span>`+
+    `<span class="monitor-password-wrap">`+
+      `<span class="monitor-password-label">Password:</span>`+
+      `<span id="liveMonitorPasswordValue" class="monitor-password-value" data-password="${esc(session.password||'')}">••••••</span>`+
+      `<button id="toggleLiveMonitorPasswordBtn" type="button" class="btn mini ghost monitor-password-toggle" aria-pressed="false">Show</button>`+
+    `</span>`;
+
+  const passwordValue=document.getElementById('liveMonitorPasswordValue');
+  const passwordToggle=document.getElementById('toggleLiveMonitorPasswordBtn');
+  if(passwordValue && passwordToggle){
+    passwordToggle.onclick=()=>{
+      const showing=passwordToggle.getAttribute('aria-pressed')==='true';
+      if(showing){
+        passwordValue.textContent='••••••';
+        passwordToggle.textContent='Show';
+        passwordToggle.setAttribute('aria-pressed','false');
+      }else{
+        passwordValue.textContent=passwordValue.dataset.password||'';
+        passwordToggle.textContent='Hide';
+        passwordToggle.setAttribute('aria-pressed','true');
+      }
+    };
+  }
 
   if(stopSessionMonitor) stopSessionMonitor();
   stopSessionMonitor=await cloudSubscribeSessionStudents(session.key,statuses=>{
