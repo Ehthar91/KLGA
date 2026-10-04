@@ -1680,3 +1680,69 @@ main{
     padding:18px 14px 30px;
   }
 }
+
+
+/* ===== COMPACT GRADE RESULT ACTIONS ===== */
+.grade-results-title{
+  gap:10px;
+  padding:14px 16px;
+}
+
+.grade-results-topline{
+  gap:10px;
+}
+
+.grade-expand-btn{
+  padding:6px 10px;
+  min-height:34px;
+  border-radius:10px;
+}
+
+.grade-expand-icon{
+  width:20px;
+  height:20px;
+  font-size:18px;
+}
+
+.grade-expand-text{
+  font-size:12px;
+}
+
+.grade-results-actions{
+  gap:8px;
+}
+
+.grade-results-actions .btn{
+  min-height:34px;
+  padding:7px 10px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.grade-results-actions .grade-sheet-script-btn{
+  min-height:36px;
+}
+
+@media(min-width:1400px){
+  .grade-results-title{
+    padding:14px 16px;
+  }
+
+  .grade-results-actions .btn{
+    min-height:32px;
+    padding:6px 10px;
+  }
+
+  .grade-results-actions .grade-sheet-script-btn{
+    min-height:34px;
+  }
+}
+
+@media(max-width:620px){
+  .grade-results-actions .btn,
+  .grade-results-actions .grade-sheet-script-btn{
+    min-height:38px;
+    font-size:13px;
+  }
+}
