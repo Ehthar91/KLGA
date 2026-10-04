@@ -1754,11 +1754,67 @@ async function openLiveMonitor(sessionKey){
   });
 }
 
+
+function setLiveMonitorFullScreen(open){
+  if(!liveSessionMonitor) return;
+
+  const shouldOpen=Boolean(open);
+  liveSessionMonitor.classList.toggle('is-screen-open',shouldOpen);
+  document.body.classList.toggle('live-monitor-screen-open',shouldOpen);
+
+  if(window.fullScreenLiveMonitorBtn){
+    fullScreenLiveMonitorBtn.textContent=shouldOpen?'Restore':'Full Screen';
+    fullScreenLiveMonitorBtn.setAttribute('aria-pressed',String(shouldOpen));
+  }
+
+  if(shouldOpen){
+    liveSessionMonitor.scrollTop=0;
+  }
+}
+
+function toggleLiveMonitorFullScreen(){
+  setLiveMonitorFullScreen(!liveSessionMonitor.classList.contains('is-screen-open'));
+}
+
+function monitorUrlForSession(sessionKey){
+  const url=new URL(window.location.href);
+  url.searchParams.set('monitor',sessionKey);
+  return url.toString();
+}
+
+function openCurrentMonitorInNewTab(){
+  const sessionKey=activeMonitorSession?.key;
+  if(!sessionKey) return;
+  window.open(monitorUrlForSession(sessionKey),'_blank','noopener');
+}
+
+function monitorSessionKeyFromUrl(){
+  try{
+    return new URL(window.location.href).searchParams.get('monitor')||'';
+  }catch(err){
+    return '';
+  }
+}
+
+function clearMonitorUrlParam(){
+  try{
+    const url=new URL(window.location.href);
+    if(!url.searchParams.has('monitor')) return;
+    url.searchParams.delete('monitor');
+    window.history.replaceState({},'',url.toString());
+  }catch(err){}
+}
+
 function closeLiveMonitor(){
+  setLiveMonitorFullScreen(false);
   liveSessionMonitor.classList.add("hidden");
   if(stopSessionMonitor) stopSessionMonitor();
   stopSessionMonitor=null;
   activeMonitorSession=null;
+
+  if(monitorSessionKeyFromUrl()){
+    clearMonitorUrlParam();
+  }
 }
 
 
@@ -3266,6 +3322,38 @@ async function startResultsListener(){
 
 startStudentBtn.onclick=()=>showView('join');
 
+
+let monitorUrlAutoOpened=false;
+
+async function openMonitorFromUrlIfRequested(){
+  const sessionKey=monitorSessionKeyFromUrl();
+  if(!sessionKey || monitorUrlAutoOpened) return;
+
+  monitorUrlAutoOpened=true;
+
+  try{
+    const sessions=await cloudLoadSessions();
+    const session=sessions.find(s=>s.key===sessionKey);
+
+    if(!session){
+      alert('This testing session could not be found.');
+      clearMonitorUrlParam();
+      monitorUrlAutoOpened=false;
+      return;
+    }
+
+    // Open the monitor even if the session has ended so the teacher can still
+    // inspect status; live controls remain based on session status/data.
+    await openLiveMonitor(sessionKey);
+
+    // In a dedicated monitor URL, maximize the monitor automatically.
+    setLiveMonitorFullScreen(true);
+  }catch(err){
+    console.error('Could not reopen monitor from URL:',err);
+    monitorUrlAutoOpened=false;
+  }
+}
+
 async function openTeacherDashboard(){
   teacherAuthMessage.classList.add('hidden');
   teacherUidBox.classList.add('hidden');
@@ -3467,6 +3555,12 @@ beginTestBtn.onclick=async()=>{
 
 
 closeLiveMonitorBtn.onclick=closeLiveMonitor;
+if(window.fullScreenLiveMonitorBtn){
+  fullScreenLiveMonitorBtn.onclick=toggleLiveMonitorFullScreen;
+}
+if(window.openLiveMonitorTabBtn){
+  openLiveMonitorTabBtn.onclick=openCurrentMonitorInNewTab;
+}
 createSessionBtn.onclick=()=>openSessionForm();
 cancelSessionBtn.onclick=closeSessionForm;
 saveSessionBtn.onclick=persistSession;
@@ -3610,6 +3704,8 @@ clearResultsBtn.onclick=async()=>{
   try{
     await cloudClearResults();
     await renderDashboard();
+  await openMonitorFromUrlIfRequested();
+
   }catch(err){
     console.error('Clear results failed:',err);
     alert('Could not clear Firebase results. Check Firestore connection and rules.');
@@ -3619,9 +3715,15 @@ clearResultsBtn.onclick=async()=>{
 };
 
 
-/* Close any maximized grade result with Escape. */
+/* Close fullscreen views with Escape. */
 document.addEventListener('keydown',event=>{
   if(event.key!=='Escape') return;
+
+  if(liveSessionMonitor?.classList.contains('is-screen-open')){
+    setLiveMonitorFullScreen(false);
+    return;
+  }
+
   const section=document.querySelector('.grade-results-section.is-screen-open');
   if(!section) return;
   section.classList.remove('is-screen-open');

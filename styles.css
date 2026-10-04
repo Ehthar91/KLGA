@@ -2277,3 +2277,89 @@ body.theme-dark .status-pill.status-speed-review{
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* ===== LIVE SESSION MONITOR FULL SCREEN / POPOUT ===== */
+.live-monitor.is-screen-open{
+  position:fixed;
+  inset:0;
+  z-index:1400;
+  width:100vw;
+  height:100vh;
+  max-width:none;
+  max-height:none;
+  margin:0;
+  padding:22px clamp(18px,2vw,34px) 30px;
+  border-radius:0;
+  overflow:auto;
+  background:#fff;
+}
+
+body.live-monitor-screen-open{
+  overflow:hidden;
+}
+
+.live-monitor.is-screen-open .roster-head{
+  position:sticky;
+  top:-22px;
+  z-index:4;
+  margin:-22px calc(clamp(18px,2vw,34px) * -1) 18px;
+  padding:22px clamp(18px,2vw,34px) 14px;
+  background:#fff;
+  border-bottom:1px solid #e2e8f0;
+}
+
+.live-monitor.is-screen-open .monitor-stats{
+  position:sticky;
+  top:76px;
+  z-index:3;
+  background:#fff;
+  padding:4px 0 14px;
+}
+
+.live-monitor.is-screen-open .live-progress-table-wrap{
+  overflow:auto;
+  max-height:none;
+}
+
+.live-monitor.is-screen-open .live-progress-table{
+  width:100%;
+  min-width:1100px;
+}
+
+.live-monitor.is-screen-open .live-progress-table thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#f8fafc;
+}
+
+body.theme-dark .live-monitor.is-screen-open{
+  background:#0f172a;
+}
+
+body.theme-dark .live-monitor.is-screen-open .roster-head,
+body.theme-dark .live-monitor.is-screen-open .monitor-stats{
+  background:#0f172a;
+  border-color:#334155;
+}
+
+body.theme-dark .live-monitor.is-screen-open .live-progress-table thead th{
+  background:#111827;
+}
+
+@media(max-width:750px){
+  .live-monitor.is-screen-open{
+    padding:14px;
+  }
+
+  .live-monitor.is-screen-open .roster-head{
+    top:-14px;
+    margin:-14px -14px 14px;
+    padding:14px;
+  }
+
+  .live-monitor.is-screen-open .monitor-stats{
+    top:112px;
+  }
+}

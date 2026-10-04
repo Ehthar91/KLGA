@@ -1,34 +1,22 @@
-KLGA LIVE PROGRESS + SPEED REVIEW PATCH
+KLGA SESSION MONITOR POPOUT PATCH
 
 Replace:
-- app.js
-- firebase-app.js
 - index.html
+- app.js
 - styles.css
 
-NEW TEACHER LIVE MONITOR
-- Questions answered / total
-- Percent complete
-- Current level
-- Recent average response time
-- Speed Review count/status
+NEW FEATURES
 
-AUTOMATIC SPEED REVIEW
-KLGA pauses a session student only after a sustained unusually-fast pattern:
-- at least 8 questions answered
-- 6 of the latest 8 under 2.5 seconds
-- average of latest 8 under 3.0 seconds
+1. FULL SCREEN
+- Live Session Monitor has Full Screen / Restore.
+- Escape exits full screen.
+- Live updates continue normally.
 
-When flagged:
-- student is paused automatically
-- progress is saved
-- teacher chooses:
-  • Resume Test
-  • Restart from Question 1
+2. OPEN IN NEW TAB
+- Opens a dedicated monitor URL using ?monitor=<sessionKey>.
+- Refreshing the new tab reopens the same session monitor.
+- If already signed in, it opens automatically.
+- If sign-in is needed, the monitor URL remains and opens after teacher sign-in.
+- Dedicated monitor tabs automatically open the monitor full screen.
 
-Resume resets the recent pace window so the student is evaluated on a fresh pattern.
-Restart clears the saved attempt.
-
-This is a review heuristic, not a cheating determination.
-
-No Firestore rules changes are required.
+No Firebase or Firestore changes are required.
