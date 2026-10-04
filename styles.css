@@ -256,11 +256,11 @@ main{display:grid;gap:26px}
   box-shadow:0 10px 22px rgba(49,94,251,.06);
   backdrop-filter:blur(8px);
 }
-.skill-card:nth-child(1){border-top:5px solid #315efb}
-.skill-card:nth-child(2){border-top:5px solid #1e90ff}
-.skill-card:nth-child(3){border-top:5px solid #6d5dfc}
-.skill-card:nth-child(4){border-top:5px solid #10b981}
-.skill-card:nth-child(5){border-top:5px solid #f59e0b}
+.skill-card:nth-child(1){border-top:5px solid #dc2626}
+.skill-card:nth-child(2){border-top:5px solid #eab308}
+.skill-card:nth-child(3){border-top:5px solid #f97316}
+.skill-card:nth-child(4){border-top:5px solid #16a34a}
+.skill-card:nth-child(5){border-top:5px solid #2563eb}
 .skill-card span{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .skill-card strong{font-size:1rem;color:var(--text)}
 .skill-card small{font-size:13px}
@@ -860,3 +860,88 @@ html[data-theme="dark"] .theme-toggle{
   background:#121d31;
   color:#dce6f5;
 }
+
+
+/* ===== KLGA LEVEL COLOR SYSTEM =====
+   Level 1 = Red
+   Level 2 = Yellow
+   Level 3 = Orange
+   Level 4 = Green
+   Level 5 = Blue
+*/
+:root{
+  --level-1:#dc2626;
+  --level-1-soft:#fee2e2;
+  --level-2:#eab308;
+  --level-2-soft:#fef9c3;
+  --level-3:#f97316;
+  --level-3-soft:#ffedd5;
+  --level-4:#16a34a;
+  --level-4-soft:#dcfce7;
+  --level-5:#2563eb;
+  --level-5-soft:#dbeafe;
+}
+
+.skill-card:nth-child(1) span{color:var(--level-1)}
+.skill-card:nth-child(2) span{color:#a16207}
+.skill-card:nth-child(3) span{color:var(--level-3)}
+.skill-card:nth-child(4) span{color:var(--level-4)}
+.skill-card:nth-child(5) span{color:var(--level-5)}
+
+.skill-card:nth-child(1){background:linear-gradient(180deg,#fff,#fff8f8)}
+.skill-card:nth-child(2){background:linear-gradient(180deg,#fff,#fffdf2)}
+.skill-card:nth-child(3){background:linear-gradient(180deg,#fff,#fff9f4)}
+.skill-card:nth-child(4){background:linear-gradient(180deg,#fff,#f7fff9)}
+.skill-card:nth-child(5){background:linear-gradient(180deg,#fff,#f7faff)}
+
+.stats-grid .stat:nth-child(2){border-top:4px solid var(--level-1)}
+.stats-grid .stat:nth-child(3){border-top:4px solid var(--level-2)}
+.stats-grid .stat:nth-child(4){border-top:4px solid var(--level-3)}
+.stats-grid .stat:nth-child(5){border-top:4px solid var(--level-4)}
+.stats-grid .stat:nth-child(6){border-top:4px solid var(--level-5)}
+
+.level-1{background:var(--level-1-soft)!important;color:#991b1b!important;border-color:#fecaca!important}
+.level-2{background:var(--level-2-soft)!important;color:#854d0e!important;border-color:#fde68a!important}
+.level-3{background:var(--level-3-soft)!important;color:#9a3412!important;border-color:#fed7aa!important}
+.level-4{background:var(--level-4-soft)!important;color:#166534!important;border-color:#bbf7d0!important}
+.level-5{background:var(--level-5-soft)!important;color:#1d4ed8!important;border-color:#bfdbfe!important}
+
+html[data-theme="dark"] body{
+  --level-1:#ff6b6b;
+  --level-1-soft:#3a1d24;
+  --level-2:#ffd84d;
+  --level-2-soft:#3a3215;
+  --level-3:#ff9a4d;
+  --level-3-soft:#3a281a;
+  --level-4:#55d98a;
+  --level-4-soft:#173422;
+  --level-5:#78a0ff;
+  --level-5-soft:#1b2d54;
+}
+
+html[data-theme="dark"] .skill-card:nth-child(1){
+  background:linear-gradient(180deg,#1a2538,#1b202f);
+  border-top-color:var(--level-1);
+}
+html[data-theme="dark"] .skill-card:nth-child(2){
+  background:linear-gradient(180deg,#1a2538,#27251b);
+  border-top-color:var(--level-2);
+}
+html[data-theme="dark"] .skill-card:nth-child(3){
+  background:linear-gradient(180deg,#1a2538,#292219);
+  border-top-color:var(--level-3);
+}
+html[data-theme="dark"] .skill-card:nth-child(4){
+  background:linear-gradient(180deg,#1a2538,#18271f);
+  border-top-color:var(--level-4);
+}
+html[data-theme="dark"] .skill-card:nth-child(5){
+  background:linear-gradient(180deg,#1a2538,#18243a);
+  border-top-color:var(--level-5);
+}
+
+html[data-theme="dark"] .skill-card:nth-child(1) span{color:var(--level-1)}
+html[data-theme="dark"] .skill-card:nth-child(2) span{color:var(--level-2)}
+html[data-theme="dark"] .skill-card:nth-child(3) span{color:var(--level-3)}
+html[data-theme="dark"] .skill-card:nth-child(4) span{color:var(--level-4)}
+html[data-theme="dark"] .skill-card:nth-child(5) span{color:var(--level-5)}
