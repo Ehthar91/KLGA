@@ -2079,3 +2079,89 @@ body.theme-dark .session-ended-progress{
   border-color:#334155;
   color:#e2e8f0;
 }
+
+
+/* ===== INDIVIDUAL STUDENT TEST CONTROLS ===== */
+.student-test-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.student-test-actions .btn{
+  white-space:nowrap;
+}
+
+.status-pill.status-paused{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.status-pill.status-terminated{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.student-control-card{
+  width:min(500px,94vw);
+  text-align:center;
+  padding:28px;
+}
+
+.student-control-icon{
+  width:50px;
+  height:50px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eaf0ff;
+  color:#1e40af;
+  border:1px solid #bfdbfe;
+  font-size:28px;
+  font-weight:900;
+}
+
+.student-control-icon.is-danger{
+  background:#fee2e2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.student-control-card h2{
+  margin:6px 0 10px;
+}
+
+.student-control-card p{
+  color:#475569;
+  line-height:1.55;
+  margin:0;
+}
+
+.student-control-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:22px;
+}
+
+.student-control-actions .btn{
+  width:100%;
+}
+
+body.theme-dark .student-control-card{
+  background:#111827;
+  color:#e5e7eb;
+}
+
+body.theme-dark .student-control-card p{
+  color:#94a3b8;
+}
+
+@media(max-width:700px){
+  .student-control-actions{
+    grid-template-columns:1fr;
+  }
+}

@@ -167,11 +167,47 @@ window.KLGAFirebase={
     const user=auth?.currentUser || null;
     const payload={ sessionKey, studentKey, status, updatedAt:serverTimestamp() };
     if(user?.isAnonymous) payload.authUid=user.uid;
+
+    // Teacher approval clears any old per-student stop/terminate command
+    // so the newly approved attempt does not immediately stop again.
+    if(status==="approved" && user && !user.isAnonymous){
+      payload.controlAction=null;
+      payload.controlNonce=null;
+      payload.controlUpdatedAt=serverTimestamp();
+    }
+
     await setDoc(
       doc(db,"sessionStudents",sessionKey+"_"+studentKey),
       payload,
       {merge:true}
     );
+  },
+
+  async setStudentTestControl(sessionKey,studentKey,action){
+    if(!db) return;
+    const ref=doc(db,"sessionStudents",sessionKey+"_"+studentKey);
+    const snap=await getDoc(ref);
+    const data=snap.exists()?snap.data():{};
+    const nextNonce=Number(data.controlNonce||0)+1;
+
+    const payload={
+      sessionKey,
+      studentKey,
+      controlAction:action,
+      controlNonce:nextNonce,
+      controlUpdatedAt:serverTimestamp()
+    };
+
+    if(action==="end"){
+      payload.status="paused";
+    }else if(action==="terminate"){
+      payload.status="terminated";
+      payload.testProgress=null;
+      payload.progressUpdatedAt=serverTimestamp();
+    }
+
+    await setDoc(ref,payload,{merge:true});
+    return nextNonce;
   },
 
   async saveStudentProgress(sessionKey,studentKey,testProgress){

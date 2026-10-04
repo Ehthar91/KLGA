@@ -1,23 +1,25 @@
-KLGA STOP-AND-RESUME SESSION PATCH
+KLGA INDIVIDUAL STUDENT TEST CONTROLS PATCH
 
 Replace:
 - app.js
 - firebase-app.js
-- index.html
 - styles.css
 
-New behavior:
-- Teacher clicks End -> active student tests stop immediately.
-- Current test progress is saved to Firebase.
-- Student sees that the session ended and that progress was saved.
-- Teacher can Start the same session later.
-- Student rejoins and is approved normally.
-- KLGA detects saved progress and offers Resume Test.
-- The student continues at the same question/progress point.
-- Completed assessments clear the saved in-progress data.
+New Live Monitor actions:
+
+END TEST
+- Stops only the selected student.
+- Keeps their saved progress.
+- Student can rejoin and resume later.
+
+TERMINATE & RESTART
+- Stops only the selected student.
+- Permanently clears their saved in-progress attempt.
+- Student status becomes Terminated.
+- After they rejoin and the teacher approves them again, they start from Question 1.
+
+Safety:
+- Both actions show a confirmation popup before taking effect.
+- Terminate & Restart is visually marked as the destructive option.
 
 No Firestore rules changes are required.
-
-Important:
-Resume across days works on the same browser/device while Firebase anonymous authentication remains stored.
-Clearing browser site data, using incognito, or switching devices may change the anonymous UID and prevent access to the old progress.

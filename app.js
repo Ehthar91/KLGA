@@ -246,6 +246,20 @@ async function cloudSetSessionStudentRunState(sessionKey,status){
 }
 
 
+async function cloudSetStudentTestControl(sessionKey,studentKey,action){
+  if(await fbReady() && window.KLGAFirebase.setStudentTestControl){
+    return await window.KLGAFirebase.setStudentTestControl(sessionKey,studentKey,action);
+  }
+
+  // Local-only fallback cannot push a live control action across devices.
+  // It still clears locally saved progress for terminate when applicable.
+  if(action==='terminate'){
+    localStorage.removeItem(localProgressKey(sessionKey,studentKey));
+  }
+  return null;
+}
+
+
 
 const consonants=[
 {l:'က',s:'Ka'},{l:'ခ',s:'Ka'},{l:'ဂ',s:'Ga'},{l:'ဃ',s:'Kha'},{l:'င',s:'Ngah'},{l:'စ',s:'Sa'},{l:'ဆ',s:'Cha'},{l:'ရှ',s:'Sha'},{l:'ည',s:'Nya'},{l:'တ',s:'Ta'},{l:'ထ',s:'Ta'},{l:'ဒ',s:'Da'},{l:'န',s:'Na'},{l:'ပ',s:'Pa'},{l:'ဖ',s:'Pa'},{l:'ဘ',s:'Ba'},{l:'မ',s:'Ma'},{l:'ယ',s:'Ya'},{l:'ရ',s:'Ra'},{l:'လ',s:'La'},{l:'ဝ',s:'Wa'},{l:'သ',s:'Tha'},{l:'ဟ',s:'Ha'},{l:'အ',s:'Ah'},{l:'ဧ',s:'Ahh'}
@@ -939,6 +953,96 @@ function ensureSessionEndedModal(){
   return modal;
 }
 
+
+function ensureIndividualStopModal(){
+  let modal=document.getElementById('individualStopModal');
+  if(modal) return modal;
+
+  modal=document.createElement('div');
+  modal.id='individualStopModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+  modal.innerHTML=
+    `<div class="modal-backdrop"></div>`+
+    `<div class="modal-card session-ended-card" role="dialog" aria-modal="true" aria-labelledby="individualStopTitle">`+
+      `<div class="session-ended-icon" id="individualStopIcon" aria-hidden="true">■</div>`+
+      `<div class="eyebrow" id="individualStopEyebrow">Teacher Action</div>`+
+      `<h2 id="individualStopTitle">Your test was stopped.</h2>`+
+      `<p id="individualStopMessage"></p>`+
+      `<div class="session-ended-progress" id="individualStopProgress"></div>`+
+      `<button type="button" class="btn primary" id="individualStopHomeBtn">Return Home</button>`+
+    `</div>`;
+
+  document.body.appendChild(modal);
+  modal.querySelector('#individualStopHomeBtn').onclick=()=>{
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+    stopStudentRuntimeWatch();
+    joinedSession=null;
+    joinedStudent=null;
+    pendingResumeProgress=null;
+    sessionPausedByTeacher=false;
+    lastHandledControlNonce=null;
+    state=fresh();
+    showView('home');
+  };
+
+  return modal;
+}
+
+async function endIndividualStudentTest(){
+  if(sessionPausedByTeacher || !joinedSession || !joinedStudent) return;
+  sessionPausedByTeacher=true;
+
+  try{
+    await saveCurrentSessionProgress();
+  }catch(err){
+    console.warn('Could not save progress while ending individual student test:',err);
+  }
+
+  nextQuestionBtn.disabled=true;
+  answerChoices.querySelectorAll('button').forEach(btn=>btn.disabled=true);
+
+  const modal=ensureIndividualStopModal();
+  modal.querySelector('#individualStopEyebrow').textContent='Test Ended by Teacher';
+  modal.querySelector('#individualStopTitle').textContent='Your test has been ended.';
+  modal.querySelector('#individualStopMessage').textContent=
+    'Your progress was saved. You can resume this same test later after your teacher approves you again.';
+
+  const answered=Number(state.totalQuestions||0);
+  const total=state.mode==='individual'
+    ? (String(joinedSession.questionCount||'8')==='all' ? 'assigned questions' : String(joinedSession.questionCount||'8'))
+    : String(ADAPTIVE_TOTAL_QUESTIONS);
+  modal.querySelector('#individualStopProgress').textContent=`Saved at ${answered} of ${total} questions.`;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
+
+async function terminateIndividualStudentTest(){
+  if(!joinedSession || !joinedStudent) return;
+  sessionPausedByTeacher=true;
+
+  // Do NOT save the current test again. The teacher intentionally discarded it.
+  try{
+    await cloudClearStudentProgress(joinedSession.key,joinedStudent.key);
+  }catch(err){
+    console.warn('Could not clear terminated test progress:',err);
+  }
+
+  pendingResumeProgress=null;
+  nextQuestionBtn.disabled=true;
+  answerChoices.querySelectorAll('button').forEach(btn=>btn.disabled=true);
+
+  const modal=ensureIndividualStopModal();
+  modal.querySelector('#individualStopEyebrow').textContent='Test Terminated';
+  modal.querySelector('#individualStopTitle').textContent='Your test will restart from the beginning.';
+  modal.querySelector('#individualStopMessage').textContent=
+    'Your teacher terminated this attempt. Your saved progress was cleared. The next time you are approved, you will begin again at Question 1.';
+  modal.querySelector('#individualStopProgress').textContent='This attempt will not be resumed.';
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
+
 async function pauseStudentTestForEndedSession(){
   if(sessionPausedByTeacher || !joinedSession || !joinedStudent) return;
   sessionPausedByTeacher=true;
@@ -978,6 +1082,21 @@ async function startStudentRuntimeWatch(){
     record=>{
       if(record?.sessionStatus==='Ended'){
         pauseStudentTestForEndedSession();
+        return;
+      }
+
+      const nonce=record?.controlNonce;
+      const action=record?.controlAction;
+
+      if(!action || nonce===null || nonce===undefined) return;
+      if(String(nonce)===String(lastHandledControlNonce)) return;
+
+      lastHandledControlNonce=nonce;
+
+      if(action==='end'){
+        endIndividualStudentTest();
+      }else if(action==='terminate'){
+        terminateIndividualStudentTest();
       }
     }
   );
@@ -1429,6 +1548,7 @@ let stopStudentStatusListener=null;
 let stopStudentRuntimeListener=null;
 let pendingResumeProgress=null;
 let sessionPausedByTeacher=false;
+let lastHandledControlNonce=null;
 
 function statusLabel(s){
   return ({
@@ -1437,6 +1557,7 @@ function statusLabel(s){
     approved:"Approved",
     testing:"Testing",
     paused:"Paused",
+    terminated:"Terminated",
     finished:"Finished"
   })[s] || s;
 }
@@ -1464,6 +1585,76 @@ function closeLiveMonitor(){
   activeMonitorSession=null;
 }
 
+
+function ensureStudentTestControlModal(){
+  let modal=document.getElementById('studentTestControlModal');
+  if(modal) return modal;
+
+  modal=document.createElement('div');
+  modal.id='studentTestControlModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+  modal.innerHTML=
+    `<div class="modal-backdrop" data-student-control-cancel></div>`+
+    `<div class="modal-card student-control-card" role="dialog" aria-modal="true" aria-labelledby="studentControlTitle">`+
+      `<div class="student-control-icon" aria-hidden="true">!</div>`+
+      `<div class="eyebrow" id="studentControlEyebrow">Teacher Action</div>`+
+      `<h2 id="studentControlTitle">Student Test Action</h2>`+
+      `<p id="studentControlMessage"></p>`+
+      `<div class="student-control-actions">`+
+        `<button type="button" class="btn ghost" data-student-control-cancel>Cancel</button>`+
+        `<button type="button" class="btn secondary" id="studentControlConfirmBtn">Confirm</button>`+
+      `</div>`+
+    `</div>`;
+
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function confirmStudentTestControl({title,message,confirmLabel,danger=false}){
+  const modal=ensureStudentTestControlModal();
+  const titleEl=modal.querySelector('#studentControlTitle');
+  const messageEl=modal.querySelector('#studentControlMessage');
+  const confirmBtn=modal.querySelector('#studentControlConfirmBtn');
+  const eyebrow=modal.querySelector('#studentControlEyebrow');
+  const icon=modal.querySelector('.student-control-icon');
+  const cancelEls=modal.querySelectorAll('[data-student-control-cancel]');
+
+  titleEl.textContent=title;
+  messageEl.textContent=message;
+  confirmBtn.textContent=confirmLabel;
+  confirmBtn.className=`btn ${danger?'danger':'secondary'}`;
+  eyebrow.textContent=danger?'Permanent Restart':'Pause Student Test';
+  icon.classList.toggle('is-danger',danger);
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+
+  return new Promise(resolve=>{
+    let done=false;
+
+    const finish=value=>{
+      if(done) return;
+      done=true;
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden','true');
+      confirmBtn.onclick=null;
+      cancelEls.forEach(el=>el.onclick=null);
+      document.removeEventListener('keydown',onKey);
+      resolve(value);
+    };
+
+    const onKey=event=>{
+      if(event.key==='Escape') finish(false);
+    };
+
+    confirmBtn.onclick=()=>finish(true);
+    cancelEls.forEach(el=>el.onclick=()=>finish(false));
+    document.addEventListener('keydown',onKey);
+    confirmBtn.focus();
+  });
+}
+
 async function renderLiveSessionStudents(session,statuses){
   const roster=await cloudLoadRoster();
   const assigned=(session.studentKeys||[])
@@ -1478,22 +1669,43 @@ async function renderLiveSessionStudents(session,statuses){
   liveSessionStudentsBody.innerHTML="";
 
   assigned.forEach(student=>{
-    const status=map[student.key]?.status || "not joined";
+    const record=map[student.key]||{};
+    const status=record.status || "not joined";
+
     if(status==="waiting") waiting++;
     if(status==="approved") approved++;
     if(status==="testing") testing++;
     if(status==="finished") finished++;
 
-    const action=status==="waiting"
-      ? `<button class="btn mini primary" data-confirm-live="${student.key}">Confirm</button>`
-      : `<span class="muted">${statusLabel(status)}</span>`;
+    let action='';
 
+    if(status==="waiting"){
+      action=`<button class="btn mini primary" data-confirm-live="${student.key}">Confirm</button>`;
+    }else if(status==="testing" || status==="approved"){
+      action=
+        `<div class="student-test-actions">`+
+          `<button class="btn mini secondary" data-end-student-test="${student.key}">End Test</button>`+
+          `<button class="btn mini danger" data-terminate-student-test="${student.key}">Terminate & Restart</button>`+
+        `</div>`;
+    }else if(status==="paused"){
+      action=
+        `<div class="student-test-actions">`+
+          `<span class="muted">Progress saved</span>`+
+          `<button class="btn mini danger" data-terminate-student-test="${student.key}">Terminate & Restart</button>`+
+        `</div>`;
+    }else if(status==="terminated"){
+      action=`<span class="muted">Next approval starts from Question 1</span>`;
+    }else{
+      action=`<span class="muted">${statusLabel(status)}</span>`;
+    }
+
+    const safeStatus=String(status).replace(/\s+/g,"-");
     const tr=document.createElement("tr");
     tr.innerHTML=
       `<td><strong>${esc(student.name)}</strong></td>`+
       `<td>${esc(student.studentId)}</td>`+
       `<td>${esc(student.grade)}</td>`+
-      `<td><span class="status-pill status-${status.replace(" ","-")}">${statusLabel(status)}</span></td>`+
+      `<td><span class="status-pill status-${safeStatus}">${statusLabel(status)}</span></td>`+
       `<td>${action}</td>`;
     liveSessionStudentsBody.appendChild(tr);
   });
@@ -1506,6 +1718,56 @@ async function renderLiveSessionStudents(session,statuses){
 
   document.querySelectorAll("[data-confirm-live]").forEach(btn=>{
     btn.onclick=()=>cloudSetStudentJoin(session.key,btn.dataset.confirmLive,"approved");
+  });
+
+  document.querySelectorAll("[data-end-student-test]").forEach(btn=>{
+    btn.onclick=async()=>{
+      const studentKey=btn.dataset.endStudentTest;
+      const student=assigned.find(s=>s.key===studentKey);
+      if(!student) return;
+
+      const approved=await confirmStudentTestControl({
+        title:`End ${student.name}'s Test?`,
+        message:'This stops only this student. Their current progress will be kept so they can resume later.',
+        confirmLabel:'End Test',
+        danger:false
+      });
+      if(!approved) return;
+
+      btn.disabled=true;
+      try{
+        await cloudSetStudentTestControl(session.key,studentKey,'end');
+      }catch(err){
+        console.error('End student test failed:',err);
+        alert('Could not end this student test. Check Firebase connection and permissions.');
+        btn.disabled=false;
+      }
+    };
+  });
+
+  document.querySelectorAll("[data-terminate-student-test]").forEach(btn=>{
+    btn.onclick=async()=>{
+      const studentKey=btn.dataset.terminateStudentTest;
+      const student=assigned.find(s=>s.key===studentKey);
+      if(!student) return;
+
+      const approved=await confirmStudentTestControl({
+        title:`Terminate ${student.name}'s Test?`,
+        message:'This permanently deletes this student’s saved in-progress attempt. The next time you approve them, they will start again from Question 1.',
+        confirmLabel:'Terminate & Restart',
+        danger:true
+      });
+      if(!approved) return;
+
+      btn.disabled=true;
+      try{
+        await cloudSetStudentTestControl(session.key,studentKey,'terminate');
+      }catch(err){
+        console.error('Terminate student test failed:',err);
+        alert('Could not terminate this student test. Check Firebase connection and permissions.');
+        btn.disabled=false;
+      }
+    };
   });
 }
 
@@ -2870,6 +3132,7 @@ returnHomeBtn.onclick=()=>{
   joinedStudent=null;
   pendingResumeProgress=null;
   sessionPausedByTeacher=false;
+  lastHandledControlNonce=null;
   updateResumeSetupUI(null);
   applyStudentSessionAssignment();
   showView('home');
@@ -3012,6 +3275,7 @@ joinSessionBtn.onclick=async()=>{
   stopStudentRuntimeWatch();
   pendingResumeProgress=null;
   sessionPausedByTeacher=false;
+  lastHandledControlNonce=null;
   joinSessionError.classList.add('hidden');
   try{
     await cloudEnsureStudentAuth();
@@ -3098,6 +3362,7 @@ confirmStudentJoinBtn.onclick=async()=>{
       }
 
       sessionPausedByTeacher=false;
+      lastHandledControlNonce=null;
       await startStudentRuntimeWatch();
 
       waitingApprovalWrap.classList.add("hidden");
