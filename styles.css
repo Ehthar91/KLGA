@@ -1933,17 +1933,17 @@ html[data-theme="dark"] .growth-score-card{
   width:100%;
 }
 
-body.theme-dark .clear-results-confirm-card{
+html[data-theme="dark"] .clear-results-confirm-card{
   background:#111827;
   color:#e5e7eb;
 }
 
-body.theme-dark .clear-results-confirm-message,
-body.theme-dark .clear-results-confirm-note{
+html[data-theme="dark"] .clear-results-confirm-message,
+html[data-theme="dark"] .clear-results-confirm-note{
   color:#94a3b8;
 }
 
-body.theme-dark .clear-results-confirm-scope{
+html[data-theme="dark"] .clear-results-confirm-scope{
   background:rgba(127,29,29,.22);
   border-color:#7f1d1d;
   color:#fecaca;
@@ -2008,17 +2008,17 @@ body.theme-dark .clear-results-confirm-scope{
   background:#f8fafc;
 }
 
-body.theme-dark .assigned-assessment-card{
+html[data-theme="dark"] .assigned-assessment-card{
   background:rgba(30,64,175,.18);
   border-color:#1d4ed8;
 }
 
-body.theme-dark .assigned-assessment-card strong{
+html[data-theme="dark"] .assigned-assessment-card strong{
   color:#bfdbfe;
 }
 
-body.theme-dark .assigned-assessment-label,
-body.theme-dark .assigned-assessment-card small{
+html[data-theme="dark"] .assigned-assessment-label,
+html[data-theme="dark"] .assigned-assessment-card small{
   color:#94a3b8;
 }
 
@@ -2065,16 +2065,16 @@ body.theme-dark .assigned-assessment-card small{
   font-weight:800;
   color:#334155;
 }
-body.theme-dark .resume-progress-notice{
+html[data-theme="dark"] .resume-progress-notice{
   background:rgba(30,64,175,.18);
   border-color:#1d4ed8;
   color:#bfdbfe;
 }
-body.theme-dark .session-ended-card{
+html[data-theme="dark"] .session-ended-card{
   background:#111827;
   color:#e5e7eb;
 }
-body.theme-dark .session-ended-progress{
+html[data-theme="dark"] .session-ended-progress{
   background:#0f172a;
   border-color:#334155;
   color:#e2e8f0;
@@ -2151,12 +2151,12 @@ body.theme-dark .session-ended-progress{
   width:100%;
 }
 
-body.theme-dark .student-control-card{
+html[data-theme="dark"] .student-control-card{
   background:#111827;
   color:#e5e7eb;
 }
 
-body.theme-dark .student-control-card p{
+html[data-theme="dark"] .student-control-card p{
   color:#94a3b8;
 }
 
@@ -2245,22 +2245,22 @@ body.theme-dark .student-control-card p{
   color:#fff;
 }
 
-body.theme-dark .speed-review-stat{
+html[data-theme="dark"] .speed-review-stat{
   background:rgba(154,52,18,.18);
   border-color:#9a3412;
 }
 
-body.theme-dark .live-progress-text span,
-body.theme-dark .pace-value{
+html[data-theme="dark"] .live-progress-text span,
+html[data-theme="dark"] .pace-value{
   color:#94a3b8;
 }
 
-body.theme-dark .live-mini-progress{
+html[data-theme="dark"] .live-mini-progress{
   background:#334155;
 }
 
-body.theme-dark .pace-value.pace-alert,
-body.theme-dark .status-pill.status-speed-review{
+html[data-theme="dark"] .pace-value.pace-alert,
+html[data-theme="dark"] .status-pill.status-speed-review{
   background:rgba(154,52,18,.24);
   border-color:#c2410c;
   color:#fdba74;
@@ -2334,17 +2334,17 @@ body.live-monitor-screen-open{
   background:#f8fafc;
 }
 
-body.theme-dark .live-monitor.is-screen-open{
+html[data-theme="dark"] .live-monitor.is-screen-open{
   background:#0f172a;
 }
 
-body.theme-dark .live-monitor.is-screen-open .roster-head,
-body.theme-dark .live-monitor.is-screen-open .monitor-stats{
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head,
+html[data-theme="dark"] .live-monitor.is-screen-open .monitor-stats{
   background:#0f172a;
   border-color:#334155;
 }
 
-body.theme-dark .live-monitor.is-screen-open .live-progress-table thead th{
+html[data-theme="dark"] .live-monitor.is-screen-open .live-progress-table thead th{
   background:#111827;
 }
 
@@ -2420,4 +2420,24 @@ body.dedicated-monitor-mode .topbar{
 
 body.dedicated-monitor-mode .live-monitor.is-screen-open{
   z-index:1600;
+}
+
+
+/* ===== DARK MODE MONITOR POLISH FIX ===== */
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head h3,
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head p,
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head .muted{
+  color:#dbe7fb;
+}
+
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head .secondary,
+html[data-theme="dark"] .live-monitor.is-screen-open .roster-head .ghost{
+  background:#12213a;
+  border-color:#2e4470;
+  color:#dbe7fb;
+}
+
+html[data-theme="dark"] .live-progress-table-wrap{
+  background:linear-gradient(180deg,#0f1b31,#0d1728);
+  border-color:#24344d;
 }

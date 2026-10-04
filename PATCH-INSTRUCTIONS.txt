@@ -1,21 +1,15 @@
-KLGA TRUE DEDICATED SESSION MONITOR PATCH
+KLGA DARK MODE SESSION MONITOR FIX
 
 Replace:
-- app.js
 - styles.css
 
-FIX
-The prior new-tab monitor URL opened correctly but the normal KLGA startup still showed the Home page.
+What this fixes:
+- Dedicated session monitor looked odd in dark mode
+- Light / white sticky header area in fullscreen monitor
+- Dark-mode monitor colors not applying consistently
+- Low-contrast header/action area in the monitor
 
-NEW BEHAVIOR
-- ?monitor=<sessionKey> is now a dedicated monitor route.
-- The Home page is bypassed.
-- Refresh keeps you on the same session monitor.
-- Teacher authentication state is restored before routing.
-- If Google sign-in is required, the URL remains intact.
-- After sign-in, KLGA opens the requested monitor directly.
-- Dedicated monitor mode opens full screen automatically.
-- Live Firebase updates continue normally.
-- "Exit Monitor" explicitly leaves dedicated mode and returns to Teacher Sessions.
+Cause:
+Recent monitor dark-mode rules were using `body.theme-dark`, but KLGA currently switches themes with `html[data-theme="dark"]`.
 
-No Firebase, Firestore, or index.html changes are required for this fix.
+No Firebase changes are needed.
