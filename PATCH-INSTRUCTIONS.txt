@@ -1,0 +1,10 @@
+KLGA TEACHER DASHBOARD NAVIGATION PATCH
+
+Replace these 3 files in your current KLGA site:
+- index.html
+- styles.css
+- app.js
+
+Then redeploy. Firebase configuration and Firestore rules do not need to change.
+
+Adds working Overview / Sessions / Students / Results navigation plus the Overview summary dashboard.

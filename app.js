@@ -1803,6 +1803,103 @@ async function exportCsv(){
 }
 
 
+
+/* ---------------------------
+   TEACHER DASHBOARD NAVIGATION
+---------------------------- */
+let activeTeacherTab='overview';
+
+function setTeacherTab(tab){
+  const valid=['overview','sessions','students','results'];
+  if(!valid.includes(tab)) tab='overview';
+  activeTeacherTab=tab;
+
+  const panels={
+    overview:document.getElementById('teacherOverviewPanel'),
+    sessions:document.getElementById('teacherSessionsPanel'),
+    students:document.getElementById('teacherStudentsPanel'),
+    results:document.getElementById('teacherResultsPanel')
+  };
+
+  Object.entries(panels).forEach(([key,panel])=>{
+    if(panel) panel.classList.toggle('hidden',key!==tab);
+  });
+
+  document.querySelectorAll('[data-teacher-tab]').forEach(btn=>{
+    const on=btn.dataset.teacherTab===tab;
+    btn.classList.toggle('active',on);
+    btn.setAttribute('aria-selected',on?'true':'false');
+  });
+
+  if(tab==='overview') updateTeacherOverview();
+}
+
+async function updateTeacherOverview(resultsOverride=null){
+  const studentCount=document.getElementById('overviewStudentCount');
+  if(!studentCount) return;
+
+  try{
+    const [roster,sessions,results]=await Promise.all([
+      cloudLoadRoster(),
+      cloudLoadSessions(),
+      resultsOverride ? Promise.resolve(resultsOverride) : cloudLoadResults()
+    ]);
+
+    const active=sessions.filter(s=>s.status==='Active');
+    const sortedResults=[...results].sort((a,b)=>resultSortTime(b)-resultSortTime(a));
+
+    studentCount.textContent=roster.length;
+    overviewActiveSessions.textContent=active.length;
+    overviewResultCount.textContent=sortedResults.length;
+
+    const recent=sortedResults[0];
+    if(recent){
+      overviewRecentResult.textContent=recent.student||'Student';
+      overviewRecentResultMeta.textContent=`${recent.resultLabel||recent.path||'KLGA Result'} • ${recent.overall??'—'}%`;
+    }else{
+      overviewRecentResult.textContent='—';
+      overviewRecentResultMeta.textContent='No assessment results yet';
+    }
+
+    overviewSessionSummary.innerHTML='';
+    const sessionItems=(active.length?active:sessions.slice().reverse()).slice(0,4);
+    if(!sessionItems.length){
+      overviewSessionSummary.innerHTML='<div class="overview-empty">No testing sessions created yet.</div>';
+    }else{
+      sessionItems.forEach(s=>{
+        const row=document.createElement('div');
+        row.className='overview-summary-item';
+        const test=s.testType==='adaptive'?'Adaptive':`Level ${s.level}`;
+        row.innerHTML=`<div><strong>${esc(s.name)}</strong><small>${esc(test)} • ${esc(s.status)}</small></div><span class="overview-summary-value">${(s.studentKeys||[]).length}</span>`;
+        overviewSessionSummary.appendChild(row);
+      });
+    }
+
+    overviewRecentResultsList.innerHTML='';
+    if(!sortedResults.length){
+      overviewRecentResultsList.innerHTML='<div class="overview-empty">No KLGA results yet.</div>';
+    }else{
+      sortedResults.slice(0,4).forEach(r=>{
+        const row=document.createElement('div');
+        row.className='overview-summary-item';
+        row.innerHTML=`<div><strong>${esc(r.student||'Student')}</strong><small>Grade ${esc(r.grade||'—')} • ${esc(r.date||'')}</small></div><span class="overview-summary-value">${esc(r.overall??'—')}%</span>`;
+        overviewRecentResultsList.appendChild(row);
+      });
+    }
+  }catch(err){
+    console.error('Teacher overview load failed:',err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-teacher-tab]').forEach(btn=>{
+    btn.addEventListener('click',()=>setTeacherTab(btn.dataset.teacherTab));
+  });
+  document.querySelectorAll('[data-overview-go]').forEach(btn=>{
+    btn.addEventListener('click',()=>setTeacherTab(btn.dataset.overviewGo));
+  });
+});
+
 let stopResultsListener=null;
 
 async function startResultsListener(){
@@ -1813,6 +1910,7 @@ async function startResultsListener(){
 
   stopResultsListener=await cloudSubscribeResults(results=>{
     renderDashboard(results);
+    updateTeacherOverview(results);
   });
 }
 
@@ -1846,6 +1944,7 @@ async function openTeacherDashboard(){
     await Promise.all([renderSessions(),renderRoster(),renderDashboard()]);
     await startResultsListener();
     showView('teacher');
+    setTeacherTab('overview');
   }catch(err){
     console.error('Teacher access failed:',err);
     teacherAuthMessage.textContent='Could not verify teacher access. Check Firebase Authentication and Firestore rules.';

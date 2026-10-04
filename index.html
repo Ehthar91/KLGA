@@ -164,12 +164,57 @@
     <h2>Teacher Dashboard</h2>
     <p>Manage rosters, run live testing sessions, and review grouped benchmark results in one place.</p>
   </div>
-  <div class="teacher-banner-chips">
-    <span>Overview</span><span>Sessions</span><span>Students</span><span>Results</span>
+  <div class="teacher-banner-chips teacher-nav" role="tablist" aria-label="Teacher Dashboard sections">
+    <button type="button" class="teacher-nav-btn active" data-teacher-tab="overview" role="tab" aria-selected="true">Overview</button>
+    <button type="button" class="teacher-nav-btn" data-teacher-tab="sessions" role="tab" aria-selected="false">Sessions</button>
+    <button type="button" class="teacher-nav-btn" data-teacher-tab="students" role="tab" aria-selected="false">Students</button>
+    <button type="button" class="teacher-nav-btn" data-teacher-tab="results" role="tab" aria-selected="false">Results</button>
   </div>
 </div>
 
-<div class="session-panel">
+<section id="teacherOverviewPanel" class="teacher-tab-panel">
+  <div class="overview-grid">
+    <button type="button" class="overview-card" data-overview-go="students">
+      <span class="overview-card-label">Students</span>
+      <strong id="overviewStudentCount">—</strong>
+      <small>Total students on the roster</small>
+    </button>
+    <button type="button" class="overview-card" data-overview-go="sessions">
+      <span class="overview-card-label">Active Sessions</span>
+      <strong id="overviewActiveSessions">—</strong>
+      <small>Sessions currently open for testing</small>
+    </button>
+    <button type="button" class="overview-card" data-overview-go="results">
+      <span class="overview-card-label">Assessment Results</span>
+      <strong id="overviewResultCount">—</strong>
+      <small>Saved KLGA results</small>
+    </button>
+    <button type="button" class="overview-card" data-overview-go="results">
+      <span class="overview-card-label">Most Recent</span>
+      <strong id="overviewRecentResult">—</strong>
+      <small id="overviewRecentResultMeta">No assessment results yet</small>
+    </button>
+  </div>
+
+  <div class="overview-columns">
+    <section class="overview-panel-card">
+      <div class="overview-panel-head">
+        <div><div class="eyebrow">Quick Access</div><h3>Testing</h3></div>
+        <button type="button" class="btn secondary mini" data-overview-go="sessions">Open Sessions</button>
+      </div>
+      <div id="overviewSessionSummary" class="overview-summary-list"></div>
+    </section>
+    <section class="overview-panel-card">
+      <div class="overview-panel-head">
+        <div><div class="eyebrow">Recent Activity</div><h3>Latest Results</h3></div>
+        <button type="button" class="btn secondary mini" data-overview-go="results">View Results</button>
+      </div>
+      <div id="overviewRecentResultsList" class="overview-summary-list"></div>
+    </section>
+  </div>
+</section>
+
+<div id="teacherSessionsPanel" class="session-panel teacher-tab-panel hidden">
   <div class="roster-head">
     <div>
       <h2>Testing Sessions</h2>
@@ -276,7 +321,7 @@
 </div>
 
 <hr class="section-divider">
-<div class="roster-panel">
+<div id="teacherStudentsPanel" class="roster-panel teacher-tab-panel hidden">
   <div class="roster-head">
     <div>
       <h2>Student Roster</h2>
@@ -352,6 +397,7 @@
 
 <hr class="section-divider">
 
+<section id="teacherResultsPanel" class="teacher-tab-panel hidden">
 <div class="teacher-head">
   <div>
     <h2>Results</h2>
@@ -367,6 +413,7 @@
 <div id="resultsHierarchy" class="results-hierarchy">
   <div class="empty-row">Loading results…</div>
 </div>
+</section>
 </section>
 </main>
 </div>
