@@ -1,10 +1,19 @@
-KLGA TEACHER DASHBOARD NAVIGATION PATCH
+KLGA GROWTH SCORE (KGS) PATCH
 
-Replace these 3 files in your current KLGA site:
+Replace these files:
 - index.html
-- styles.css
 - app.js
+- styles.css
 
-Then redeploy. Firebase configuration and Firestore rules do not need to change.
+Adds:
+- KLGA Growth Score (KGS) for Adaptive Tests
+- Growth from the prior adaptive benchmark in the same school year
+- KGS/Growth on student results
+- KGS/Growth in teacher result table and details
+- KGS in Overview recent results
+- KGS/Growth in CSV exports
+- KGS/Growth in generated Google Sheet Apps Script
 
-Adds working Overview / Sessions / Students / Results navigation plus the Overview summary dashboard.
+Individual Level Tests continue to use percent/mastery only and do not receive KGS.
+
+No Firebase configuration or Firestore rules changes are required.

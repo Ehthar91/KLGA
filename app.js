@@ -868,19 +868,129 @@ function setResultTiles(){
   }
 }
 
-function finishAdaptive(level){
+function clampNumber(value,min,max){
+  return Math.max(min,Math.min(max,value));
+}
+
+function adaptiveKGS(level,levelResults){
+  const numericLevel=Number(level)||0;
+
+  // Below Level 1: progress toward the Level 1 benchmark.
+  if(numericLevel<=0){
+    const l1=Number(levelResults?.[1]??0);
+    return clampNumber(Math.round((l1/75)*99),0,99);
+  }
+
+  // Level 5 is the top visible band. Use mastery above the 75% benchmark
+  // to spread passing Level 5 scores across 500-599.
+  if(numericLevel>=5){
+    const l5=Number(levelResults?.[5]??75);
+    const mastery=clampNumber(l5,75,100);
+    return 500+Math.round(((mastery-75)/25)*99);
+  }
+
+  // Levels 1-4: use performance on the next harder level to measure
+  // progress within the current 100-point band.
+  const nextAccuracy=Number(levelResults?.[numericLevel+1]??0);
+  const progress=clampNumber(Math.round((nextAccuracy/75)*99),0,99);
+  return numericLevel*100+progress;
+}
+
+function resultPlacementLevel(result){
+  const raw=String(result?.placement||result?.resultLabel||'');
+  if(/below\s+level\s+1/i.test(raw)) return 0;
+  const m=raw.match(/level\s*([1-5])/i);
+  return m?Number(m[1]):null;
+}
+
+function resultKGSValue(result){
+  const stored=Number(result?.kgs);
+  if(Number.isFinite(stored) && result?.kgs!=='' && result?.kgs!==null && result?.kgs!==undefined){
+    return stored;
+  }
+  if(String(result?.mode||'').toLowerCase().indexOf('adaptive')===-1) return null;
+
+  const level=resultPlacementLevel(result);
+  if(level===null) return null;
+  const levels={
+    1:result?.level1,
+    2:result?.level2,
+    3:result?.level3,
+    4:result?.level4,
+    5:result?.level5
+  };
+  return adaptiveKGS(level,levels);
+}
+
+function resultStudentIdentity(result){
+  if(result?.studentKey) return `key:${String(result.studentKey)}`;
+  if(result?.studentId) return `id:${String(result.studentId).trim().toLowerCase()}`;
+  return `name:${String(result?.student||'').trim().toLowerCase()}|grade:${String(result?.grade||'')}`;
+}
+
+function resultSchoolYear(result){
+  try{return schoolYearFromResult(result);}catch(err){return 'Unknown Year';}
+}
+
+function growthDeltaForResult(result,allResults){
+  const current=resultKGSValue(result);
+  if(current===null) return null;
+
+  const identity=resultStudentIdentity(result);
+  const year=resultSchoolYear(result);
+  const currentTime=resultSortTime(result);
+
+  const prior=(allResults||[])
+    .filter(x=>x!==result)
+    .filter(x=>String(x?.mode||'').toLowerCase().includes('adaptive'))
+    .filter(x=>resultStudentIdentity(x)===identity)
+    .filter(x=>resultSchoolYear(x)===year)
+    .filter(x=>resultKGSValue(x)!==null)
+    .filter(x=>{
+      const t=resultSortTime(x);
+      return !currentTime || !t || t<currentTime;
+    })
+    .sort((a,b)=>resultSortTime(b)-resultSortTime(a))[0];
+
+  if(!prior) return null;
+  return current-resultKGSValue(prior);
+}
+
+function formatGrowthDelta(delta){
+  if(delta===null || delta===undefined || Number.isNaN(Number(delta))) return '—';
+  const n=Number(delta);
+  if(n>0) return `+${n}`;
+  return String(n);
+}
+
+async function priorGrowthForNewResult(result){
+  try{
+    const existing=await cloudLoadResults();
+    const delta=growthDeltaForResult(result,[...existing,result]);
+    return delta;
+  }catch(err){
+    console.warn('Could not calculate prior KLGA growth:',err);
+    return null;
+  }
+}
+
+async function finishAdaptive(level){
   progressBar.style.width='100%';
   const displayLevel=level<=0?'Below Level 1':'Level '+level;
 
   resultStudentName.textContent=state.studentName;
   resultLevel.textContent=displayLevel;
   resultAccuracy.textContent=pct(state.responses)+'%';
+  const kgs=adaptiveKGS(level,state.levelResults);
+  resultKgs.textContent=String(kgs);
+  resultGrowth.textContent='—';
   setResultTiles();
 
   adaptiveSummary.innerHTML=
     `<strong>Adaptive path:</strong> ${state.path.join(' → ')}<br>`+
     `<strong>Questions answered:</strong> ${state.totalQuestions}<br>`+
-    `<strong>Placement:</strong> ${displayLevel}`;
+    `<strong>Placement:</strong> ${displayLevel}<br>`+
+    `<strong>KLGA Growth Score:</strong> ${kgs}`;
 
   diagnosticSummary.innerHTML=diagnosticHtml();
 
@@ -891,6 +1001,10 @@ function finishAdaptive(level){
     mode:'Adaptive Test',
     resultLabel:displayLevel,
     placement:displayLevel,
+    kgs,
+    growth:'',
+    studentKey:joinedStudent?.key||'',
+    studentId:joinedStudent?.studentId||'',
     overall:pct(state.responses),
     questions:state.totalQuestions,
     path:state.path.join(' → '),
@@ -911,6 +1025,9 @@ function finishAdaptive(level){
     date:new Date().toLocaleDateString()
   };
 
+  result.growth=await priorGrowthForNewResult(result);
+  resultGrowth.textContent=formatGrowthDelta(result.growth);
+
   const saved=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
   saved.push(result);
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
@@ -930,13 +1047,16 @@ function finishIndividual(){
   resultStudentName.textContent=state.studentName;
   resultLevel.textContent='Level '+level;
   resultAccuracy.textContent=score+'%';
+  resultKgs.textContent='—';
+  resultGrowth.textContent='—';
   setResultTiles();
 
   adaptiveSummary.innerHTML=
     `<strong>Individual level test:</strong> Level ${level} — ${LEVELS[level].name}<br>`+
     `<strong>Questions answered:</strong> ${rows.length}<br>`+
     `<strong>Score:</strong> ${score}% (${rows.filter(r=>r.correct).length}/${rows.length})<br>`+
-    `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}`;
+    `<strong>Mastery benchmark:</strong> ${score>=75?'Met (75% or higher)':'Not yet met'}<br>`+
+    `<strong>KLGA Growth Score:</strong> Not reported for Individual Level Tests`;
 
   diagnosticSummary.innerHTML=diagnosticHtml();
 
@@ -947,6 +1067,10 @@ function finishIndividual(){
     mode:'Individual Level Test',
     resultLabel:score>=75?'Met Benchmark':'Below Benchmark',
     placement:'Level '+level,
+    kgs:'',
+    growth:'',
+    studentKey:joinedStudent?.key||'',
+    studentId:joinedStudent?.studentId||'',
     overall:score,
     questions:rows.length,
     path:'Level '+level,
@@ -1555,6 +1679,8 @@ function openTeacherResultDetail(resultKey){
     ['Window',result.window||'—'],
     ['Mode',result.mode||'—'],
     ['Questions',result.questions??'—'],
+    ['KGS',resultKGSValue(result)??'—'],
+    ['Growth',formatGrowthDelta(growthDeltaForResult(result,teacherResultCache))],
     ['Overall',result.overall!==undefined?`${result.overall}%`:'—'],
     ['Result',result.resultLabel||'—'],
     ['Date',result.date||'—']
@@ -1733,6 +1859,8 @@ async function renderDashboard(resultsOverride=null){
                 `<th>Questions</th>`+
                 `<th>Path / Level</th>`+
                 `<th>Result</th>`+
+                `<th>KGS</th>`+
+                `<th>Growth</th>`+
                 `<th>Overall</th>`+
                 `<th>Date</th>`+
                 `<th>Details</th>`+
@@ -1743,7 +1871,7 @@ async function renderDashboard(resultsOverride=null){
           const tbody=tableWrap.querySelector('tbody');
 
           if(!gradeResults.length){
-            tbody.innerHTML='<tr><td colspan="8" class="empty-row">No results for this grade.</td></tr>';
+            tbody.innerHTML='<tr><td colspan="10" class="empty-row">No results for this grade.</td></tr>';
           }else{
             gradeResults.forEach(x=>{
               const tr=document.createElement('tr');
@@ -1753,6 +1881,8 @@ async function renderDashboard(resultsOverride=null){
                 `<td>${esc(x.questions??'')}</td>`+
                 `<td>${esc(x.path||'')}</td>`+
                 `<td><strong>${esc(x.resultLabel||'')}</strong></td>`+
+                `<td><strong class="kgs-table-value">${esc(resultKGSValue(x)??'—')}</strong></td>`+
+                `<td class="growth-table-value">${esc(formatGrowthDelta(growthDeltaForResult(x,teacherResultCache)))}</td>`+
                 `<td>${esc(x.overall??'')}%</td>`+
                 `<td>${esc(x.date||'')}</td>`+
                 `<td><button class="btn mini secondary" data-result-detail="${x.key}">View Details</button></td>`;
@@ -1888,7 +2018,7 @@ function safeFilePart(value){
 
 function downloadResultsCsv(results,filename='KLGA-5-Level-Results.csv'){
   const rows=[[
-    'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
+    'Student','Grade','Window','Mode','Result','KLGA Growth Score','Growth','Overall','Questions','Path',
     'Level 1','Level 2','Level 3','Level 4','Level 5',
     'Alphabet Recognition','Letter Sounds','Vowel Recognition',
     'Alphabet + Vowel','Tone Recognition','Blend Sound Recognition',
@@ -1896,7 +2026,7 @@ function downloadResultsCsv(results,filename='KLGA-5-Level-Results.csv'){
   ]];
 
   results.forEach(x=>rows.push([
-    x.student,x.grade,x.window,x.mode,x.resultLabel,x.overall,x.questions,x.path,
+    x.student,x.grade,x.window,x.mode,x.resultLabel,resultKGSValue(x)??'',formatGrowthDelta(growthDeltaForResult(x,results)),x.overall,x.questions,x.path,
     x.level1,x.level2,x.level3,x.level4,x.level5,
     x.skill1,x.skill2,x.skill3,x.skill4,x.skill5,x.skill6,x.skill7,x.skill8,x.skill9,
     x.date
@@ -1925,7 +2055,7 @@ async function exportCsv(){
 
 function buildGoogleSheetAppsScript(results,year,season,grade){
   const headers=[
-    'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
+    'Student','Grade','Window','Mode','Result','KLGA Growth Score','Growth','Overall','Questions','Path',
     'Level 1','Level 2','Level 3','Level 4','Level 5',
     'Alphabet Recognition','Letter Sounds','Vowel Recognition',
     'Alphabet + Vowel','Tone Recognition','Blend Sound Recognition',
@@ -1934,7 +2064,7 @@ function buildGoogleSheetAppsScript(results,year,season,grade){
 
   const rows=results.map(x=>[
     x.student??'',x.grade??'',x.window??'',x.mode??'',x.resultLabel??'',
-    x.overall??'',x.questions??'',x.path??'',
+    resultKGSValue(x)??'',formatGrowthDelta(growthDeltaForResult(x,results)),x.overall??'',x.questions??'',x.path??'',
     x.level1??'',x.level2??'',x.level3??'',x.level4??'',x.level5??'',
     x.skill1??'',x.skill2??'',x.skill3??'',x.skill4??'',x.skill5??'',
     x.skill6??'',x.skill7??'',x.skill8??'',x.skill9??'',x.date??''
@@ -1986,18 +2116,18 @@ function createKLGAGradeResultsSheet() {
     .setHorizontalAlignment('left');
 
   // Level color headers: L1 red, L2 yellow, L3 orange, L4 green, L5 blue
-  sheet.getRange(1, 9).setBackground('#DC2626').setFontColor('#FFFFFF');
-  sheet.getRange(1,10).setBackground('#EAB308').setFontColor('#1F2937');
-  sheet.getRange(1,11).setBackground('#F97316').setFontColor('#FFFFFF');
-  sheet.getRange(1,12).setBackground('#16A34A').setFontColor('#FFFFFF');
-  sheet.getRange(1,13).setBackground('#2563EB').setFontColor('#FFFFFF');
+  sheet.getRange(1,11).setBackground('#DC2626').setFontColor('#FFFFFF');
+  sheet.getRange(1,12).setBackground('#EAB308').setFontColor('#1F2937');
+  sheet.getRange(1,13).setBackground('#F97316').setFontColor('#FFFFFF');
+  sheet.getRange(1,14).setBackground('#16A34A').setFontColor('#FFFFFF');
+  sheet.getRange(1,15).setBackground('#2563EB').setFontColor('#FFFFFF');
 
   // Basic formatting
   sheet.getDataRange().setWrap(true);
   sheet.autoResizeColumns(1, data[0].length);
   sheet.setColumnWidth(1, 190);
-  sheet.setColumnWidth(8, 220);
-  sheet.setColumnWidth(23, 150);
+  sheet.setColumnWidth(10, 220);
+  sheet.setColumnWidth(25, 150);
 
   // Alternating row colors.
   if (data.length > 1) {
@@ -2157,7 +2287,7 @@ async function updateTeacherOverview(resultsOverride=null){
     const recent=sortedResults[0];
     if(recent){
       overviewRecentResult.textContent=recent.student||'Student';
-      overviewRecentResultMeta.textContent=`${recent.resultLabel||recent.path||'KLGA Result'} • ${recent.overall??'—'}%`;
+      overviewRecentResultMeta.textContent=`${recent.resultLabel||recent.path||'KLGA Result'} • KGS ${resultKGSValue(recent)??'—'} • ${recent.overall??'—'}%`;
     }else{
       overviewRecentResult.textContent='—';
       overviewRecentResultMeta.textContent='No assessment results yet';
@@ -2184,7 +2314,7 @@ async function updateTeacherOverview(resultsOverride=null){
       sortedResults.slice(0,4).forEach(r=>{
         const row=document.createElement('div');
         row.className='overview-summary-item';
-        row.innerHTML=`<div><strong>${esc(r.student||'Student')}</strong><small>Grade ${esc(r.grade||'—')} • ${esc(r.date||'')}</small></div><span class="overview-summary-value">${esc(r.overall??'—')}%</span>`;
+        row.innerHTML=`<div><strong>${esc(r.student||'Student')}</strong><small>Grade ${esc(r.grade||'—')} • ${esc(r.date||'')} • ${esc(r.resultLabel||'')}</small></div><span class="overview-summary-value">KGS ${esc(resultKGSValue(r)??'—')}</span>`;
         overviewRecentResultsList.appendChild(row);
       });
     }

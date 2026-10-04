@@ -1805,3 +1805,44 @@ main{
     grid-template-columns:1fr;
   }
 }
+
+
+/* ===== KLGA GROWTH SCORE (KGS) ===== */
+.growth-score-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin:22px 0 10px;
+}
+.growth-score-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px 20px;
+  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  box-shadow:0 10px 22px rgba(15,23,42,.04);
+}
+.growth-score-card strong{
+  display:block;
+  margin:4px 0;
+  font-size:2rem;
+  line-height:1;
+  letter-spacing:-.04em;
+}
+.growth-score-card small{color:var(--muted)}
+.kgs-card{border-top:4px solid #315efb}
+.growth-card{border-top:4px solid #16a34a}
+.kgs-note{
+  margin:0 0 18px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+.kgs-table-value{color:var(--primary)}
+.growth-table-value{font-weight:800;color:var(--success)}
+html[data-theme="dark"] .growth-score-card{
+  background:linear-gradient(180deg,#132036,#101a2c);
+  border-color:var(--line);
+}
+@media(max-width:720px){
+  .growth-score-grid{grid-template-columns:1fr}
+}
