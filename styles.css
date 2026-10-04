@@ -1746,3 +1746,62 @@ main{
     font-size:13px;
   }
 }
+
+
+/* ===== THREE GRADE ACTION BUTTONS ON SAME ROW ===== */
+.grade-results-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+  margin-left:0;
+}
+
+.grade-results-actions .btn{
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  padding:7px 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  white-space:nowrap;
+  line-height:1.1;
+  font-size:11px;
+  letter-spacing:-0.01em;
+}
+
+.grade-results-actions .grade-sheet-script-btn{
+  grid-column:auto;
+  min-height:34px;
+}
+
+.grade-results-section{
+  overflow:hidden;
+}
+
+@media(min-width:1400px){
+  .grade-results-actions .btn{
+    font-size:12px;
+    padding:7px 10px;
+  }
+}
+
+@media(max-width:900px){
+  .grade-results-actions{
+    grid-template-columns:1fr;
+  }
+
+  .grade-results-actions .btn{
+    font-size:12px;
+    min-height:36px;
+    white-space:normal;
+  }
+}
+
+@media(max-width:620px){
+  .grade-results-actions{
+    grid-template-columns:1fr;
+  }
+}
