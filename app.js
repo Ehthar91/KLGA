@@ -1,5 +1,54 @@
 
 /* ---------------------------
+   THEME / DARK MODE
+---------------------------- */
+const KLGA_THEME_KEY='klgaTheme';
+
+function applyTheme(theme){
+  const value=theme==='dark'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',value);
+
+  if(window.themeToggleText){
+    themeToggleText.textContent=value==='dark'?'Light Mode':'Dark Mode';
+  }
+  if(window.themeToggleIcon){
+    themeToggleIcon.textContent=value==='dark'?'☀':'☾';
+  }
+  if(window.themeToggleBtn){
+    themeToggleBtn.setAttribute(
+      'aria-label',
+      value==='dark'?'Switch to light mode':'Switch to dark mode'
+    );
+  }
+}
+
+function initialTheme(){
+  const saved=localStorage.getItem(KLGA_THEME_KEY);
+  if(saved==='dark' || saved==='light') return saved;
+
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    return 'dark';
+  }
+  return 'light';
+}
+
+applyTheme(initialTheme());
+
+document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(initialTheme());
+
+  if(window.themeToggleBtn){
+    themeToggleBtn.onclick=()=>{
+      const current=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
+      const next=current==='dark'?'light':'dark';
+      localStorage.setItem(KLGA_THEME_KEY,next);
+      applyTheme(next);
+    };
+  }
+});
+
+
+/* ---------------------------
    FIREBASE BRIDGE
    Uses window.KLGAFirebase when firebase-app.js is configured.
    Falls back to localStorage when Firebase is unavailable.

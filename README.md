@@ -1,13 +1,11 @@
-# KLGA — UI Redesign
+# KLGA — UI Redesign + Dark Mode
 
-This version keeps the existing Firebase logic and features, but redesigns the visual interface to feel more like a polished assessment platform.
+This version adds a Light / Dark mode toggle to the redesigned KLGA interface.
 
-Included improvements:
-- modern brand header and home hero
-- refined buttons, cards, spacing, shadows, and typography
-- more polished student testing screen and result screen
-- cleaner Teacher Dashboard presentation
-- improved session, roster, monitor, and results styling
-- stronger visual grouping for School Year → Season → Grade results
-- color-tinted Grade 6 / 7 / 8 sections
-- preserved Google teacher sign-in, roster, sessions, live monitoring, results, and View Details
+Dark mode features:
+- theme toggle in the main header
+- follows the device theme the first time the site is opened
+- remembers the selected theme on that device using localStorage
+- dark styling for home, testing, results, Teacher Dashboard, tables, forms, sessions, roster, live monitor, and result details
+
+All existing Firebase, Google teacher sign-in, student sessions, roster, live monitoring, results, and assessment logic remain unchanged.
