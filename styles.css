@@ -2493,4 +2493,38 @@ html[data-theme="dark"] .monitor-password-label{
 html[data-theme="dark"] .monitor-password-value{
   color:#e2e8f0;
 }
-\n\n/* ===== TEACHER ADAPTIVE GUIDE BUTTON ===== */\n.teacher-banner-tools{\n  display:flex;\n  align-items:center;\n  justify-content:flex-end;\n  gap:10px;\n  flex-wrap:wrap;\n}\n\n.teacher-guide-btn{\n  text-decoration:none;\n  white-space:nowrap;\n  min-height:38px;\n  display:inline-flex;\n  align-items:center;\n  justify-content:center;\n}\n\n@media(max-width:900px){\n  .teacher-banner-tools{\n    width:100%;\n    justify-content:flex-start;\n  }\n}\n
+
+
+/* ===== TEACHER GUIDE UTILITY BUTTON ===== */
+.teacher-banner-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+.teacher-account-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.teacher-guide-btn{
+  text-decoration:none;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+@media(max-width:760px){
+  .teacher-account-bar{
+    align-items:flex-start;
+  }
+
+  .teacher-account-actions{
+    width:100%;
+    justify-content:flex-start;
+  }
+}

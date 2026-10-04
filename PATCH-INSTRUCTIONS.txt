@@ -1,13 +1,13 @@
-KLGA HOW KLGA WORKS GUIDE PATCH
+KLGA HOW KLGA WORKS BUTTON REPOSITION PATCH
 
-Replace/add:
+Replace:
 - index.html
 - styles.css
-- KLGA-Adaptive-Test-Guide.pdf
 
-New feature:
-- Adds a "How KLGA Works" button to the Teacher Dashboard header.
-- Opens the adaptive test explanation PDF in a new browser tab.
-- The PDF is included with the website, so upload it alongside the other site files.
+Change:
+- Moves "How KLGA Works" out of the Teacher Dashboard navigation row.
+- Places it beside Sign Out in the signed-in teacher account bar.
+- Keeps Overview / Sessions / Students / Results as a clean single navigation row.
+- Mobile layout remains responsive.
 
-No app.js, Firebase, or Firestore changes are required.
+No app.js, Firebase, Firestore, or PDF changes are required.
