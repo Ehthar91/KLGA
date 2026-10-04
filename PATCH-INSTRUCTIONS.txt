@@ -1,15 +1,13 @@
-KLGA SESSION MONITOR PASSWORD PATCH
+KLGA HOW KLGA WORKS GUIDE PATCH
 
-Replace:
-- app.js
+Replace/add:
+- index.html
 - styles.css
+- KLGA-Adaptive-Test-Guide.pdf
 
-New behavior:
-- Session password is shown in the Live Session Monitor.
-- Hidden by default as ••••••.
-- Show button reveals the real password.
-- Hide button masks it again.
-- Password returns to hidden after refresh/reopening the monitor.
-- Works in both normal and dedicated monitor tabs.
+New feature:
+- Adds a "How KLGA Works" button to the Teacher Dashboard header.
+- Opens the adaptive test explanation PDF in a new browser tab.
+- The PDF is included with the website, so upload it alongside the other site files.
 
-No Firebase or Firestore changes are required.
+No app.js, Firebase, or Firestore changes are required.

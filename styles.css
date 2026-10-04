@@ -2493,3 +2493,4 @@ html[data-theme="dark"] .monitor-password-label{
 html[data-theme="dark"] .monitor-password-value{
   color:#e2e8f0;
 }
+\n\n/* ===== TEACHER ADAPTIVE GUIDE BUTTON ===== */\n.teacher-banner-tools{\n  display:flex;\n  align-items:center;\n  justify-content:flex-end;\n  gap:10px;\n  flex-wrap:wrap;\n}\n\n.teacher-guide-btn{\n  text-decoration:none;\n  white-space:nowrap;\n  min-height:38px;\n  display:inline-flex;\n  align-items:center;\n  justify-content:center;\n}\n\n@media(max-width:900px){\n  .teacher-banner-tools{\n    width:100%;\n    justify-content:flex-start;\n  }\n}\n
