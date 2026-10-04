@@ -2528,3 +2528,36 @@ html[data-theme="dark"] .monitor-password-value{
     justify-content:flex-start;
   }
 }
+
+
+/* ===== TEACHER GUIDE FINAL POSITION ===== */
+.teacher-account-actions .teacher-guide-btn{
+  min-height:32px;
+  padding:6px 11px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:800;
+  color:var(--accent,#315efb);
+  background:rgba(49,94,251,.06);
+  border-color:rgba(49,94,251,.18);
+}
+
+.teacher-account-actions .teacher-guide-btn:hover{
+  background:rgba(49,94,251,.11);
+  border-color:rgba(49,94,251,.30);
+}
+
+html[data-theme="dark"] .teacher-account-actions .teacher-guide-btn{
+  color:#b8c9ff;
+  background:#162541;
+  border-color:#2e4470;
+}
+
+html[data-theme="dark"] .teacher-account-actions .teacher-guide-btn:hover{
+  background:#1d2d52;
+  border-color:#48618f;
+}
+
+.teacher-banner-tools{
+  gap:0;
+}

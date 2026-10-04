@@ -1,13 +1,12 @@
-KLGA HOW KLGA WORKS BUTTON REPOSITION PATCH
+KLGA GUIDE BUTTON CLEAN POSITION PATCH
 
 Replace:
 - index.html
 - styles.css
 
-Change:
-- Moves "How KLGA Works" out of the Teacher Dashboard navigation row.
-- Places it beside Sign Out in the signed-in teacher account bar.
-- Keeps Overview / Sessions / Students / Results as a clean single navigation row.
-- Mobile layout remains responsive.
+Fix:
+- Removes How KLGA Works from the Overview / Sessions / Students / Results row.
+- Moves it to the signed-in teacher bar beside Sign Out.
+- Styles it as a smaller utility/help button so it no longer looks like a fifth dashboard tab.
 
-No app.js, Firebase, Firestore, or PDF changes are required.
+The existing KLGA-Adaptive-Test-Guide.pdf file does not need to be replaced if you already uploaded it.
