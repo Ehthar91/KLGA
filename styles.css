@@ -1013,3 +1013,140 @@ html[data-theme="dark"] .overview-summary-value{color:#9bb3ff}
   .overview-columns{grid-template-columns:1fr}
 }
 @media(max-width:620px){.overview-grid{grid-template-columns:1fr}}
+
+
+/* ===== UNIFIED STUDENT + TEACHER WORKSPACE UI ===== */
+.workspace-banner{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:22px;
+  padding:24px 26px;
+  border:1px solid #d9e5fb;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(49,94,251,.12), transparent 28%),
+    linear-gradient(135deg, rgba(49,94,251,.07), rgba(75,192,255,.035) 42%, rgba(255,255,255,.98) 100%);
+  box-shadow:0 14px 32px rgba(49,94,251,.07);
+}
+.workspace-banner h2{margin:5px 0 7px;font-size:clamp(1.6rem,2.2vw,2.15rem)}
+.workspace-banner p{margin:0;max-width:720px;line-height:1.55}
+.workspace-steps,
+.teacher-banner-chips{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.workspace-steps span,
+.teacher-banner-chips span,
+.teacher-nav-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:9px 14px;
+  border-radius:999px;
+  border:1px solid #dbe6f7;
+  background:rgba(255,255,255,.82);
+  color:#536781;
+  font-size:13px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.workspace-steps span.active{
+  color:#fff;
+  background:linear-gradient(180deg,var(--primary-2),var(--primary));
+  border-color:var(--primary);
+  box-shadow:0 8px 18px rgba(49,94,251,.18);
+}
+
+.student-workspace-view,
+.workspace-auth-view{
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+.student-content-panel{
+  width:100%;
+  max-width:980px;
+  margin:0 auto;
+  padding:26px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:linear-gradient(180deg,#fff,#fbfdff);
+  box-shadow:0 14px 30px rgba(16,34,60,.055);
+}
+.session-login.student-content-panel,
+.auth-card.student-content-panel{max-width:820px}
+.student-section-title{margin:0 0 8px;font-size:1.22rem}
+.test-content-panel{max-width:1080px}
+.result-content-panel{max-width:1120px}
+.compact-workspace-banner{padding-top:18px;padding-bottom:18px}
+.compact-workspace-banner h2{font-size:1.45rem}
+
+/* Make the teacher dashboard use the exact same workspace banner proportions. */
+.teacher-welcome-banner{padding:24px 26px}
+.teacher-nav-btn{
+  cursor:pointer;
+  font:inherit;
+  color:#536781;
+  transition:transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+}
+.teacher-nav-btn:hover{transform:translateY(-1px);border-color:#c7d7f4;background:#f8fbff}
+.teacher-nav-btn.active{
+  color:#fff;
+  background:linear-gradient(180deg,var(--primary-2),var(--primary));
+  border-color:var(--primary);
+  box-shadow:0 8px 18px rgba(49,94,251,.18);
+}
+
+/* Give teacher content panels the same inner-card treatment as student screens. */
+.teacher-tab-panel:not(.hidden){animation:workspaceFade .18s ease-out}
+#teacherOverviewPanel,
+#teacherSessionsPanel,
+#teacherStudentsPanel,
+#teacherResultsPanel{
+  border-radius:22px;
+}
+@keyframes workspaceFade{
+  from{opacity:.55;transform:translateY(3px)}
+  to{opacity:1;transform:none}
+}
+
+html[data-theme="dark"] .workspace-banner{
+  border-color:#2d4263;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(111,145,255,.15), transparent 30%),
+    linear-gradient(135deg, rgba(41,62,102,.82), rgba(20,34,57,.96) 52%, rgba(16,26,44,.99) 100%);
+  box-shadow:0 16px 34px rgba(0,0,0,.24);
+}
+html[data-theme="dark"] .workspace-steps span,
+html[data-theme="dark"] .teacher-banner-chips span,
+html[data-theme="dark"] .teacher-nav-btn{
+  background:#16243a;
+  border-color:#2a3d5c;
+  color:#aebed4;
+}
+html[data-theme="dark"] .workspace-steps span.active,
+html[data-theme="dark"] .teacher-nav-btn.active{
+  color:#fff;
+  background:linear-gradient(180deg,#7898ff,#5578ee);
+  border-color:#7898ff;
+}
+html[data-theme="dark"] .student-content-panel{
+  background:linear-gradient(180deg,#132036,#101a2c);
+  border-color:var(--line);
+  box-shadow:0 16px 34px rgba(0,0,0,.24);
+}
+
+@media(max-width:980px){
+  .workspace-banner{flex-direction:column;align-items:flex-start}
+  .workspace-steps,.teacher-banner-chips{justify-content:flex-start}
+  .student-content-panel{padding:22px}
+}
+@media(max-width:620px){
+  .workspace-banner{padding:20px}
+  .workspace-steps span,.teacher-nav-btn{padding:8px 11px;font-size:12px}
+  .student-content-panel{padding:18px}
+}
