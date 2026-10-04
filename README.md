@@ -1,28 +1,13 @@
-# KLGA — Results Sorted by School Year, Season, and Grade
+# KLGA — UI Redesign
 
-Teacher results are now organized in this hierarchy:
+This version keeps the existing Firebase logic and features, but redesigns the visual interface to feel more like a polished assessment platform.
 
-School Year
-- Fall
-  - Grade 6
-  - Grade 7
-  - Grade 8
-- Winter (shown only if existing data uses Winter)
-  - Grade 6
-  - Grade 7
-  - Grade 8
-- Spring
-  - Grade 6
-  - Grade 7
-  - Grade 8
-
-School year is derived from the saved result date:
-- July–December -> current year to next year
-- January–June -> previous year to current year
-
-Example:
-September 2026 -> 2026–27
-March 2027 -> 2026–27
-
-Existing View Details, Google teacher sign-in, Firestore live updates,
-CSV export, sessions, roster, and student authentication remain intact.
+Included improvements:
+- modern brand header and home hero
+- refined buttons, cards, spacing, shadows, and typography
+- more polished student testing screen and result screen
+- cleaner Teacher Dashboard presentation
+- improved session, roster, monitor, and results styling
+- stronger visual grouping for School Year → Season → Grade results
+- color-tinted Grade 6 / 7 / 8 sections
+- preserved Google teacher sign-in, roster, sessions, live monitoring, results, and View Details

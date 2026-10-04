@@ -8,12 +8,12 @@
 <body>
 <div class="app-shell">
 <header class="topbar">
-  <div><h1>Karen Language Growth Assessment</h1><p class="subtitle">KLGA • 5-Level Adaptive Assessment</p></div>
+  <div><div class="brand-kicker">KLGA Platform</div><h1>Karen Language Growth Assessment</h1><p class="subtitle">Measure growth • Track progress • Support learning</p></div>
   <div class="top-actions"><button id="studentModeBtn" class="btn secondary">Student Test</button><button id="teacherModeBtn" class="btn secondary">Teacher Dashboard</button></div>
 </header>
 <main>
 <section id="homeView" class="card hero">
-<h2>Adaptive KLGA Assessment</h2>
+<h2>Adaptive KLGA Assessment</h2><p class="hero-lead">A polished, teacher-friendly benchmark platform for Karen language assessment. Students begin around Level 2 and move up or down based on performance.</p>
 <div class="skill-grid">
 <div class="skill-card"><span>Level 1</span><strong>Foundations</strong><small>Alphabet Recognition • Letter Sounds • Vowel Recognition</small></div>
 <div class="skill-card"><span>Level 2</span><strong>Sound Building</strong><small>Alphabet + Vowel • Tone Recognition • Blend Sound Recognition</small></div>
@@ -21,7 +21,7 @@
 <div class="skill-card"><span>Level 4</span><strong>Advanced Sound Building</strong><small>Alphabet + Blend + Vowel</small></div>
 <div class="skill-card"><span>Level 5</span><strong>Phrase Reading</strong><small>Read and identify complete Karen phrases.</small></div>
 </div>
-<p class="adaptive-note">Students begin at Level 2. The test moves up or down based on performance. Levels 1 and 2 include multiple diagnostic skills.</p><div class="actions center"><button id="startStudentBtn" class="btn primary">Start Adaptive Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
+<p class="adaptive-note">Students begin at Level 2. The test moves up or down based on performance. Levels 1 and 2 include multiple diagnostic skills.</p><div class="hero-actions-note">Choose a student testing session or open the teacher dashboard to manage rosters, sessions, and results.</div><div class="actions center"><button id="startStudentBtn" class="btn primary">Start Adaptive Test</button><button id="startTeacherBtn" class="btn secondary">Teacher Dashboard</button></div>
 </section>
 
 
@@ -151,6 +151,16 @@
   <button id="teacherSignOutBtn" class="btn ghost mini">Sign Out</button>
 </div>
 
+<div class="teacher-welcome-banner">
+  <div>
+    <div class="eyebrow">Teacher Workspace</div>
+    <h2>Teacher Dashboard</h2>
+    <p>Manage rosters, run live testing sessions, and review grouped benchmark results in one place.</p>
+  </div>
+  <div class="teacher-banner-chips">
+    <span>Overview</span><span>Sessions</span><span>Students</span><span>Results</span>
+  </div>
+</div>
 
 <div class="session-panel">
   <div class="roster-head">
