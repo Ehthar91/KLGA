@@ -1527,3 +1527,72 @@ html[data-theme="dark"] .grade-expand-btn{
     justify-content:center;
   }
 }
+
+
+/* ===== GRADE RESULT CARD LAYOUT V2 =====
+   Keep action buttons inside each grade card.
+   Row 1: Full Screen | Export CSV
+   Row 2: Google Sheet Script
+*/
+.grade-results-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+  margin-left:0;
+}
+
+.grade-results-actions .btn{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  white-space:normal;
+  line-height:1.2;
+}
+
+.grade-results-actions .grade-sheet-script-btn{
+  grid-column:1 / -1;
+}
+
+/* Make all unavailable grade actions clearly disabled */
+.grade-results-actions .btn:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+  pointer-events:none;
+  box-shadow:none;
+  transform:none;
+  filter:saturate(.55);
+}
+
+.grade-results-section{
+  overflow:hidden;
+}
+
+.grade-results-title{
+  min-width:0;
+}
+
+@media(max-width:1180px){
+  .grade-results-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .grade-results-actions .grade-sheet-script-btn{
+    grid-column:1 / -1;
+  }
+}
+
+@media(max-width:620px){
+  .grade-results-actions{
+    grid-template-columns:1fr;
+  }
+
+  .grade-results-actions .grade-sheet-script-btn{
+    grid-column:auto;
+  }
+}
