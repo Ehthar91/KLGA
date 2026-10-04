@@ -1713,6 +1713,7 @@ async function renderDashboard(resultsOverride=null){
                 `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
               `</div>`+
               `<div class="grade-results-actions">`+
+                `<button class="btn mini ghost grade-fullscreen-btn" type="button" ${gradeResults.length?'':'disabled'}>Full Screen</button>`+
                 `<button class="btn mini secondary grade-export-btn" type="button" ${gradeResults.length?'':'disabled'}>Export CSV</button>`+
               `</div>`+
             `</div>`;
@@ -1780,6 +1781,36 @@ async function renderDashboard(resultsOverride=null){
         section.classList.toggle('is-collapsed',!willExpand);
         btn.setAttribute('aria-expanded',String(willExpand));
         btn.title=(willExpand?'Collapse ':'Expand ')+`Grade ${section.dataset.grade} results`;
+      };
+    });
+
+    document.querySelectorAll('.grade-fullscreen-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const section=btn.closest('.grade-results-section');
+        if(!section) return;
+
+        const opening=!section.classList.contains('is-screen-open');
+
+        document.querySelectorAll('.grade-results-section.is-screen-open').forEach(other=>{
+          if(other!==section){
+            other.classList.remove('is-screen-open');
+            const otherBtn=other.querySelector('.grade-fullscreen-btn');
+            if(otherBtn) otherBtn.textContent='Full Screen';
+          }
+        });
+
+        section.classList.toggle('is-screen-open',opening);
+        document.body.classList.toggle('grade-result-screen-open',opening);
+        btn.textContent=opening?'Restore':'Full Screen';
+
+        if(opening && section.classList.contains('is-collapsed')){
+          section.classList.remove('is-collapsed');
+          const expandBtn=section.querySelector('.grade-expand-btn');
+          if(expandBtn){
+            expandBtn.setAttribute('aria-expanded','true');
+            expandBtn.title=`Collapse Grade ${section.dataset.grade} results`;
+          }
+        }
       };
     });
 
@@ -2223,3 +2254,15 @@ clearResultsBtn.onclick=async()=>{
     }
   }
 };
+
+
+/* Close any maximized grade result with Escape. */
+document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape') return;
+  const section=document.querySelector('.grade-results-section.is-screen-open');
+  if(!section) return;
+  section.classList.remove('is-screen-open');
+  document.body.classList.remove('grade-result-screen-open');
+  const btn=section.querySelector('.grade-fullscreen-btn');
+  if(btn) btn.textContent='Full Screen';
+});
