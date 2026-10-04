@@ -1355,3 +1355,70 @@ html[data-theme="dark"] .grade-results-section.is-screen-open::before{
     gap:8px;
   }
 }
+
+
+/* ===== GOOGLE SHEET SCRIPT EXPORT ===== */
+.grade-results-actions{
+  flex-wrap:wrap;
+}
+
+.sheet-script-card{
+  width:min(1040px,96vw);
+  max-height:92vh;
+  display:flex;
+  flex-direction:column;
+}
+
+.sheet-script-help{
+  margin:8px 0 0;
+  max-width:760px;
+  line-height:1.55;
+}
+
+.sheet-script-textarea{
+  width:100%;
+  min-height:420px;
+  resize:vertical;
+  margin:0;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  font-size:12px;
+  line-height:1.55;
+  tab-size:2;
+  white-space:pre;
+  overflow:auto;
+}
+
+.sheet-script-textarea:focus{
+  outline:none;
+  border-color:#7393ff;
+  box-shadow:0 0 0 4px rgba(49,94,251,.12);
+}
+
+.sheet-script-status{
+  min-height:22px;
+  margin-top:10px;
+  color:var(--success);
+  font-weight:700;
+  font-size:13px;
+}
+
+.sheet-script-actions{
+  justify-content:flex-end;
+  margin-top:10px;
+}
+
+html[data-theme="dark"] .sheet-script-textarea{
+  background:#070d18;
+  color:#dce8ff;
+  border-color:#2d415f;
+}
+
+@media(max-width:760px){
+  .sheet-script-textarea{min-height:340px}
+  .sheet-script-actions .btn{width:100%}
+}

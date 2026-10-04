@@ -1715,6 +1715,7 @@ async function renderDashboard(resultsOverride=null){
               `<div class="grade-results-actions">`+
                 `<button class="btn mini ghost grade-fullscreen-btn" type="button" ${gradeResults.length?'':'disabled'}>Full Screen</button>`+
                 `<button class="btn mini secondary grade-export-btn" type="button" ${gradeResults.length?'':'disabled'}>Export CSV</button>`+
+                `<button class="btn mini secondary grade-sheet-script-btn" type="button" ${gradeResults.length?'':'disabled'}>Google Sheet Script</button>`+
               `</div>`+
             `</div>`;
 
@@ -1837,6 +1838,28 @@ async function renderDashboard(resultsOverride=null){
       };
     });
 
+    document.querySelectorAll('.grade-sheet-script-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const section=btn.closest('.grade-results-section');
+        if(!section) return;
+
+        const year=section.dataset.year;
+        const season=section.dataset.season;
+        const grade=section.dataset.grade;
+
+        const subset=teacherResultCache.filter(x=>
+          schoolYearFromResult(x)===year &&
+          seasonFromResult(x)===season &&
+          String(x.grade||'Unknown')===grade
+        );
+
+        if(!subset.length) return;
+
+        const script=buildGoogleSheetAppsScript(subset,year,season,grade);
+        showGoogleSheetScriptModal(script,year,season,grade);
+      };
+    });
+
   }catch(err){
     console.error('Results load failed:',err);
     resultsHierarchy.innerHTML='<div class="empty-row">Could not load results from Firebase.</div>';
@@ -1892,6 +1915,188 @@ function downloadResultsCsv(results,filename='KLGA-5-Level-Results.csv'){
 async function exportCsv(){
   const r=await cloudLoadResults();
   downloadResultsCsv(r,'KLGA-5-Level-Results.csv');
+}
+
+
+function buildGoogleSheetAppsScript(results,year,season,grade){
+  const headers=[
+    'Student','Grade','Window','Mode','Result','Overall','Questions','Path',
+    'Level 1','Level 2','Level 3','Level 4','Level 5',
+    'Alphabet Recognition','Letter Sounds','Vowel Recognition',
+    'Alphabet + Vowel','Tone Recognition','Blend Sound Recognition',
+    'Alphabet + Blend','Alphabet + Blend + Vowel','Phrase Reading','Date'
+  ];
+
+  const rows=results.map(x=>[
+    x.student??'',x.grade??'',x.window??'',x.mode??'',x.resultLabel??'',
+    x.overall??'',x.questions??'',x.path??'',
+    x.level1??'',x.level2??'',x.level3??'',x.level4??'',x.level5??'',
+    x.skill1??'',x.skill2??'',x.skill3??'',x.skill4??'',x.skill5??'',
+    x.skill6??'',x.skill7??'',x.skill8??'',x.skill9??'',x.date??''
+  ]);
+
+  const data=[headers,...rows];
+  const title=`KLGA ${year} ${season} Grade ${grade} Results`;
+  const sheetName=`Grade ${grade} - ${season}`;
+
+  return `/**
+ * KLGA GOOGLE SHEET EXPORT
+ * ${year} • ${season} • Grade ${grade}
+ *
+ * 1. Go to script.google.com
+ * 2. Create a new project.
+ * 3. Paste this entire script.
+ * 4. Run createKLGAGradeResultsSheet().
+ * 5. Approve Google permissions when prompted.
+ */
+function createKLGAGradeResultsSheet() {
+  const spreadsheet = SpreadsheetApp.create(${JSON.stringify(title)});
+  const sheet = spreadsheet.getActiveSheet();
+  sheet.setName(${JSON.stringify(sheetName)});
+
+  const data = ${JSON.stringify(data, null, 2)};
+
+  const range = sheet.getRange(1, 1, data.length, data[0].length);
+  range.setValues(data);
+
+  // Header styling
+  const header = sheet.getRange(1, 1, 1, data[0].length);
+  header
+    .setFontWeight('bold')
+    .setBackground('#315EFB')
+    .setFontColor('#FFFFFF')
+    .setHorizontalAlignment('center');
+
+  // Freeze and filter
+  sheet.setFrozenRows(1);
+  if (data.length > 1) {
+    range.createFilter();
+  }
+
+  // Alignment
+  sheet.getDataRange().setVerticalAlignment('middle');
+  sheet.getRange(2, 2, Math.max(data.length - 1, 1), data[0].length - 1)
+    .setHorizontalAlignment('center');
+  sheet.getRange(2, 1, Math.max(data.length - 1, 1), 1)
+    .setHorizontalAlignment('left');
+
+  // Level color headers: L1 red, L2 yellow, L3 orange, L4 green, L5 blue
+  sheet.getRange(1, 9).setBackground('#DC2626').setFontColor('#FFFFFF');
+  sheet.getRange(1,10).setBackground('#EAB308').setFontColor('#1F2937');
+  sheet.getRange(1,11).setBackground('#F97316').setFontColor('#FFFFFF');
+  sheet.getRange(1,12).setBackground('#16A34A').setFontColor('#FFFFFF');
+  sheet.getRange(1,13).setBackground('#2563EB').setFontColor('#FFFFFF');
+
+  // Basic formatting
+  sheet.getDataRange().setWrap(true);
+  sheet.autoResizeColumns(1, data[0].length);
+  sheet.setColumnWidth(1, 190);
+  sheet.setColumnWidth(8, 220);
+  sheet.setColumnWidth(23, 150);
+
+  // Alternating row colors.
+  if (data.length > 1) {
+    const body = sheet.getRange(2, 1, data.length - 1, data[0].length);
+    body.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false);
+  }
+
+  SpreadsheetApp.flush();
+  Logger.log('Google Sheet created: ' + spreadsheet.getUrl());
+  return spreadsheet.getUrl();
+}`;
+}
+
+function ensureGoogleSheetScriptModal(){
+  let modal=document.getElementById('googleSheetScriptModal');
+  if(modal) return modal;
+
+  modal=document.createElement('div');
+  modal.id='googleSheetScriptModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+
+  modal.innerHTML=
+    `<div class="modal-backdrop" data-close-sheet-script></div>`+
+    `<div class="modal-card sheet-script-card">`+
+      `<div class="modal-head">`+
+        `<div>`+
+          `<div class="eyebrow">Google Sheets Export</div>`+
+          `<h2 id="googleSheetScriptTitle">Generated Apps Script</h2>`+
+          `<p class="sheet-script-help">Copy this script into Google Apps Script and run <strong>createKLGAGradeResultsSheet</strong>. It will create a new Google Sheet in your Drive.</p>`+
+        `</div>`+
+        `<button id="closeGoogleSheetScriptBtn" class="btn ghost mini" type="button">Close</button>`+
+      `</div>`+
+      `<textarea id="googleSheetScriptText" class="sheet-script-textarea" spellcheck="false" readonly></textarea>`+
+      `<div id="googleSheetScriptStatus" class="sheet-script-status"></div>`+
+      `<div class="actions sheet-script-actions">`+
+        `<button id="copyGoogleSheetScriptBtn" class="btn primary" type="button">Copy Script</button>`+
+        `<button id="downloadGoogleSheetScriptBtn" class="btn secondary" type="button">Download .gs</button>`+
+      `</div>`+
+    `</div>`;
+
+  document.body.appendChild(modal);
+
+  const close=()=>{
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+  };
+
+  modal.querySelector('#closeGoogleSheetScriptBtn').onclick=close;
+  modal.querySelector('[data-close-sheet-script]').onclick=close;
+
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape' && !modal.classList.contains('hidden')) close();
+  });
+
+  return modal;
+}
+
+function showGoogleSheetScriptModal(script,year,season,grade){
+  const modal=ensureGoogleSheetScriptModal();
+  const textarea=modal.querySelector('#googleSheetScriptText');
+  const title=modal.querySelector('#googleSheetScriptTitle');
+  const status=modal.querySelector('#googleSheetScriptStatus');
+  const copyBtn=modal.querySelector('#copyGoogleSheetScriptBtn');
+  const downloadBtn=modal.querySelector('#downloadGoogleSheetScriptBtn');
+
+  title.textContent=`${year} • ${season} • Grade ${grade}`;
+  textarea.value=script;
+  status.textContent='';
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+
+  copyBtn.onclick=async()=>{
+    try{
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(script);
+      }else{
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+      }
+      status.textContent='Script copied. Paste it into Google Apps Script.';
+    }catch(err){
+      console.error('Copy script failed:',err);
+      textarea.focus();
+      textarea.select();
+      status.textContent='Select the script and copy it manually.';
+    }
+  };
+
+  downloadBtn.onclick=()=>{
+    const blob=new Blob([script],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`KLGA-${safeFilePart(year)}-${safeFilePart(season)}-Grade-${safeFilePart(grade)}-Google-Sheet.gs`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    status.textContent='Apps Script file downloaded.';
+  };
+
+  setTimeout(()=>textarea.scrollTop=0,0);
 }
 
 
