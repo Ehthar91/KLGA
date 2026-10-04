@@ -2021,3 +2021,61 @@ body.theme-dark .assigned-assessment-label,
 body.theme-dark .assigned-assessment-card small{
   color:#94a3b8;
 }
+
+
+/* ===== STOP-ON-END + RESUMABLE SESSION TESTING ===== */
+.resume-progress-notice{
+  margin:4px 0 18px;
+  padding:12px 14px;
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  background:#eff6ff;
+  color:#1e3a8a;
+  line-height:1.5;
+}
+.resume-progress-notice.hidden{display:none}
+
+.session-ended-card{
+  width:min(520px,94vw);
+  text-align:center;
+  padding:30px;
+}
+.session-ended-icon{
+  width:52px;
+  height:52px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fee2e2;
+  color:#b91c1c;
+  font-size:20px;
+  font-weight:900;
+  border:1px solid #fecaca;
+}
+.session-ended-card h2{margin:6px 0 10px}
+.session-ended-card p{line-height:1.55}
+.session-ended-progress{
+  margin:16px 0;
+  padding:12px 14px;
+  border-radius:12px;
+  background:#f8fafc;
+  border:1px solid #dbe3ee;
+  font-weight:800;
+  color:#334155;
+}
+body.theme-dark .resume-progress-notice{
+  background:rgba(30,64,175,.18);
+  border-color:#1d4ed8;
+  color:#bfdbfe;
+}
+body.theme-dark .session-ended-card{
+  background:#111827;
+  color:#e5e7eb;
+}
+body.theme-dark .session-ended-progress{
+  background:#0f172a;
+  border-color:#334155;
+  color:#e2e8f0;
+}

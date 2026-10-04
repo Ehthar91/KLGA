@@ -174,6 +174,58 @@ window.KLGAFirebase={
     );
   },
 
+  async saveStudentProgress(sessionKey,studentKey,testProgress){
+    if(!db) return;
+    const user=auth?.currentUser || null;
+    const payload={
+      sessionKey,
+      studentKey,
+      testProgress,
+      progressUpdatedAt:serverTimestamp()
+    };
+    if(user?.isAnonymous) payload.authUid=user.uid;
+    await setDoc(
+      doc(db,"sessionStudents",sessionKey+"_"+studentKey),
+      payload,
+      {merge:true}
+    );
+  },
+
+  async getStudentProgress(sessionKey,studentKey){
+    if(!db) return null;
+    const snap=await getDoc(doc(db,"sessionStudents",sessionKey+"_"+studentKey));
+    if(!snap.exists()) return null;
+    return snap.data()?.testProgress || null;
+  },
+
+  async clearStudentProgress(sessionKey,studentKey){
+    if(!db) return;
+    const user=auth?.currentUser || null;
+    const payload={
+      sessionKey,
+      studentKey,
+      testProgress:null,
+      progressUpdatedAt:serverTimestamp()
+    };
+    if(user?.isAnonymous) payload.authUid=user.uid;
+    await setDoc(
+      doc(db,"sessionStudents",sessionKey+"_"+studentKey),
+      payload,
+      {merge:true}
+    );
+  },
+
+  async setSessionStudentRunState(sessionKey,sessionStatus){
+    if(!db) return;
+    const q=query(collection(db,"sessionStudents"),where("sessionKey","==",sessionKey));
+    const snap=await getDocs(q);
+    await Promise.all(snap.docs.map(d=>setDoc(
+      d.ref,
+      {sessionStatus,sessionStatusUpdatedAt:serverTimestamp()},
+      {merge:true}
+    )));
+  },
+
   subscribeStudentStatus(sessionKey,studentKey,callback){
     if(!db) return ()=>{};
     return onSnapshot(

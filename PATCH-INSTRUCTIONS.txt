@@ -1,16 +1,23 @@
-KLGA SESSION-CONTROLLED TEST MODE PATCH
+KLGA STOP-AND-RESUME SESSION PATCH
 
 Replace:
-- index.html
 - app.js
+- firebase-app.js
+- index.html
 - styles.css
 
-Fixes:
-- Students joining a session can no longer choose Adaptive vs Individual.
-- Adaptive sessions are locked to Adaptive Test and 40 questions.
-- Individual sessions are locked to the teacher-selected level.
-- Individual sessions now also let the teacher choose question count.
-- Students can see the assigned assessment settings, but cannot change them.
-- The session settings are enforced in app.js, not just hidden in the UI.
+New behavior:
+- Teacher clicks End -> active student tests stop immediately.
+- Current test progress is saved to Firebase.
+- Student sees that the session ended and that progress was saved.
+- Teacher can Start the same session later.
+- Student rejoins and is approved normally.
+- KLGA detects saved progress and offers Resume Test.
+- The student continues at the same question/progress point.
+- Completed assessments clear the saved in-progress data.
 
-No Firebase or Firestore changes are required.
+No Firestore rules changes are required.
+
+Important:
+Resume across days works on the same browser/device while Firebase anonymous authentication remains stored.
+Clearing browser site data, using incognito, or switching devices may change the anonymous UID and prevent access to the old progress.

@@ -210,6 +210,42 @@ async function cloudSubscribeSessionStudents(sessionKey,callback){
 }
 
 
+function localProgressKey(sessionKey,studentKey){
+  return `klgaTestProgress:${sessionKey}:${studentKey}`;
+}
+
+async function cloudSaveStudentProgress(sessionKey,studentKey,progress){
+  if(await fbReady() && window.KLGAFirebase.saveStudentProgress){
+    return await window.KLGAFirebase.saveStudentProgress(sessionKey,studentKey,progress);
+  }
+  localStorage.setItem(localProgressKey(sessionKey,studentKey),JSON.stringify(progress));
+}
+
+async function cloudLoadStudentProgress(sessionKey,studentKey){
+  if(await fbReady() && window.KLGAFirebase.getStudentProgress){
+    return await window.KLGAFirebase.getStudentProgress(sessionKey,studentKey);
+  }
+  try{
+    return JSON.parse(localStorage.getItem(localProgressKey(sessionKey,studentKey))||'null');
+  }catch(err){
+    return null;
+  }
+}
+
+async function cloudClearStudentProgress(sessionKey,studentKey){
+  if(await fbReady() && window.KLGAFirebase.clearStudentProgress){
+    return await window.KLGAFirebase.clearStudentProgress(sessionKey,studentKey);
+  }
+  localStorage.removeItem(localProgressKey(sessionKey,studentKey));
+}
+
+async function cloudSetSessionStudentRunState(sessionKey,status){
+  if(await fbReady() && window.KLGAFirebase.setSessionStudentRunState){
+    return await window.KLGAFirebase.setSessionStudentRunState(sessionKey,status);
+  }
+}
+
+
 
 const consonants=[
 {l:'က',s:'Ka'},{l:'ခ',s:'Ka'},{l:'ဂ',s:'Ga'},{l:'ဃ',s:'Kha'},{l:'င',s:'Ngah'},{l:'စ',s:'Sa'},{l:'ဆ',s:'Cha'},{l:'ရှ',s:'Sha'},{l:'ည',s:'Nya'},{l:'တ',s:'Ta'},{l:'ထ',s:'Ta'},{l:'ဒ',s:'Da'},{l:'န',s:'Na'},{l:'ပ',s:'Pa'},{l:'ဖ',s:'Pa'},{l:'ဘ',s:'Ba'},{l:'မ',s:'Ma'},{l:'ယ',s:'Ya'},{l:'ရ',s:'Ra'},{l:'လ',s:'La'},{l:'ဝ',s:'Wa'},{l:'သ',s:'Tha'},{l:'ဟ',s:'Ha'},{l:'အ',s:'Ah'},{l:'ဧ',s:'Ahh'}
@@ -758,6 +794,195 @@ function balancedSample(level, countChoice){
   return chosen;
 }
 
+
+function sessionAssignmentKey(session=joinedSession){
+  if(!session) return '';
+  if(session.testType==='individual'){
+    return `individual:${Number(session.level||1)}:${String(session.questionCount||'8')}`;
+  }
+  return `adaptive:${ADAPTIVE_TOTAL_QUESTIONS}`;
+}
+
+function serializeCurrentTestProgress(){
+  if(!joinedSession || !joinedStudent) return null;
+  return {
+    version:1,
+    assignmentKey:sessionAssignmentKey(joinedSession),
+    sessionKey:joinedSession.key,
+    studentKey:joinedStudent.key,
+    savedAt:new Date().toISOString(),
+    state:{
+      studentName:state.studentName,
+      grade:state.grade,
+      window:state.window,
+      mode:state.mode,
+      currentLevel:state.currentLevel,
+      individualLevel:state.individualLevel,
+      currentBatch:state.currentBatch,
+      currentIndex:state.currentIndex,
+      responses:state.responses,
+      levelResults:state.levelResults,
+      skillResults:state.skillResults,
+      path:state.path,
+      highestPassed:state.highestPassed,
+      lowestFailed:state.lowestFailed,
+      totalQuestions:state.totalQuestions,
+      usedQuestionKeys:[...state.usedQuestionKeys]
+    }
+  };
+}
+
+function progressMatchesCurrentSession(progress){
+  return Boolean(
+    progress &&
+    progress.version===1 &&
+    progress.sessionKey===joinedSession?.key &&
+    progress.studentKey===joinedStudent?.key &&
+    progress.assignmentKey===sessionAssignmentKey(joinedSession) &&
+    progress.state
+  );
+}
+
+function restoreTestProgress(progress){
+  if(!progressMatchesCurrentSession(progress)) return false;
+  const saved=progress.state;
+
+  state=fresh();
+  state.studentName=saved.studentName||joinedStudent?.name||'';
+  state.grade=saved.grade||joinedStudent?.grade||'';
+  state.window=saved.window||testWindow.value;
+  state.mode=saved.mode||'adaptive';
+  state.currentLevel=Number(saved.currentLevel||2);
+  state.individualLevel=saved.individualLevel===null || saved.individualLevel===undefined
+    ? null
+    : Number(saved.individualLevel);
+  state.currentBatch=Array.isArray(saved.currentBatch)?saved.currentBatch:[];
+  state.currentIndex=Number(saved.currentIndex||0);
+  state.selected=null;
+  state.responses=Array.isArray(saved.responses)?saved.responses:[];
+  state.levelResults=saved.levelResults||{};
+  state.skillResults=saved.skillResults||{};
+  state.path=Array.isArray(saved.path)?saved.path:[];
+  state.highestPassed=Number(saved.highestPassed||0);
+  state.lowestFailed=Number(saved.lowestFailed||6);
+  state.totalQuestions=Number(saved.totalQuestions||0);
+  state.usedQuestionKeys=new Set(Array.isArray(saved.usedQuestionKeys)?saved.usedQuestionKeys:[]);
+
+  return Boolean(state.currentBatch.length && state.currentIndex < state.currentBatch.length);
+}
+
+async function saveCurrentSessionProgress(){
+  if(!joinedSession || !joinedStudent) return;
+  const progress=serializeCurrentTestProgress();
+  if(!progress) return;
+  try{
+    await cloudSaveStudentProgress(joinedSession.key,joinedStudent.key,progress);
+  }catch(err){
+    console.warn('Could not save KLGA test progress:',err);
+  }
+}
+
+function updateResumeSetupUI(progress){
+  pendingResumeProgress=progressMatchesCurrentSession(progress)?progress:null;
+
+  if(pendingResumeProgress){
+    const answered=Number(pendingResumeProgress.state?.totalQuestions||0);
+    const total=joinedSession?.testType==='individual'
+      ? (String(joinedSession.questionCount||'8')==='all' ? 'all assigned' : String(joinedSession.questionCount||'8'))
+      : String(ADAPTIVE_TOTAL_QUESTIONS);
+
+    resumeProgressNotice.innerHTML=
+      `<strong>Saved progress found.</strong> `+
+      `You completed ${answered} of ${esc(total)} questions. `+
+      `Choose <strong>Resume Test</strong> to continue where you stopped.`;
+    resumeProgressNotice.classList.remove('hidden');
+    beginTestBtn.textContent='Resume Test';
+  }else{
+    resumeProgressNotice.classList.add('hidden');
+    resumeProgressNotice.textContent='';
+    beginTestBtn.textContent='Begin Test';
+  }
+}
+
+function ensureSessionEndedModal(){
+  let modal=document.getElementById('sessionEndedModal');
+  if(modal) return modal;
+
+  modal=document.createElement('div');
+  modal.id='sessionEndedModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+  modal.innerHTML=
+    `<div class="modal-backdrop"></div>`+
+    `<div class="modal-card session-ended-card" role="dialog" aria-modal="true" aria-labelledby="sessionEndedTitle">`+
+      `<div class="session-ended-icon" aria-hidden="true">■</div>`+
+      `<div class="eyebrow">Session Ended</div>`+
+      `<h2 id="sessionEndedTitle">Your teacher ended the session.</h2>`+
+      `<p>Your test has stopped and your progress was saved.</p>`+
+      `<div class="session-ended-progress" id="sessionEndedProgress"></div>`+
+      `<p class="muted">When your teacher starts this same session again, join it normally and KLGA will offer to resume from this point.</p>`+
+      `<button type="button" class="btn primary" id="sessionEndedHomeBtn">Return Home</button>`+
+    `</div>`;
+
+  document.body.appendChild(modal);
+  modal.querySelector('#sessionEndedHomeBtn').onclick=()=>{
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+    stopStudentRuntimeWatch();
+    joinedSession=null;
+    joinedStudent=null;
+    pendingResumeProgress=null;
+    sessionPausedByTeacher=false;
+    state=fresh();
+    showView('home');
+  };
+  return modal;
+}
+
+async function pauseStudentTestForEndedSession(){
+  if(sessionPausedByTeacher || !joinedSession || !joinedStudent) return;
+  sessionPausedByTeacher=true;
+
+  try{
+    await saveCurrentSessionProgress();
+    await cloudSetStudentJoin(joinedSession.key,joinedStudent.key,'paused');
+  }catch(err){
+    console.warn('Could not mark student test paused:',err);
+  }
+
+  nextQuestionBtn.disabled=true;
+  answerChoices.querySelectorAll('button').forEach(btn=>btn.disabled=true);
+
+  const modal=ensureSessionEndedModal();
+  const answered=Number(state.totalQuestions||0);
+  const total=state.mode==='individual'
+    ? (String(joinedSession.questionCount||'8')==='all' ? 'assigned questions' : String(joinedSession.questionCount||'8'))
+    : String(ADAPTIVE_TOTAL_QUESTIONS);
+  modal.querySelector('#sessionEndedProgress').textContent=`Saved at ${answered} of ${total} questions.`;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+}
+
+function stopStudentRuntimeWatch(){
+  if(stopStudentRuntimeListener) stopStudentRuntimeListener();
+  stopStudentRuntimeListener=null;
+}
+
+async function startStudentRuntimeWatch(){
+  stopStudentRuntimeWatch();
+  if(!joinedSession || !joinedStudent) return;
+
+  stopStudentRuntimeListener=await cloudSubscribeStudentStatus(
+    joinedSession.key,
+    joinedStudent.key,
+    record=>{
+      if(record?.sessionStatus==='Ended'){
+        pauseStudentTestForEndedSession();
+      }
+    }
+  );
+}
+
 function beginLevel(level){
   state.currentLevel=level;
   const remaining=Math.max(0,ADAPTIVE_TOTAL_QUESTIONS-state.totalQuestions);
@@ -817,9 +1042,14 @@ function render(){
     answerChoices.appendChild(b);
   });
   nextQuestionBtn.disabled=true;
+
+  if(joinedSession && joinedStudent && !sessionPausedByTeacher){
+    saveCurrentSessionProgress();
+  }
 }
 
 function submit(){
+  if(sessionPausedByTeacher) return;
   if(state.selected===null) return;
 
   const z=state.currentBatch[state.currentIndex];
@@ -1112,8 +1342,11 @@ async function finishAdaptive(level){
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
   cloudSaveResult(result).catch(()=>{});
   if(joinedSession && joinedStudent){
+    cloudClearStudentProgress(joinedSession.key,joinedStudent.key).catch(()=>{});
     cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"finished").catch(()=>{});
+    stopStudentRuntimeWatch();
   }
+  pendingResumeProgress=null;
   showView('result');
 }
 
@@ -1175,8 +1408,11 @@ function finishIndividual(){
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(saved));
   cloudSaveResult(result).catch(()=>{});
   if(joinedSession && joinedStudent){
+    cloudClearStudentProgress(joinedSession.key,joinedStudent.key).catch(()=>{});
     cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"finished").catch(()=>{});
+    stopStudentRuntimeWatch();
   }
+  pendingResumeProgress=null;
   showView('result');
 }
 
@@ -1190,6 +1426,9 @@ let editingSessionKey=null;
 let activeMonitorSession=null;
 let stopSessionMonitor=null;
 let stopStudentStatusListener=null;
+let stopStudentRuntimeListener=null;
+let pendingResumeProgress=null;
+let sessionPausedByTeacher=false;
 
 function statusLabel(s){
   return ({
@@ -1197,6 +1436,7 @@ function statusLabel(s){
     waiting:"Waiting",
     approved:"Approved",
     testing:"Testing",
+    paused:"Paused",
     finished:"Finished"
   })[s] || s;
 }
@@ -1424,6 +1664,7 @@ async function setSessionStatus(key,status){
     };
 
     await cloudSaveSession(updated);
+    await cloudSetSessionStudentRunState(key,status);
     await renderSessions();
 
     if(status==='Active'){
@@ -2623,9 +2864,13 @@ teacherModeBtn.onclick=openTeacherDashboard;
 document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>showView('home'));
 
 returnHomeBtn.onclick=()=>{
+  stopStudentRuntimeWatch();
   state=fresh();
   joinedSession=null;
   joinedStudent=null;
+  pendingResumeProgress=null;
+  sessionPausedByTeacher=false;
+  updateResumeSetupUI(null);
   applyStudentSessionAssignment();
   showView('home');
 };
@@ -2683,7 +2928,7 @@ testMode.onchange=()=>{
   questionCountWrap.classList.toggle('hidden',!isIndividual);
 };
 
-beginTestBtn.onclick=()=>{
+beginTestBtn.onclick=async()=>{
   const name=studentName.value.trim();
   const grade=studentGrade.value;
   const window=testWindow.value;
@@ -2696,6 +2941,22 @@ beginTestBtn.onclick=()=>{
     return;
   }
 
+  sessionPausedByTeacher=false;
+
+  if(joinedSession && joinedStudent && pendingResumeProgress && restoreTestProgress(pendingResumeProgress)){
+    studentName.value=state.studentName;
+    studentGrade.value=state.grade;
+    testWindow.value=state.window;
+    await cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"testing");
+    await startStudentRuntimeWatch();
+    showView('test');
+    pendingResumeProgress=null;
+    beginTestBtn.textContent='Begin Test';
+    resumeProgressNotice.classList.add('hidden');
+    render();
+    return;
+  }
+
   state=fresh();
   state.studentName=name;
   state.grade=grade;
@@ -2703,7 +2964,8 @@ beginTestBtn.onclick=()=>{
   state.mode=mode;
 
   if(joinedSession && joinedStudent){
-    cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"testing").catch(()=>{});
+    await cloudSetStudentJoin(joinedSession.key,joinedStudent.key,"testing");
+    await startStudentRuntimeWatch();
   }
 
   showView('test');
@@ -2747,6 +3009,9 @@ let joinedSession=null;
 let joinedStudent=null;
 
 joinSessionBtn.onclick=async()=>{
+  stopStudentRuntimeWatch();
+  pendingResumeProgress=null;
+  sessionPausedByTeacher=false;
   joinSessionError.classList.add('hidden');
   try{
     await cloudEnsureStudentAuth();
@@ -2812,7 +3077,7 @@ confirmStudentJoinBtn.onclick=async()=>{
   stopStudentStatusListener=await cloudSubscribeStudentStatus(
     joinedSession.key,
     student.key,
-    statusRecord=>{
+    async statusRecord=>{
       if(statusRecord?.status!=="approved") return;
 
       if(stopStudentStatusListener) stopStudentStatusListener();
@@ -2822,6 +3087,18 @@ confirmStudentJoinBtn.onclick=async()=>{
       studentGrade.value=student.grade;
 
       applyStudentSessionAssignment();
+
+      try{
+        const savedProgress=statusRecord?.testProgress
+          || await cloudLoadStudentProgress(joinedSession.key,student.key);
+        updateResumeSetupUI(savedProgress);
+      }catch(err){
+        console.warn('Could not load saved KLGA progress:',err);
+        updateResumeSetupUI(null);
+      }
+
+      sessionPausedByTeacher=false;
+      await startStudentRuntimeWatch();
 
       waitingApprovalWrap.classList.add("hidden");
       showView("setup");
