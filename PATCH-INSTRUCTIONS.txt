@@ -1,19 +1,17 @@
-KLGA GROWTH SCORE (KGS) PATCH
+KLGA 40-QUESTION ADAPTIVE TEST PATCH
 
-Replace these files:
-- index.html
+Replace:
 - app.js
-- styles.css
+- index.html
 
-Adds:
-- KLGA Growth Score (KGS) for Adaptive Tests
-- Growth from the prior adaptive benchmark in the same school year
-- KGS/Growth on student results
-- KGS/Growth in teacher result table and details
-- KGS in Overview recent results
-- KGS/Growth in CSV exports
-- KGS/Growth in generated Google Sheet Apps Script
+What changed:
+- Every Adaptive Test now contains exactly 40 questions.
+- Adaptive testing still starts at Level 2 and moves up/down by performance.
+- Once KLGA finds the placement boundary, remaining questions collect more evidence near that boundary.
+- Overall % = total correct / 40.
+- Placement still uses the 75% level benchmark.
+- KGS and skill diagnostics continue to work with the larger evidence set.
+- Adaptive question progress now displays Question X of 40.
+- Individual Level Tests remain unchanged with selectable question counts.
 
-Individual Level Tests continue to use percent/mastery only and do not receive KGS.
-
-No Firebase configuration or Firestore rules changes are required.
+No Firebase or Firestore rule changes are required.

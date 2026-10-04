@@ -623,6 +623,8 @@ const views={
 
 let state={};
 
+const ADAPTIVE_TOTAL_QUESTIONS=40;
+
 function fresh(){
   return {
     studentName:'',
@@ -640,7 +642,8 @@ function fresh(){
     path:[],
     highestPassed:0,
     lowestFailed:6,
-    totalQuestions:0
+    totalQuestions:0,
+    usedQuestionKeys:new Set()
   };
 }
 state=fresh();
@@ -656,6 +659,10 @@ function pct(rows){
 
 function questionsForSkill(skill){
   return poolForLevel(skill);
+}
+
+function questionKey(item){
+  return [item.skill,item.type,item.prompt,(item.choices||[]).join('||')].join('::');
 }
 
 // Balanced sampling for grouped levels.
@@ -680,7 +687,9 @@ function balancedSample(level, countChoice){
   const skills=LEVELS[level].skills;
   const pools={};
   skills.forEach(skill=>{
-    pools[skill]=shuffle(questionsForSkill(skill)).map(item=>({
+    const unused=questionsForSkill(skill).filter(item=>!state.usedQuestionKeys.has(questionKey(item)));
+    const source=unused.length ? unused : questionsForSkill(skill);
+    pools[skill]=shuffle(source).map(item=>({
       ...item,
       internalSkill:skill,
       visibleLevel:level
@@ -690,13 +699,17 @@ function balancedSample(level, countChoice){
   if(countChoice==='all'){
     let all=[];
     skills.forEach(skill=>all.push(...pools[skill]));
-    return shuffle(all);
+    const chosen=shuffle(all);
+    chosen.forEach(item=>state.usedQuestionKeys.add(questionKey(item)));
+    return chosen;
   }
 
   let count = Number(countChoice) || defaultCountForLevel(level);
 
   if(skills.length===1){
-    return pools[skills[0]].slice(0,Math.min(count,pools[skills[0]].length));
+    const chosen=pools[skills[0]].slice(0,Math.min(count,pools[skills[0]].length));
+    chosen.forEach(item=>state.usedQuestionKeys.add(questionKey(item)));
+    return chosen;
   }
 
   // Balance across the grouped skills as evenly as possible.
@@ -712,12 +725,20 @@ function balancedSample(level, countChoice){
     guard++;
     if(skills.every(s=>pools[s].length===0)) break;
   }
-  return shuffle(result);
+  const chosen=shuffle(result);
+  chosen.forEach(item=>state.usedQuestionKeys.add(questionKey(item)));
+  return chosen;
 }
 
 function beginLevel(level){
   state.currentLevel=level;
-  state.currentBatch=balancedSample(level, defaultCountForLevel(level));
+  const remaining=Math.max(0,ADAPTIVE_TOTAL_QUESTIONS-state.totalQuestions);
+  const count=Math.min(defaultCountForLevel(level),remaining);
+  if(count<=0){
+    finishAdaptive(finalAdaptivePlacement());
+    return;
+  }
+  state.currentBatch=balancedSample(level,count);
   state.currentIndex=0;
   state.selected=null;
   state.path.push('Level '+level);
@@ -743,7 +764,7 @@ function render(){
   questionNumber.textContent=state.totalQuestions+1;
   questionTotal.textContent=state.mode==='individual'
     ? state.currentBatch.length
-    : 'Adaptive';
+    : ADAPTIVE_TOTAL_QUESTIONS;
   currentSkill.textContent=SKILL_NAMES[z.internalSkill] || z.skill;
   questionInstruction.textContent=z.instruction;
   questionPrompt.textContent=z.prompt;
@@ -751,7 +772,7 @@ function render(){
 
   const estimated = state.mode==='individual'
     ? Math.round((state.currentIndex/state.currentBatch.length)*100)
-    : Math.min(95,Math.round((state.totalQuestions/30)*100));
+    : Math.min(100,Math.round((state.totalQuestions/ADAPTIVE_TOTAL_QUESTIONS)*100));
   progressBar.style.width=estimated+'%';
 
   answerChoices.innerHTML='';
@@ -808,6 +829,20 @@ function calculateDiagnostics(level){
   });
 }
 
+function finalAdaptivePlacement(){
+  // Recalculate every level that was actually tested using all responses.
+  const testedLevels=[...new Set(state.responses.map(r=>r.visibleLevel))].sort((a,b)=>a-b);
+  testedLevels.forEach(level=>calculateDiagnostics(level));
+
+  let highestPassed=0;
+  testedLevels.forEach(level=>{
+    if((state.levelResults[level]??0)>=75) highestPassed=Math.max(highestPassed,level);
+  });
+
+  // If Level 1 was tested but not passed and no higher level passed, placement is Below Level 1.
+  return highestPassed;
+}
+
 function evaluateLevel(){
   const level=state.currentLevel;
   calculateDiagnostics(level);
@@ -815,33 +850,49 @@ function evaluateLevel(){
 
   if(score>=75){
     state.highestPassed=Math.max(state.highestPassed,level);
-
-    if(level===5){
-      finishAdaptive(5);
-      return;
-    }
-
-    const next=level+1;
-    if(next>=state.lowestFailed){
-      finishAdaptive(level);
-      return;
-    }
-    beginLevel(next);
   }else{
     state.lowestFailed=Math.min(state.lowestFailed,level);
-
-    if(level===1){
-      finishAdaptive(0);
-      return;
-    }
-
-    const prev=level-1;
-    if(prev<=state.highestPassed){
-      finishAdaptive(state.highestPassed);
-      return;
-    }
-    beginLevel(prev);
   }
+
+  // Every adaptive benchmark now contains exactly 40 questions.
+  if(state.totalQuestions>=ADAPTIVE_TOTAL_QUESTIONS){
+    finishAdaptive(finalAdaptivePlacement());
+    return;
+  }
+
+  let nextLevel=level;
+
+  if(score>=75){
+    if(level===5){
+      // Top level reached: continue gathering Level 5 evidence.
+      nextLevel=5;
+    }else{
+      const harder=level+1;
+      if(harder>=state.lowestFailed){
+        // Placement boundary found. Focus remaining questions on the harder side
+        // of the boundary so KGS can measure progress toward the next level.
+        nextLevel=harder;
+      }else{
+        nextLevel=harder;
+      }
+    }
+  }else{
+    if(level===1){
+      // Student is below the first benchmark; collect more Level 1 evidence.
+      nextLevel=1;
+    }else{
+      const easier=level-1;
+      if(easier<=state.highestPassed){
+        // Boundary found between the passed easier level and this harder level.
+        // Stay on the harder level to strengthen the within-band KGS estimate.
+        nextLevel=level;
+      }else{
+        nextLevel=easier;
+      }
+    }
+  }
+
+  beginLevel(nextLevel);
 }
 
 function diagnosticHtml(){
@@ -988,7 +1039,7 @@ async function finishAdaptive(level){
 
   adaptiveSummary.innerHTML=
     `<strong>Adaptive path:</strong> ${state.path.join(' → ')}<br>`+
-    `<strong>Questions answered:</strong> ${state.totalQuestions}<br>`+
+    `<strong>Questions answered:</strong> ${state.totalQuestions} of ${ADAPTIVE_TOTAL_QUESTIONS}<br>`+
     `<strong>Placement:</strong> ${displayLevel}<br>`+
     `<strong>KLGA Growth Score:</strong> ${kgs}`;
 
