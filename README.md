@@ -1,3 +1,1 @@
-KLGA logo website patch
-
-Replace index.html and styles.css, and add klga-logo.png to the website root.
+KLGA website build with KLGA logo in the main header.
