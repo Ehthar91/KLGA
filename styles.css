@@ -2644,3 +2644,101 @@ body.live-monitor-screen-open .topbar{
 body.dedicated-monitor-mode .topbar{
   display:none !important;
 }
+
+/* ===== COMPACT FULL-SCREEN LIVE MONITOR HEADER ===== */
+.live-monitor.is-screen-open .roster-head{
+  min-height:auto;
+  align-items:center;
+  gap:18px;
+  padding-top:14px;
+  padding-bottom:12px;
+  margin-bottom:14px;
+}
+
+.live-monitor.is-screen-open .roster-head > div:first-child{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-areas:
+    "eyebrow eyebrow"
+    "title meta";
+  align-items:center;
+  column-gap:14px;
+  row-gap:2px;
+  min-width:0;
+}
+
+.live-monitor.is-screen-open .roster-head .eyebrow{
+  grid-area:eyebrow;
+  margin:0;
+  line-height:1.1;
+}
+
+.live-monitor.is-screen-open #liveSessionTitle{
+  grid-area:title;
+  margin:0;
+  line-height:1.15;
+  white-space:nowrap;
+}
+
+.live-monitor.is-screen-open #liveSessionMeta{
+  grid-area:meta;
+  margin:0;
+  gap:8px;
+  min-width:0;
+  line-height:1.2;
+}
+
+.live-monitor.is-screen-open #liveSessionMeta > span:first-child{
+  white-space:nowrap;
+}
+
+.live-monitor.is-screen-open .monitor-password-wrap{
+  padding:3px 7px;
+}
+
+.live-monitor.is-screen-open .roster-head .actions{
+  flex:0 0 auto;
+  margin-left:auto;
+  gap:10px;
+  align-items:center;
+  flex-wrap:nowrap;
+}
+
+.live-monitor.is-screen-open .roster-head .actions .btn{
+  white-space:nowrap;
+}
+
+body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
+  padding-top:14px;
+  padding-bottom:12px;
+  margin-bottom:14px;
+}
+
+@media(max-width:900px){
+  .live-monitor.is-screen-open .roster-head{
+    align-items:flex-start;
+  }
+  .live-monitor.is-screen-open .roster-head > div:first-child{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "eyebrow"
+      "title"
+      "meta";
+    row-gap:4px;
+  }
+  .live-monitor.is-screen-open .roster-head .actions{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+}
+
+@media(max-width:650px){
+  .live-monitor.is-screen-open .roster-head{
+    flex-direction:column;
+  }
+  .live-monitor.is-screen-open .roster-head .actions{
+    width:100%;
+    margin-left:0;
+    justify-content:flex-start;
+  }
+}

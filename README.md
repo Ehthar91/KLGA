@@ -1,9 +1,10 @@
-KLGA Full-Screen Monitor Header Fix
+KLGA Compact Full-Screen Monitor Header Patch
 
 Replace:
 - styles.css
 
-Change:
-- Hides the main KLGA Platform header while the Live Session Monitor is in Full Screen.
-- The header automatically returns when Restore is clicked.
-- Dedicated monitor mode also keeps the main platform header hidden.
+Changes:
+- Makes the full-screen Live Session Monitor header more compact.
+- Keeps session name, status, and password grouped together on the left.
+- Keeps Restore, Open in New Tab, and Close Monitor aligned together on the right.
+- Preserves responsive behavior on smaller screens.
