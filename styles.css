@@ -2561,3 +2561,33 @@ html[data-theme="dark"] .teacher-account-actions .teacher-guide-btn:hover{
 .teacher-banner-tools{
   gap:0;
 }
+
+
+/* ===== CREATOR BADGE ===== */
+.site-creator-footer{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:18px 16px 24px;
+}
+
+.creator-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 11px;
+  border-radius:999px;
+  border:1px solid rgba(49,94,251,.16);
+  background:rgba(49,94,251,.05);
+  color:var(--muted,#64748b);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.01em;
+  line-height:1;
+}
+
+html[data-theme="dark"] .creator-badge{
+  color:#94a3b8;
+  background:#111c30;
+  border-color:#293b5d;
+}
