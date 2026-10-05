@@ -2632,3 +2632,15 @@ body.dedicated-monitor-mode .live-monitor.is-screen-open .monitor-stats{
     padding:14px;
   }
 }
+
+/* ===== FULL-SCREEN MONITOR: HIDE MAIN KLGA HEADER ===== */
+/* The platform banner and its Student Test / Teacher Dashboard / theme controls
+   are not needed while the live session monitor is full screen. */
+body.live-monitor-screen-open .topbar{
+  display:none !important;
+}
+
+/* Dedicated monitor mode should follow the same rule explicitly. */
+body.dedicated-monitor-mode .topbar{
+  display:none !important;
+}

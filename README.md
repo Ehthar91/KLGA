@@ -1,12 +1,9 @@
-KLGA Dedicated Monitor Top/Scroll Fix
+KLGA Full-Screen Monitor Header Fix
 
-Replace these files on your site:
+Replace:
 - styles.css
-- app.js
 
-Fixes:
-- Dedicated Session Monitor always opens at the true top.
-- Header controls no longer start hidden above the viewport.
-- Monitor summary cards no longer overlap the header in dedicated mode.
-- Creator badge is hidden while the dedicated/full-screen monitor is open.
-- Adds extra scroll resets after Firebase/live content renders.
+Change:
+- Hides the main KLGA Platform header while the Live Session Monitor is in Full Screen.
+- The header automatically returns when Restore is clicked.
+- Dedicated monitor mode also keeps the main platform header hidden.
