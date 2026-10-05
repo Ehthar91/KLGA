@@ -2742,3 +2742,20 @@ body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
     justify-content:flex-start;
   }
 }
+
+/* ===== WIDER FULL-SCREEN MONITOR ===== */
+/* Use more of the available browser width while keeping the monitor centered. */
+@media (min-width:751px){
+  .live-monitor.is-screen-open{
+    padding-left:16px;
+    padding-right:16px;
+  }
+
+  .live-monitor.is-screen-open .roster-head,
+  body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
+    margin-left:-16px;
+    margin-right:-16px;
+    padding-left:16px;
+    padding-right:16px;
+  }
+}
