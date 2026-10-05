@@ -1,8 +1,12 @@
-KLGA Creator Badge Patch
+KLGA Dedicated Monitor Top/Scroll Fix
 
 Replace these files on your site:
-- index.html
 - styles.css
+- app.js
 
-Adds a subtle footer badge: “Created by Aung Naing”.
-No app.js or Firebase changes are required.
+Fixes:
+- Dedicated Session Monitor always opens at the true top.
+- Header controls no longer start hidden above the viewport.
+- Monitor summary cards no longer overlap the header in dedicated mode.
+- Creator badge is hidden while the dedicated/full-screen monitor is open.
+- Adds extra scroll resets after Firebase/live content renders.

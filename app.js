@@ -1791,7 +1791,22 @@ function setLiveMonitorFullScreen(open){
   }
 
   if(shouldOpen){
+    // Force the dedicated/full-screen monitor to open at its true top.
+    // A second reset is needed after the browser restores scroll position
+    // or Firebase paints the live session content.
+    window.scrollTo(0,0);
     liveSessionMonitor.scrollTop=0;
+    requestAnimationFrame(()=>{
+      window.scrollTo(0,0);
+      liveSessionMonitor.scrollTop=0;
+    });
+    setTimeout(()=>{
+      window.scrollTo(0,0);
+      liveSessionMonitor.scrollTop=0;
+    },80);
+    setTimeout(()=>{
+      liveSessionMonitor.scrollTop=0;
+    },300);
   }
 }
 
@@ -3406,6 +3421,12 @@ async function openDedicatedMonitor(sessionKey){
 
   await openLiveMonitor(sessionKey);
   setLiveMonitorFullScreen(true);
+  window.scrollTo(0,0);
+  liveSessionMonitor.scrollTop=0;
+  setTimeout(()=>{
+    window.scrollTo(0,0);
+    liveSessionMonitor.scrollTop=0;
+  },150);
 
   if(window.openLiveMonitorTabBtn){
     openLiveMonitorTabBtn.classList.add('hidden');

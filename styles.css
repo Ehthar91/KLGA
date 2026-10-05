@@ -2591,3 +2591,44 @@ html[data-theme="dark"] .creator-badge{
   background:#111c30;
   border-color:#293b5d;
 }
+
+/* ===== DEDICATED MONITOR TOP / SCROLL FIX ===== */
+body.dedicated-monitor-mode{
+  overflow:hidden !important;
+}
+
+body.dedicated-monitor-mode .site-creator-footer,
+body.live-monitor-screen-open .site-creator-footer{
+  display:none !important;
+}
+
+body.dedicated-monitor-mode .live-monitor.is-screen-open{
+  inset:0 !important;
+  height:100dvh;
+  min-height:100vh;
+  overflow-y:auto !important;
+  overflow-x:hidden;
+  overflow-anchor:none;
+  scroll-behavior:auto;
+  overscroll-behavior:contain;
+  padding-top:0;
+}
+
+body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
+  top:0 !important;
+  margin:0 calc(clamp(18px,2vw,34px) * -1) 18px;
+  padding:22px clamp(18px,2vw,34px) 14px;
+}
+
+/* Keep the summary cards from covering the monitor header. */
+body.dedicated-monitor-mode .live-monitor.is-screen-open .monitor-stats{
+  position:static;
+  top:auto;
+}
+
+@media(max-width:750px){
+  body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
+    margin:0 -14px 14px;
+    padding:14px;
+  }
+}
