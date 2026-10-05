@@ -2759,3 +2759,28 @@ body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
     padding-right:16px;
   }
 }
+
+/* ===== FULLSCREEN MONITOR VIEWPORT WIDTH FIX ===== */
+/* Keep padding inside the viewport width so the monitor never clips on the right. */
+.live-monitor.is-screen-open{
+  box-sizing:border-box !important;
+  width:auto !important;
+  left:0 !important;
+  right:0 !important;
+  max-width:100% !important;
+  overflow-x:hidden !important;
+}
+
+.live-monitor.is-screen-open .roster-head,
+.live-monitor.is-screen-open .monitor-stats,
+.live-monitor.is-screen-open .live-progress-table-wrap{
+  box-sizing:border-box;
+  max-width:100%;
+}
+
+/* Allow the table wrapper to scroll internally if a narrow viewport ever needs it,
+   rather than making the entire fullscreen monitor wider than the screen. */
+.live-monitor.is-screen-open .live-progress-table-wrap{
+  width:100%;
+  overflow-x:auto;
+}

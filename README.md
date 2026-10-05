@@ -1,10 +1,12 @@
-KLGA wider fullscreen monitor patch
+KLGA Fullscreen Monitor Viewport Width Fix
 
-Replace this file on your website:
+Replace:
 - styles.css
 
-Change:
-- Reduces fullscreen live monitor left/right spacing to 16px on desktop.
-- Keeps the monitor centered.
-- Makes the compact monitor header use the same 16px alignment.
-- Mobile spacing is unchanged.
+Fixes:
+- fullscreen monitor extending beyond the right edge
+- clipped Close Monitor button
+- clipped Finished summary card
+- horizontal page overflow caused by width:100vw plus padding
+
+The monitor now stays inside the visible viewport and keeps its side padding within the available width.
