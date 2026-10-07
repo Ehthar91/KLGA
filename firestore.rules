@@ -18,6 +18,23 @@ service cloud.firestore {
         && request.auth.token.firebase.sign_in_provider == 'anonymous';
     }
 
+    // A student may reclaim a stale session record after moving to a different
+    // Chromebook/browser only when the old attempt is not actively testing and
+    // the student is actually assigned to the still-active session.
+    function canReclaimStudentSession() {
+      let session = get(/databases/$(database)/documents/sessions/$(resource.data.sessionKey));
+      return isAnonymousStudent()
+        && session.data.status == 'Active'
+        && session.data.studentKeys.hasAny([resource.data.studentKey])
+        && resource.data.status in ['waiting', 'paused', 'terminated']
+        && request.resource.data.sessionKey == resource.data.sessionKey
+        && request.resource.data.studentKey == resource.data.studentKey
+        && request.resource.data.authUid == request.auth.uid
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['authUid', 'status', 'updatedAt']);
+    }
+
     // Teacher allowlist. Create teacher UID documents from the Firebase Console.
     match /teachers/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
@@ -37,8 +54,8 @@ service cloud.firestore {
       allow create, update, delete: if isTeacher();
     }
 
-    // Student status documents are owned by the anonymous student UID.
-    // Teachers can monitor and confirm them.
+    // Student status documents are normally owned by the anonymous student UID.
+    // A stale UID may be replaced only through the narrow reclaim rule above.
     match /sessionStudents/{statusId} {
       allow read: if isTeacher()
         || (isAnonymousStudent() && resource.data.authUid == request.auth.uid);
@@ -49,7 +66,8 @@ service cloud.firestore {
       allow update: if isTeacher()
         || (isAnonymousStudent()
             && resource.data.authUid == request.auth.uid
-            && request.resource.data.authUid == resource.data.authUid);
+            && request.resource.data.authUid == resource.data.authUid)
+        || canReclaimStudentSession();
 
       allow delete: if isTeacher();
     }

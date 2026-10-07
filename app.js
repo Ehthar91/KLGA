@@ -3793,11 +3793,29 @@ confirmStudentJoinBtn.onclick=async()=>{
     .find(s=>s.key===joinStudentSelect.value);
   if(!student || !joinedSession) return;
 
-  joinedStudent=student;
-  await cloudSetStudentJoin(joinedSession.key,student.key,"waiting");
+  joinSessionError.classList.add('hidden');
+  joinSessionError.textContent='';
+  confirmStudentJoinBtn.disabled=true;
+  confirmStudentJoinBtn.textContent='Joining…';
+
+  try{
+    joinedStudent=student;
+    await cloudSetStudentJoin(joinedSession.key,student.key,"waiting");
+  }catch(error){
+    console.error('KLGA student join failed:',error);
+    joinedStudent=null;
+    joinSessionError.textContent=
+      'Unable to continue with this student. An earlier test session may still be active or already finished. Please ask your teacher to End Test or Terminate & Restart this student, then try again.';
+    joinSessionError.classList.remove('hidden');
+    confirmStudentJoinBtn.disabled=false;
+    confirmStudentJoinBtn.textContent='Continue';
+    return;
+  }
 
   waitingApprovalWrap.classList.remove("hidden");
   confirmStudentJoinBtn.classList.add("hidden");
+  confirmStudentJoinBtn.disabled=false;
+  confirmStudentJoinBtn.textContent='Continue';
 
   if(stopStudentStatusListener) stopStudentStatusListener();
 
