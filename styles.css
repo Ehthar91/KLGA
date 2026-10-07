@@ -2842,3 +2842,5 @@ html[data-theme="dark"] .account-role-badge{
 /* Teacher-assigned benchmark testing window */
 .assigned-window-note{display:block;margin-top:6px;color:var(--muted,#64748b);font-size:12px;font-weight:500}
 #testWindow:disabled{opacity:1;color:var(--text,#1e293b);background:var(--primary-soft,#eef2ff);cursor:default}
+
+.result-detail-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}

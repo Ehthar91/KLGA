@@ -226,6 +226,20 @@ async function cloudClearGradeResults(year,season,grade){
 }
 
 
+async function cloudDeleteOneResult(resultKey){
+  if(!resultKey) throw new Error('Missing result ID.');
+
+  if(await fbReady() && window.KLGAFirebase.deleteResults){
+    await window.KLGAFirebase.deleteResults([resultKey]);
+    return;
+  }
+
+  const all=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  const kept=all.filter(x=>String(x.key)!==String(resultKey));
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify(kept));
+}
+
+
 async function cloudJoinSession(name,password){
   if(await fbReady()) return await window.KLGAFirebase.findActiveSession(name,password);
   const sessions=await cloudLoadSessions();
@@ -2597,6 +2611,7 @@ function resultSortTime(x){
 
 
 let teacherResultCache=[];
+let activeTeacherResultKey=null;
 
 function normalizeSkillScore(value){
   if(value===null || value===undefined || value==='') return '—';
@@ -2625,7 +2640,14 @@ function openTeacherResultDetail(resultKey){
   const result=teacherResultCache.find(r=>String(r.key)===String(resultKey));
   if(!result) return;
 
+  activeTeacherResultKey=result.key;
   teacherResultDetailTitle.textContent=`${result.student||'Student'} — ${result.resultLabel||'Result'}`;
+
+  const deleteBtn=document.getElementById('deleteTeacherResultBtn');
+  if(deleteBtn){
+    deleteBtn.classList.toggle('hidden',isViewerAccount());
+    deleteBtn.disabled=isViewerAccount();
+  }
 
   const items=[
     ['Student',result.student||'—'],
@@ -2663,8 +2685,46 @@ function openTeacherResultDetail(resultKey){
 }
 
 function closeTeacherResultDetail(){
+  activeTeacherResultKey=null;
   teacherResultDetailModal.classList.add('hidden');
   teacherResultDetailModal.setAttribute('aria-hidden','true');
+}
+
+
+async function deleteCurrentTeacherResult(){
+  if(isViewerAccount() || !activeTeacherResultKey) return;
+
+  const result=teacherResultCache.find(r=>String(r.key)===String(activeTeacherResultKey));
+  if(!result) return;
+
+  const confirmed=await confirmClearResults({
+    title:'Delete This Result?',
+    message:`Delete ${result.student||'this student'}'s ${result.window||'assessment'} result from ${result.date||'this date'}?`,
+    scope:`${result.student||'Student'} • Grade ${result.grade||'—'} • ${result.window||'—'} • ${result.resultLabel||'Result'}`,
+    confirmLabel:'Delete Result'
+  });
+
+  if(!confirmed) return;
+
+  const deleteBtn=document.getElementById('deleteTeacherResultBtn');
+  if(deleteBtn){
+    deleteBtn.disabled=true;
+    deleteBtn.textContent='Deleting…';
+  }
+
+  try{
+    await cloudDeleteOneResult(result.key);
+    closeTeacherResultDetail();
+    await renderDashboard();
+  }catch(err){
+    console.error('Delete result failed:',err);
+    alert('Could not delete this result. Please check your Firebase connection and Firestore rules.');
+  }finally{
+    if(deleteBtn){
+      deleteBtn.disabled=false;
+      deleteBtn.textContent='Delete Result';
+    }
+  }
 }
 
 
@@ -3612,6 +3672,8 @@ googleTeacherSignInBtn.onclick=async()=>{
 
 if(window.closeTeacherResultDetailBtn){
   closeTeacherResultDetailBtn.onclick=closeTeacherResultDetail;
+const deleteTeacherResultBtn=document.getElementById('deleteTeacherResultBtn');
+if(deleteTeacherResultBtn) deleteTeacherResultBtn.onclick=deleteCurrentTeacherResult;
 }
 document.querySelectorAll('[data-close-result-detail]').forEach(el=>{
   el.onclick=closeTeacherResultDetail;

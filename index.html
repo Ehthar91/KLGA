@@ -521,7 +521,10 @@
   <div class="modal-card result-detail-card">
     <div class="modal-head">
       <div><div class="eyebrow">Assessment Result</div><h2 id="teacherResultDetailTitle">Student Result Details</h2></div>
-      <button id="closeTeacherResultDetailBtn" class="btn ghost mini">Close</button>
+      <div class="result-detail-actions">
+        <button id="deleteTeacherResultBtn" class="btn danger mini hidden" type="button">Delete Result</button>
+        <button id="closeTeacherResultDetailBtn" class="btn ghost mini">Close</button>
+      </div>
     </div>
     <div id="teacherResultSummary" class="result-summary-grid"></div>
     <div class="detail-section"><h3>Placement Path</h3><div id="teacherResultPath" class="result-path-box"></div></div>
