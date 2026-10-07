@@ -2195,6 +2195,7 @@ async function openSessionForm(session=null){
     sessionName.value=session.name;
     sessionPassword.value=session.password;
     sessionTestType.value=session.testType;
+    sessionTestingWindow.value=['Fall','Winter','Spring'].includes(session.testingWindow)?session.testingWindow:'Fall';
     sessionLevel.value=session.level||'1';
     sessionQuestionCount.value=String(session.questionCount||'8');
     const isIndividual=session.testType==='individual';
@@ -2207,6 +2208,7 @@ async function openSessionForm(session=null){
     sessionName.value=generateSessionName();
     sessionPassword.value=generateSessionPassword();
     sessionTestType.value='adaptive';
+    sessionTestingWindow.value='Fall';
     sessionLevel.value='1';
     sessionQuestionCount.value='8';
     sessionLevelWrap.classList.add('hidden');
@@ -2223,6 +2225,7 @@ async function persistSession(){
   const name=sessionName.value.trim();
   const password=sessionPassword.value.trim();
   const testType=sessionTestType.value;
+  const testingWindow=sessionTestingWindow.value;
   const level=testType==='individual'?Number(sessionLevel.value):null;
   const questionCount=testType==='individual'?sessionQuestionCount.value:null;
   const studentKeys=selectedSessionStudentKeys();
@@ -2254,11 +2257,11 @@ async function persistSession(){
   let session;
   if(editingSessionKey){
     const existing=sessions.find(s=>s.key===editingSessionKey);
-    session={...(existing||{}),key:editingSessionKey,name,password,testType,level,questionCount,studentKeys,studentSummaries};
+    session={...(existing||{}),key:editingSessionKey,name,password,testType,testingWindow,level,questionCount,studentKeys,studentSummaries};
   }else{
     session={
       key:'ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-      name,password,testType,level,questionCount,studentKeys,studentSummaries,status:'Draft',
+      name,password,testType,testingWindow,level,questionCount,studentKeys,studentSummaries,status:'Draft',
       createdAt:new Date().toLocaleString()
     };
   }
@@ -2358,7 +2361,7 @@ async function renderSessions(){
     tr.innerHTML=
       `<td><strong>${esc(s.name)}</strong></td>`+
       `<td><span class="session-password">${esc(s.password)}</span></td>`+
-      `<td>${testLabel}</td>`+
+      `<td>${testLabel} • ${esc(s.testingWindow||'Fall')}</td>`+
       `<td>${studentNames.length}</td>`+
       `<td><span class="status-pill status-${String(s.status).toLowerCase()}">${esc(s.status)}</span></td>`+
       `<td class="row-actions">`+
@@ -3655,6 +3658,8 @@ function applyStudentSessionAssignment(){
   const inSession=Boolean(joinedSession && joinedStudent);
 
   if(!inSession){
+    testWindow.disabled=false;
+    studentTestingWindowNote.classList.add('hidden');
     testModeWrap.classList.remove('hidden');
     assignedAssessmentWrap.classList.add('hidden');
     testMode.disabled=false;
@@ -3664,6 +3669,9 @@ function applyStudentSessionAssignment(){
   }
 
   testModeWrap.classList.add('hidden');
+  testWindow.value=['Fall','Winter','Spring'].includes(joinedSession.testingWindow)?joinedSession.testingWindow:'Fall';
+  testWindow.disabled=true;
+  studentTestingWindowNote.classList.remove('hidden');
   assignedAssessmentWrap.classList.remove('hidden');
 
   const isIndividual=joinedSession.testType==='individual';
@@ -3681,7 +3689,7 @@ function applyStudentSessionAssignment(){
     questionCountWrap.classList.remove('hidden');
 
     assignedAssessmentType.textContent=`Individual Level Test — Level ${assignedLevel}`;
-    assignedAssessmentDetails.textContent=`${assignedCount==='all'?'All available':assignedCount} questions • Assigned by teacher`;
+    assignedAssessmentDetails.textContent=`${assignedCount==='all'?'All available':assignedCount} questions • ${testWindow.value} Benchmark • Assigned by teacher`;
   }else{
     individualLevelWrap.classList.add('hidden');
     questionCountWrap.classList.add('hidden');
@@ -3689,7 +3697,7 @@ function applyStudentSessionAssignment(){
     questionCount.disabled=false;
 
     assignedAssessmentType.textContent='Adaptive Test';
-    assignedAssessmentDetails.textContent='40 questions • Assigned by teacher';
+    assignedAssessmentDetails.textContent=`40 questions • ${testWindow.value} Benchmark • Assigned by teacher`;
   }
 }
 
@@ -3706,7 +3714,9 @@ testMode.onchange=()=>{
 beginTestBtn.onclick=async()=>{
   const name=studentName.value.trim();
   const grade=studentGrade.value;
-  const window=testWindow.value;
+  const window=(joinedSession && joinedStudent)
+    ? (['Fall','Winter','Spring'].includes(joinedSession.testingWindow)?joinedSession.testingWindow:'Fall')
+    : testWindow.value;
   const mode=(joinedSession && joinedStudent)
     ? (joinedSession.testType==='individual'?'individual':'adaptive')
     : testMode.value;

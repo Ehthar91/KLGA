@@ -2838,3 +2838,7 @@ html[data-theme="dark"] .account-role-badge{
   background:rgba(96,135,255,.14);
   border-color:rgba(128,161,255,.26);
 }
+
+/* Teacher-assigned benchmark testing window */
+.assigned-window-note{display:block;margin-top:6px;color:var(--muted,#64748b);font-size:12px;font-weight:500}
+#testWindow:disabled{opacity:1;color:var(--text,#1e293b);background:var(--primary-soft,#eef2ff);cursor:default}

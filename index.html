@@ -130,7 +130,7 @@
 <div class="form-grid">
 <label>Student Name<input id="studentName" type="text" placeholder="Enter your name"></label>
 <label>Grade<select id="studentGrade"><option value="">Select grade</option><option>6</option><option>7</option><option>8</option></select></label>
-<label>Testing Window<select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select></label>
+<label id="studentTestingWindowWrap">Testing Window<select id="testWindow"><option>Fall</option><option>Winter</option><option>Spring</option></select><small id="studentTestingWindowNote" class="assigned-window-note hidden">Assigned by teacher</small></label>
 <label id="testModeWrap">Test Mode
 <select id="testMode">
 <option value="adaptive">Adaptive Test</option>
@@ -315,6 +315,13 @@
           <input id="sessionPassword" type="text" placeholder="Example: READ25">
           <button id="generatePasswordBtn" type="button" class="btn secondary mini">Generate</button>
         </div>
+      </label>
+      <label>Testing Window
+        <select id="sessionTestingWindow">
+          <option value="Fall">Fall</option>
+          <option value="Winter">Winter</option>
+          <option value="Spring">Spring</option>
+        </select>
       </label>
       <label>Test Type
         <select id="sessionTestType">
