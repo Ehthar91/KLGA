@@ -844,9 +844,46 @@ function fresh(){
 }
 state=fresh();
 
+function isElementVisibleForScrollLock(el){
+  if(!el || el.classList.contains('hidden')) return false;
+  let node=el.parentElement;
+  while(node && node!==document.body){
+    if(node.classList?.contains('hidden')) return false;
+    node=node.parentElement;
+  }
+  return true;
+}
+
+function syncPageScrollLock(){
+  const monitorOpen=Boolean(
+    liveSessionMonitor &&
+    liveSessionMonitor.classList.contains('is-screen-open') &&
+    isElementVisibleForScrollLock(liveSessionMonitor)
+  );
+
+  const gradeOpen=[...document.querySelectorAll('.grade-results-section.is-screen-open')]
+    .some(section=>isElementVisibleForScrollLock(section));
+
+  document.body.classList.toggle('live-monitor-screen-open',monitorOpen);
+  document.body.classList.toggle('grade-result-screen-open',gradeOpen);
+
+  // Dedicated-monitor layout should never keep the normal page locked
+  // after the monitor itself is no longer open.
+  if(!monitorOpen && !document.body.classList.contains('dedicated-monitor-loading')){
+    document.body.classList.remove('dedicated-monitor-mode');
+  }
+
+  // Clear an inline overflow lock if one was left behind by an interrupted UI state.
+  if(!monitorOpen && !gradeOpen && !document.body.classList.contains('dedicated-monitor-loading')){
+    if(document.body.style.overflow==='hidden') document.body.style.overflow='';
+    if(document.documentElement.style.overflow==='hidden') document.documentElement.style.overflow='';
+  }
+}
+
 function showView(n){
   Object.values(views).forEach(v=>v.classList.add('hidden'));
   views[n].classList.remove('hidden');
+  requestAnimationFrame(syncPageScrollLock);
 }
 
 function pct(rows){
@@ -1889,7 +1926,8 @@ function setLiveMonitorFullScreen(open){
 
   const shouldOpen=Boolean(open);
   liveSessionMonitor.classList.toggle('is-screen-open',shouldOpen);
-  document.body.classList.toggle('live-monitor-screen-open',shouldOpen);
+  if(shouldOpen && monitorSessionKeyFromUrl()) document.body.classList.add('dedicated-monitor-mode');
+  syncPageScrollLock();
 
   if(window.fullScreenLiveMonitorBtn){
     fullScreenLiveMonitorBtn.textContent=shouldOpen?'Restore':'Full Screen';
@@ -1954,6 +1992,7 @@ function closeLiveMonitor(){
 
   setLiveMonitorFullScreen(false);
   liveSessionMonitor.classList.add("hidden");
+  syncPageScrollLock();
   if(stopSessionMonitor) stopSessionMonitor();
   stopSessionMonitor=null;
   activeMonitorSession=null;
@@ -3217,7 +3256,7 @@ async function renderDashboard(resultsOverride=null){
         });
 
         section.classList.toggle('is-screen-open',opening);
-        document.body.classList.toggle('grade-result-screen-open',opening);
+        syncPageScrollLock();
         btn.textContent=opening?'Restore':'Full Screen';
 
         if(opening && section.classList.contains('is-collapsed')){
@@ -3569,6 +3608,15 @@ function setTeacherTab(tab){
   if(!valid.includes(tab)) tab='overview';
   activeTeacherTab=tab;
 
+  // Leaving Results should never leave a fullscreen result scroll-lock behind.
+  if(tab!=='results'){
+    document.querySelectorAll('.grade-results-section.is-screen-open').forEach(section=>{
+      section.classList.remove('is-screen-open');
+      const button=section.querySelector('.grade-fullscreen-btn');
+      if(button) button.textContent='Full Screen';
+    });
+  }
+
   const panels={
     overview:document.getElementById('teacherOverviewPanel'),
     sessions:document.getElementById('teacherSessionsPanel'),
@@ -3587,6 +3635,7 @@ function setTeacherTab(tab){
   });
 
   if(tab==='overview') updateTeacherOverview();
+  requestAnimationFrame(syncPageScrollLock);
 }
 
 async function updateTeacherOverview(resultsOverride=null){
@@ -3877,6 +3926,9 @@ document.querySelectorAll('[data-close-result-detail]').forEach(el=>{
 });
 
 teacherSignOutBtn.onclick=async()=>{
+  document.querySelectorAll('.grade-results-section.is-screen-open').forEach(section=>section.classList.remove('is-screen-open'));
+  if(liveSessionMonitor?.classList.contains('is-screen-open')) setLiveMonitorFullScreen(false);
+  syncPageScrollLock();
   await cloudSignOut();
   if(isDedicatedMonitorMode()){
     setLiveMonitorFullScreen(false);
@@ -4233,11 +4285,26 @@ document.addEventListener('keydown',event=>{
   const section=document.querySelector('.grade-results-section.is-screen-open');
   if(!section) return;
   section.classList.remove('is-screen-open');
-  document.body.classList.remove('grade-result-screen-open');
+  syncPageScrollLock();
   const btn=section.querySelector('.grade-fullscreen-btn');
   if(btn) btn.textContent='Full Screen';
 });
 
+
+/* Scroll-lock safety net.
+   If a fullscreen class survives after its panel has closed/re-rendered,
+   restore normal page scrolling automatically instead of requiring refresh. */
+window.addEventListener('pageshow',()=>requestAnimationFrame(syncPageScrollLock));
+window.addEventListener('resize',()=>requestAnimationFrame(syncPageScrollLock));
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden) requestAnimationFrame(syncPageScrollLock);
+});
+document.addEventListener('click',()=>setTimeout(syncPageScrollLock,0),true);
+
+const scrollLockObserver=new MutationObserver(()=>{
+  requestAnimationFrame(syncPageScrollLock);
+});
+scrollLockObserver.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
 
 /* Dedicated monitor refresh fallback. */
 if(document.readyState!=='loading' && monitorSessionKeyFromUrl()){
