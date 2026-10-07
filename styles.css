@@ -3123,3 +3123,109 @@ html[data-theme="dark"] body > .grade-results-section.is-screen-open::before{
   z-index:1;
 }
 
+
+/* ===== RESULTS SEARCH ===== */
+.results-search-bar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin:18px 0 20px;
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(248,250,252,.88);
+}
+.results-search-field{
+  flex:1 1 420px;
+  max-width:620px;
+}
+.results-search-field>span{
+  display:block;
+  margin-bottom:6px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+.results-search-field input,
+.grade-result-search-input{
+  width:100%;
+  margin:0;
+  min-height:40px;
+  padding:9px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface, #fff);
+  color:var(--text);
+  outline:none;
+}
+.results-search-field input:focus,
+.grade-result-search-input:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.results-search-meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.result-search-row-hidden,
+.result-search-hidden{
+  display:none !important;
+}
+.grade-results-inline-search{
+  display:none;
+  align-items:center;
+  gap:8px;
+  flex:1 1 320px;
+  min-width:260px;
+  max-width:520px;
+}
+.grade-result-search-input{
+  min-width:190px;
+}
+.grade-result-search-count{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+body > .grade-results-section.is-screen-open .grade-results-inline-search{
+  display:flex;
+}
+body > .grade-results-section.is-screen-open .grade-results-actions{
+  align-items:center;
+}
+html[data-theme="dark"] .results-search-bar{
+  background:rgba(15,26,44,.78);
+  border-color:#334866;
+}
+html[data-theme="dark"] .results-search-field input,
+html[data-theme="dark"] .grade-result-search-input{
+  background:#0f1a2c;
+  color:#eaf1ff;
+  border-color:#334866;
+}
+@media(max-width:760px){
+  .results-search-bar{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .results-search-field{
+    max-width:none;
+  }
+  .results-search-meta{
+    justify-content:space-between;
+  }
+  body > .grade-results-section.is-screen-open .grade-results-inline-search{
+    width:100%;
+    max-width:none;
+    min-width:0;
+  }
+}

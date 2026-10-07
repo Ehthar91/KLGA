@@ -3155,6 +3155,103 @@ function openGradeResultsFullscreen(section){
   });
 }
 
+
+/* ---------------------------
+   RESULTS SEARCH
+   Live, non-destructive filter by student name or Student ID.
+---------------------------- */
+let resultsSearchQuery='';
+
+function normalizedResultSearch(value=''){
+  return String(value||'').trim().toLowerCase();
+}
+
+function syncResultsSearchInputs(){
+  const globalInput=document.getElementById('resultsSearchInput');
+  if(globalInput && globalInput.value!==resultsSearchQuery) globalInput.value=resultsSearchQuery;
+  document.querySelectorAll('.grade-result-search-input').forEach(input=>{
+    if(input.value!==resultsSearchQuery) input.value=resultsSearchQuery;
+  });
+}
+
+function applyResultsSearchFilter(){
+  const query=normalizedResultSearch(resultsSearchQuery);
+  const rows=[...document.querySelectorAll('#resultsHierarchy tr.result-data-row, body > .grade-results-section.is-screen-open tr.result-data-row')];
+  let matches=0;
+
+  rows.forEach(row=>{
+    const match=!query || String(row.dataset.searchText||'').includes(query);
+    row.classList.toggle('result-search-row-hidden',!match);
+    if(match) matches++;
+  });
+
+  const gradeSections=[...document.querySelectorAll('#resultsHierarchy .grade-results-section, body > .grade-results-section.is-screen-open')];
+  gradeSections.forEach(section=>{
+    const dataRows=[...section.querySelectorAll('tr.result-data-row')];
+    const visibleRows=dataRows.filter(row=>!row.classList.contains('result-search-row-hidden'));
+    const tbody=section.querySelector('.grade-results-body tbody');
+    let emptyRow=tbody?.querySelector('.result-search-empty-row');
+
+    if(query && dataRows.length && !visibleRows.length){
+      if(!emptyRow && tbody){
+        emptyRow=document.createElement('tr');
+        emptyRow.className='result-search-empty-row';
+        emptyRow.innerHTML=`<td colspan="10" class="empty-row">No matching students in Grade ${esc(section.dataset.grade||'')}.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+    }else if(emptyRow){
+      emptyRow.remove();
+    }
+
+    // Never hide the grade card currently being shown fullscreen.
+    const hideGrade=!!query && !visibleRows.length && !section.classList.contains('is-screen-open');
+    section.classList.toggle('result-search-hidden',hideGrade);
+
+    const inlineCount=section.querySelector('.grade-result-search-count');
+    if(inlineCount){
+      inlineCount.textContent=query
+        ? `${visibleRows.length} match${visibleRows.length===1?'':'es'}`
+        : `${dataRows.length} result${dataRows.length===1?'':'s'}`;
+    }
+  });
+
+  document.querySelectorAll('#resultsHierarchy .results-season-section').forEach(section=>{
+    const grades=[...section.querySelectorAll(':scope > .results-grade-grid > .grade-results-section')];
+    const hide=!!query && grades.length && grades.every(g=>g.classList.contains('result-search-hidden'));
+    section.classList.toggle('result-search-hidden',hide);
+  });
+
+  document.querySelectorAll('#resultsHierarchy .results-year-section').forEach(section=>{
+    const seasons=[...section.querySelectorAll(':scope > .results-seasons-wrap > .results-season-section')];
+    const hide=!!query && seasons.length && seasons.every(s=>s.classList.contains('result-search-hidden'));
+    section.classList.toggle('result-search-hidden',hide);
+  });
+
+  const countEl=document.getElementById('resultsSearchCount');
+  if(countEl){
+    const total=rows.length;
+    countEl.textContent=query
+      ? `${matches} of ${total} result${total===1?'':'s'} found`
+      : `${total} result${total===1?'':'s'}`;
+  }
+
+  syncResultsSearchInputs();
+}
+
+function setResultsSearch(value=''){
+  resultsSearchQuery=String(value||'');
+  applyResultsSearchFilter();
+}
+
+function bindDynamicResultSearchInputs(){
+  document.querySelectorAll('.grade-result-search-input').forEach(input=>{
+    if(input.dataset.searchBound==='1') return;
+    input.dataset.searchBound='1';
+    input.value=resultsSearchQuery;
+    input.addEventListener('input',()=>setResultsSearch(input.value));
+  });
+}
+
 async function renderDashboard(resultsOverride=null){
   closeGradeResultsFullscreen();
   resultsHierarchy.innerHTML='<div class="empty-row">Loading results…</div>';
@@ -3166,6 +3263,9 @@ async function renderDashboard(resultsOverride=null){
 
     if(!sorted.length){
       resultsHierarchy.innerHTML='<div class="empty-row">No KLGA results yet.</div>';
+      const countEl=document.getElementById('resultsSearchCount');
+      if(countEl) countEl.textContent='0 results';
+      syncResultsSearchInputs();
       return;
     }
 
@@ -3247,6 +3347,10 @@ async function renderDashboard(resultsOverride=null){
                 `</div>`+
               `</div>`+
               `<div class="grade-results-actions">`+
+                `<div class="grade-results-inline-search">`+
+                  `<input class="grade-result-search-input" type="search" autocomplete="off" placeholder="Search name or ID…" aria-label="Search results by student name or ID">`+
+                  `<span class="grade-result-search-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
+                `</div>`+
                 `<button class="btn mini ghost grade-fullscreen-btn" type="button" ${gradeResults.length?'':'disabled'}>Full Screen</button>`+
                 `<button class="btn mini secondary grade-export-btn" type="button" ${gradeResults.length?'':'disabled'}>Export CSV</button>`+
                 `<button class="btn mini secondary grade-sheet-script-btn" type="button" ${gradeResults.length?'':'disabled'}>Google Sheet Script</button>`+
@@ -3280,6 +3384,8 @@ async function renderDashboard(resultsOverride=null){
           }else{
             gradeResults.forEach(x=>{
               const tr=document.createElement('tr');
+              tr.className='result-data-row';
+              tr.dataset.searchText=normalizedResultSearch(`${x.student||''} ${x.studentId||''}`);
               tr.innerHTML=
                 `<td>${esc(x.student||'')}</td>`+
                 `<td>${esc(x.mode||'')}</td>`+
@@ -3423,9 +3529,14 @@ async function renderDashboard(resultsOverride=null){
       };
     });
 
+    bindDynamicResultSearchInputs();
+    applyResultsSearchFilter();
+
   }catch(err){
     console.error('Results load failed:',err);
     resultsHierarchy.innerHTML='<div class="empty-row">Could not load results from Firebase.</div>';
+    const countEl=document.getElementById('resultsSearchCount');
+    if(countEl) countEl.textContent='—';
   }
 }
 
@@ -4291,6 +4402,18 @@ confirmStudentJoinBtn.onclick=async()=>{
   );
 };
 
+
+const resultsSearchInputEl=document.getElementById('resultsSearchInput');
+const clearResultsSearchBtnEl=document.getElementById('clearResultsSearchBtn');
+if(resultsSearchInputEl){
+  resultsSearchInputEl.addEventListener('input',()=>setResultsSearch(resultsSearchInputEl.value));
+}
+if(clearResultsSearchBtnEl){
+  clearResultsSearchBtnEl.onclick=()=>{
+    setResultsSearch('');
+    resultsSearchInputEl?.focus();
+  };
+}
 
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;

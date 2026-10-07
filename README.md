@@ -1,19 +1,18 @@
-KLGA True Fullscreen Results Fix
+KLGA Results Search
 
 Replace:
 - app.js
+- index.html
 - styles.css
 
-This fixes the broken fullscreen grade/student results view by moving the selected
-grade result card directly under <body> while fullscreen is active. That avoids
-Chrome/Chromebook containing-block issues caused by dashboard backdrop/filter
-containers.
+Adds:
+- Live Search Results field on the Results page.
+- Search by Student Name or Student ID.
+- Case-insensitive instant filtering while typing.
+- Match count such as "3 of 20 results found".
+- Clear button.
+- Works for both Teacher and Viewer accounts.
+- Fullscreen grade results include the same live search field.
+- Searching only changes what is displayed; it does not edit, delete, or change any result data.
 
-Behavior:
-- Fullscreen result card is truly fixed to the browser viewport.
-- Top controls stay inside the visible screen.
-- Results table scrolls inside the card.
-- Restore returns the exact grade card to its original dashboard location.
-- Escape, changing tabs, signing out, and dashboard rerenders safely restore it.
-- No Firestore changes.
-- No result data is changed.
+No Firestore rule update is required.
