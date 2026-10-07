@@ -97,15 +97,26 @@ service cloud.firestore {
       allow delete: if isTeacher();
     }
 
-    // Viewers may read results, but only teachers may delete them.
-    // Students can submit only their own result.
+    // Active assessment results. Viewers may read but never change them.
+    // Students can submit only their own result. A full teacher may recreate
+    // a result only when restoring the same document ID from Recently Deleted.
     match /results/{resultId} {
       allow read: if canReadResults();
       allow delete: if isTeacher();
 
-      allow create: if isAnonymousStudent()
-        && request.resource.data.authUid == request.auth.uid;
+      allow create: if (isAnonymousStudent()
+          && request.resource.data.authUid == request.auth.uid)
+        || (isTeacher()
+          && exists(/databases/$(database)/documents/deletedResults/$(resultId)));
 
+      allow update: if false;
+    }
+
+    // Recently Deleted is teacher-only. Viewers cannot see or modify trash.
+    // Records are created when a teacher clears/deletes results, then may be
+    // restored to /results or permanently deleted later.
+    match /deletedResults/{resultId} {
+      allow read, create, delete: if isTeacher();
       allow update: if false;
     }
   }

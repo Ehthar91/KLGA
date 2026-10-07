@@ -9,6 +9,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  reauthenticateWithPopup,
   signInAnonymously,
   signOut,
   onAuthStateChanged
@@ -25,7 +26,8 @@ import {
   where,
   updateDoc,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -92,6 +94,19 @@ window.KLGAFirebase={
     const result=await signInWithPopup(auth,provider);
     const access=await teacherAuthorization(result.user);
     return {user:result.user,...access};
+  },
+
+  async reauthenticateTeacher(){
+    if(!auth?.currentUser) throw new Error("No teacher is signed in.");
+    if(auth.currentUser.isAnonymous) throw new Error("Teacher Google sign-in is required.");
+    const provider=new GoogleAuthProvider();
+    provider.setCustomParameters({prompt:"select_account"});
+    const result=await reauthenticateWithPopup(auth.currentUser,provider);
+    const access=await teacherAuthorization(result.user);
+    if(!access.authorized || access.role==="viewer"){
+      throw new Error("Full teacher authorization is required.");
+    }
+    return true;
   },
 
   async isAuthorizedTeacher(){
@@ -304,16 +319,70 @@ window.KLGAFirebase={
     );
   },
 
-  async deleteResults(resultIds=[]){
-    if(!db) return;
+  async getDeletedResults(){
+    return await getCollection("deletedResults");
+  },
+
+  async trashResults(resultIds=[]){
+    if(!db) return 0;
     const ids=[...new Set((resultIds||[]).filter(Boolean))];
-    await Promise.all(ids.map(id=>deleteDoc(doc(db,"results",id))));
+    const user=auth?.currentUser || null;
+    let moved=0;
+
+    // Firestore batches are limited to 500 writes. Each moved result uses two
+    // writes (create trash copy + delete active copy), so process safely in chunks.
+    for(let start=0; start<ids.length; start+=200){
+      const chunk=ids.slice(start,start+200);
+      const snapshots=await Promise.all(chunk.map(id=>getDoc(doc(db,"results",id))));
+      const batch=writeBatch(db);
+      let chunkCount=0;
+      snapshots.forEach((snap,index)=>{
+        if(!snap.exists()) return;
+        const id=chunk[index];
+        batch.set(doc(db,"deletedResults",id),{
+          ...snap.data(),
+          deletedAt:serverTimestamp(),
+          deletedBy:user?.uid || null
+        });
+        batch.delete(doc(db,"results",id));
+        chunkCount++;
+      });
+      if(chunkCount){
+        await batch.commit();
+        moved+=chunkCount;
+      }
+    }
+    return moved;
+  },
+
+  async restoreDeletedResult(resultId){
+    if(!db || !resultId) return;
+    const trashRef=doc(db,"deletedResults",resultId);
+    const snap=await getDoc(trashRef);
+    if(!snap.exists()) throw new Error("Deleted result not found.");
+    const data={...snap.data()};
+    delete data.deletedAt;
+    delete data.deletedBy;
+    const batch=writeBatch(db);
+    batch.set(doc(db,"results",resultId),data);
+    batch.delete(trashRef);
+    await batch.commit();
+  },
+
+  async permanentlyDeleteResult(resultId){
+    if(!db || !resultId) return;
+    await deleteDoc(doc(db,"deletedResults",resultId));
+  },
+
+  // Backward-compatible aliases: destructive actions now move records to trash.
+  async deleteResults(resultIds=[]){
+    return await this.trashResults(resultIds);
   },
 
   async clearResults(){
-    if(!db) return;
+    if(!db) return 0;
     const snap=await getDocs(collection(db,"results"));
-    await Promise.all(snap.docs.map(d=>deleteDoc(d.ref)));
+    return await this.trashResults(snap.docs.map(d=>d.id));
   }
 };
 

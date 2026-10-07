@@ -128,6 +128,13 @@ async function cloudSignOut(){
   if(await fbReady()) return await window.KLGAFirebase.signOut();
 }
 
+async function cloudReauthenticateTeacher(){
+  if(!(await fbReady()) || !window.KLGAFirebase.reauthenticateTeacher){
+    throw new Error('Google re-authentication is unavailable.');
+  }
+  return await window.KLGAFirebase.reauthenticateTeacher();
+}
+
 function cloudCurrentUser(){
   return window.KLGAFirebase?.currentUser?.() || null;
 }
@@ -194,7 +201,12 @@ async function cloudClearResults(){
   if(await fbReady() && window.KLGAFirebase.clearResults){
     return await window.KLGAFirebase.clearResults();
   }
-  localStorage.removeItem('klgaFiveLevelResults');
+  const all=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  const deleted=JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+  const stamped=all.map(x=>({...x,deletedAt:new Date().toISOString(),deletedBy:'local'}));
+  localStorage.setItem('klgaDeletedResults',JSON.stringify([...deleted,...stamped]));
+  localStorage.setItem('klgaFiveLevelResults','[]');
+  return all.length;
 }
 
 async function cloudClearGradeResults(year,season,grade){
@@ -221,6 +233,9 @@ async function cloudClearGradeResults(year,season,grade){
     seasonFromResult(x)===season &&
     String(x.grade||'Unknown')===String(grade)
   ));
+  const deleted=JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+  const stamped=targets.map(x=>({...x,deletedAt:new Date().toISOString(),deletedBy:'local'}));
+  localStorage.setItem('klgaDeletedResults',JSON.stringify([...deleted,...stamped]));
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(kept));
   return targets.length;
 }
@@ -235,8 +250,43 @@ async function cloudDeleteOneResult(resultKey){
   }
 
   const all=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  const target=all.find(x=>String(x.key)===String(resultKey));
   const kept=all.filter(x=>String(x.key)!==String(resultKey));
+  if(target){
+    const deleted=JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+    localStorage.setItem('klgaDeletedResults',JSON.stringify([...deleted,{...target,deletedAt:new Date().toISOString(),deletedBy:'local'}]));
+  }
   localStorage.setItem('klgaFiveLevelResults',JSON.stringify(kept));
+}
+
+async function cloudLoadDeletedResults(){
+  if(await fbReady() && window.KLGAFirebase.getDeletedResults){
+    return await window.KLGAFirebase.getDeletedResults();
+  }
+  return JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+}
+
+async function cloudRestoreDeletedResult(resultKey){
+  if(await fbReady() && window.KLGAFirebase.restoreDeletedResult){
+    return await window.KLGAFirebase.restoreDeletedResult(resultKey);
+  }
+  const deleted=JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+  const target=deleted.find(x=>String(x.key)===String(resultKey));
+  if(!target) return;
+  const restored={...target};
+  delete restored.deletedAt;
+  delete restored.deletedBy;
+  const results=JSON.parse(localStorage.getItem('klgaFiveLevelResults')||'[]');
+  localStorage.setItem('klgaFiveLevelResults',JSON.stringify([...results,restored]));
+  localStorage.setItem('klgaDeletedResults',JSON.stringify(deleted.filter(x=>String(x.key)!==String(resultKey))));
+}
+
+async function cloudPermanentlyDeleteResult(resultKey){
+  if(await fbReady() && window.KLGAFirebase.permanentlyDeleteResult){
+    return await window.KLGAFirebase.permanentlyDeleteResult(resultKey);
+  }
+  const deleted=JSON.parse(localStorage.getItem('klgaDeletedResults')||'[]');
+  localStorage.setItem('klgaDeletedResults',JSON.stringify(deleted.filter(x=>String(x.key)!==String(resultKey))));
 }
 
 
@@ -2699,9 +2749,10 @@ async function deleteCurrentTeacherResult(){
 
   const confirmed=await confirmClearResults({
     title:'Delete This Result?',
-    message:`Delete ${result.student||'this student'}'s ${result.window||'assessment'} result from ${result.date||'this date'}?`,
-    scope:`${result.student||'Student'} • Grade ${result.grade||'—'} • ${result.window||'—'} • ${result.resultLabel||'Result'}`,
-    confirmLabel:'Delete Result'
+    message:'This result will be moved to Recently Deleted and can be restored later.',
+    scope:`${result.student||'Student'} • Grade ${result.grade||'—'} • ${result.window||'—'} • ${result.resultLabel||'Result'} • ${result.date||'—'}`,
+    confirmLabel:'Move to Recently Deleted',
+    requiredText:result.student||'Student'
   });
 
   if(!confirmed) return;
@@ -2781,14 +2832,19 @@ function ensureClearResultsConfirmModal(){
     `<div class="modal-backdrop" data-clear-results-cancel></div>`+
     `<div class="modal-card clear-results-confirm-card" role="dialog" aria-modal="true" aria-labelledby="clearResultsConfirmTitle">`+
       `<div class="clear-results-warning-icon" aria-hidden="true">!</div>`+
-      `<div class="eyebrow danger-eyebrow">Permanent Action</div>`+
-      `<h2 id="clearResultsConfirmTitle">Clear Results?</h2>`+
+      `<div class="eyebrow danger-eyebrow">Protected Action</div>`+
+      `<h2 id="clearResultsConfirmTitle">Delete Results?</h2>`+
       `<p id="clearResultsConfirmMessage" class="clear-results-confirm-message"></p>`+
       `<div id="clearResultsConfirmScope" class="clear-results-confirm-scope"></div>`+
-      `<p class="clear-results-confirm-note"><strong>This cannot be undone.</strong> Export the results first if you may need them later.</p>`+
+      `<div id="clearResultsTypedWrap" class="clear-results-typed-wrap hidden">`+
+        `<label id="clearResultsTypedLabel" for="clearResultsTypedInput"></label>`+
+        `<input id="clearResultsTypedInput" type="text" autocomplete="off" spellcheck="false">`+
+      `</div>`+
+      `<div id="clearResultsSecurityNote" class="clear-results-security-note hidden"></div>`+
+      `<p class="clear-results-confirm-note"><strong>Results are moved to Recently Deleted first.</strong> They can be restored until permanently deleted.</p>`+
       `<div class="clear-results-confirm-actions">`+
         `<button type="button" class="btn ghost" data-clear-results-cancel>Cancel</button>`+
-        `<button type="button" class="btn danger clear-results-confirm-delete">Clear Results</button>`+
+        `<button type="button" class="btn danger clear-results-confirm-delete">Continue</button>`+
       `</div>`+
     `</div>`;
 
@@ -2796,18 +2852,41 @@ function ensureClearResultsConfirmModal(){
   return modal;
 }
 
-function confirmClearResults({title='Clear Results?',message='',scope='',confirmLabel='Clear Results'}={}){
+function confirmClearResults({title='Delete Results?',message='',scope='',confirmLabel='Continue',requiredText='',securityNote=''}={}){
   const modal=ensureClearResultsConfirmModal();
   const titleEl=modal.querySelector('#clearResultsConfirmTitle');
   const messageEl=modal.querySelector('#clearResultsConfirmMessage');
   const scopeEl=modal.querySelector('#clearResultsConfirmScope');
   const confirmBtn=modal.querySelector('.clear-results-confirm-delete');
   const cancelEls=modal.querySelectorAll('[data-clear-results-cancel]');
+  const typedWrap=modal.querySelector('#clearResultsTypedWrap');
+  const typedLabel=modal.querySelector('#clearResultsTypedLabel');
+  const typedInput=modal.querySelector('#clearResultsTypedInput');
+  const securityEl=modal.querySelector('#clearResultsSecurityNote');
 
   titleEl.textContent=title;
   messageEl.textContent=message;
   scopeEl.textContent=scope;
   confirmBtn.textContent=confirmLabel;
+
+  const expected=String(requiredText||'').trim();
+  typedWrap.classList.toggle('hidden',!expected);
+  if(expected){
+    typedLabel.textContent=`Type “${expected}” to continue:`;
+    typedInput.value='';
+    typedInput.placeholder=expected;
+    confirmBtn.disabled=true;
+  }else{
+    confirmBtn.disabled=false;
+  }
+
+  securityEl.classList.toggle('hidden',!securityNote);
+  securityEl.textContent=securityNote||'';
+
+  const matches=()=>String(typedInput.value||'').trim().toLowerCase()===expected.toLowerCase();
+  typedInput.oninput=()=>{
+    if(expected) confirmBtn.disabled=!matches();
+  };
 
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden','false');
@@ -2821,6 +2900,7 @@ function confirmClearResults({title='Clear Results?',message='',scope='',confirm
       modal.classList.add('hidden');
       modal.setAttribute('aria-hidden','true');
       confirmBtn.onclick=null;
+      typedInput.oninput=null;
       cancelEls.forEach(el=>el.onclick=null);
       document.removeEventListener('keydown',onKey);
       resolve(answer);
@@ -2828,13 +2908,128 @@ function confirmClearResults({title='Clear Results?',message='',scope='',confirm
 
     const onKey=event=>{
       if(event.key==='Escape') cleanup(false);
+      if(event.key==='Enter' && !confirmBtn.disabled) cleanup(true);
     };
 
-    confirmBtn.onclick=()=>cleanup(true);
+    confirmBtn.onclick=()=>{
+      if(expected && !matches()) return;
+      cleanup(true);
+    };
     cancelEls.forEach(el=>el.onclick=()=>cleanup(false));
     document.addEventListener('keydown',onKey);
-    confirmBtn.focus();
+    setTimeout(()=>expected?typedInput.focus():confirmBtn.focus(),0);
   });
+}
+
+function deletedResultTime(x){
+  if(x.deletedAt?.seconds) return x.deletedAt.seconds*1000;
+  if(x.deletedAt?.toMillis) return x.deletedAt.toMillis();
+  return Date.parse(x.deletedAt||'')||resultSortTime(x);
+}
+
+function formatDeletedAt(x){
+  const ms=deletedResultTime(x);
+  if(!ms) return '—';
+  try{return new Date(ms).toLocaleString();}catch{return '—';}
+}
+
+function ensureRecentlyDeletedModal(){
+  let modal=document.getElementById('recentlyDeletedModal');
+  if(modal) return modal;
+  modal=document.createElement('div');
+  modal.id='recentlyDeletedModal';
+  modal.className='modal hidden';
+  modal.setAttribute('aria-hidden','true');
+  modal.innerHTML=
+    `<div class="modal-backdrop" data-close-trash></div>`+
+    `<div class="modal-card recently-deleted-card" role="dialog" aria-modal="true" aria-labelledby="recentlyDeletedTitle">`+
+      `<div class="modal-head">`+
+        `<div><div class="eyebrow">Recovery</div><h2 id="recentlyDeletedTitle">Recently Deleted</h2><p>Restore a result or permanently remove it.</p></div>`+
+        `<button type="button" class="btn ghost mini" data-close-trash>Close</button>`+
+      `</div>`+
+      `<div id="recentlyDeletedList" class="recently-deleted-list"></div>`+
+    `</div>`;
+  document.body.appendChild(modal);
+  modal.querySelectorAll('[data-close-trash]').forEach(el=>el.onclick=()=>{
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+  });
+  return modal;
+}
+
+async function openRecentlyDeleted(){
+  if(isViewerAccount()) return;
+  const modal=ensureRecentlyDeletedModal();
+  const list=modal.querySelector('#recentlyDeletedList');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+  list.innerHTML='<div class="empty-row">Loading deleted results…</div>';
+
+  try{
+    const rows=(await cloudLoadDeletedResults()).sort((a,b)=>deletedResultTime(b)-deletedResultTime(a));
+    if(!rows.length){
+      list.innerHTML='<div class="empty-row">Recently Deleted is empty.</div>';
+      return;
+    }
+    list.innerHTML='';
+    rows.forEach(result=>{
+      const row=document.createElement('div');
+      row.className='recently-deleted-row';
+      row.innerHTML=
+        `<div class="recently-deleted-main">`+
+          `<strong>${esc(result.student||'Student')}</strong>`+
+          `<span>Grade ${esc(result.grade||'—')} • ${esc(result.window||'—')} • ${esc(result.resultLabel||'Result')}</span>`+
+          `<small>Deleted ${esc(formatDeletedAt(result))} • Test date ${esc(result.date||'—')}</small>`+
+        `</div>`+
+        `<div class="recently-deleted-actions">`+
+          `<button type="button" class="btn secondary mini" data-trash-restore="${esc(result.key)}">Restore</button>`+
+          `<button type="button" class="btn danger mini" data-trash-permanent="${esc(result.key)}">Permanently Delete</button>`+
+        `</div>`;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('[data-trash-restore]').forEach(btn=>{
+      btn.onclick=async()=>{
+        btn.disabled=true;
+        try{
+          await cloudRestoreDeletedResult(btn.dataset.trashRestore);
+          await renderDashboard();
+          await openRecentlyDeleted();
+        }catch(err){
+          console.error('Restore result failed:',err);
+          alert('Could not restore this result. Check Firebase and Firestore rules.');
+          btn.disabled=false;
+        }
+      };
+    });
+
+    list.querySelectorAll('[data-trash-permanent]').forEach(btn=>{
+      btn.onclick=async()=>{
+        const result=rows.find(x=>String(x.key)===String(btn.dataset.trashPermanent));
+        if(!result) return;
+        const approved=await confirmClearResults({
+          title:'Permanently Delete Result?',
+          message:'This permanently removes the result from Recently Deleted and cannot be undone.',
+          scope:`${result.student||'Student'} • ${result.window||'—'} • ${result.date||'—'}`,
+          confirmLabel:'Permanently Delete',
+          requiredText:'DELETE PERMANENTLY'
+        });
+        if(!approved) return;
+        btn.disabled=true;
+        try{
+          await cloudPermanentlyDeleteResult(result.key);
+          await openRecentlyDeleted();
+        }catch(err){
+          console.error('Permanent delete failed:',err);
+          alert('Could not permanently delete this result.');
+          btn.disabled=false;
+        }
+      };
+    });
+  }catch(err){
+    console.error('Could not load Recently Deleted:',err);
+    list.innerHTML='<div class="empty-row">Could not load Recently Deleted. Check Firestore rules.</div>';
+  }
 }
 
 async function renderDashboard(resultsOverride=null){
@@ -3054,11 +3249,13 @@ async function renderDashboard(resultsOverride=null){
 
         if(!subset.length) return;
 
+        const requiredPhrase=`CLEAR GRADE ${grade} ${String(season).toUpperCase()}`;
         const approved=await confirmClearResults({
           title:`Clear Grade ${grade} Results?`,
-          message:'You are about to permanently delete this result group.',
+          message:'These results will be moved to Recently Deleted and can be restored later.',
           scope:`${year} • ${season} • Grade ${grade} • ${subset.length} result${subset.length===1?'':'s'}`,
-          confirmLabel:`Clear ${subset.length} Result${subset.length===1?'':'s'}`
+          confirmLabel:`Move ${subset.length} to Recently Deleted`,
+          requiredText:requiredPhrase
         });
 
         if(!approved) return;
@@ -3983,6 +4180,11 @@ confirmStudentJoinBtn.onclick=async()=>{
 nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
 
+const recentlyDeletedButton=document.getElementById('recentlyDeletedBtn');
+if(recentlyDeletedButton){
+  recentlyDeletedButton.onclick=()=>openRecentlyDeleted();
+}
+
 clearResultsBtn.onclick=async()=>{
   if(isViewerAccount()) return;
   const count=teacherResultCache.length;
@@ -3990,21 +4192,29 @@ clearResultsBtn.onclick=async()=>{
 
   const approved=await confirmClearResults({
     title:'Clear ALL KLGA Results?',
-    message:'This will permanently delete every saved assessment result across all school years, seasons, and grades.',
+    message:'Every current assessment result will be moved to Recently Deleted.',
     scope:`ALL RESULTS • ${count} result${count===1?'':'s'}`,
-    confirmLabel:`Clear All ${count} Result${count===1?'':'s'}`
+    confirmLabel:`Verify Google & Clear ${count}`,
+    requiredText:'CLEAR ALL RESULTS',
+    securityNote:'After confirmation, KLGA will require your Google account to be verified again before continuing.'
   });
 
   if(!approved) return;
 
   clearResultsBtn.disabled=true;
   try{
+    await cloudReauthenticateTeacher();
     await cloudClearResults();
     await renderDashboard();
-
+    alert('All results were moved to Recently Deleted.');
   }catch(err){
     console.error('Clear results failed:',err);
-    alert('Could not clear Firebase results. Check Firestore connection and rules.');
+    const code=String(err?.code||'');
+    if(code.includes('popup-closed') || code.includes('cancelled-popup')){
+      alert('Google verification was cancelled. No results were cleared.');
+    }else{
+      alert('Could not finish clearing results. Refresh Results and Recently Deleted to verify what moved, then check Google sign-in, Firebase, and Firestore rules.');
+    }
   }finally{
     clearResultsBtn.disabled=false;
   }

@@ -1965,6 +1965,83 @@ html[data-theme="dark"] .clear-results-confirm-scope{
 }
 
 
+.clear-results-typed-wrap{
+  margin-top:14px;
+  text-align:left;
+}
+.clear-results-typed-wrap label{
+  display:block;
+  margin-bottom:7px;
+  color:#7f1d1d;
+  font-size:13px;
+  font-weight:800;
+}
+.clear-results-typed-wrap input{
+  margin-top:0;
+  width:100%;
+  border-color:#fca5a5;
+  background:#fff;
+  color:#111827;
+}
+.clear-results-security-note{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  color:#1e40af;
+  font-size:12px;
+  line-height:1.45;
+  text-align:left;
+}
+.recently-deleted-card{
+  width:min(760px,95vw);
+  max-height:min(82vh,760px);
+  overflow:auto;
+}
+.recently-deleted-card .modal-head p{
+  margin:4px 0 0;
+  color:#64748b;
+}
+.recently-deleted-list{
+  display:grid;
+  gap:10px;
+  margin-top:18px;
+}
+.recently-deleted-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:14px;
+  border:1px solid #dbe3ee;
+  border-radius:14px;
+  background:#f8fafc;
+}
+.recently-deleted-main{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.recently-deleted-main strong{font-size:15px}
+.recently-deleted-main span{color:#334155;font-size:13px}
+.recently-deleted-main small{color:#64748b;line-height:1.35}
+.recently-deleted-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+html[data-theme="dark"] .clear-results-typed-wrap label{color:#fecaca}
+html[data-theme="dark"] .clear-results-typed-wrap input{background:#0f172a;color:#e5e7eb;border-color:#7f1d1d}
+html[data-theme="dark"] .clear-results-security-note{background:rgba(30,64,175,.2);border-color:#1d4ed8;color:#bfdbfe}
+html[data-theme="dark"] .recently-deleted-card{background:#111827;color:#e5e7eb}
+html[data-theme="dark"] .recently-deleted-card .modal-head p,
+html[data-theme="dark"] .recently-deleted-main small{color:#94a3b8}
+html[data-theme="dark"] .recently-deleted-row{background:#0f172a;border-color:#334155}
+html[data-theme="dark"] .recently-deleted-main span{color:#cbd5e1}
+@media(max-width:700px){
+  .recently-deleted-row{align-items:flex-start;flex-direction:column}
+  .recently-deleted-actions{width:100%;justify-content:stretch}
+  .recently-deleted-actions .btn{flex:1}
+}
+
 /* ===== SESSION-LOCKED STUDENT ASSESSMENT ===== */
 .assigned-assessment-card{
   border:1px solid #bfdbfe;
@@ -2821,6 +2898,7 @@ body.viewer-mode #teacherOverviewPanel,
 body.viewer-mode #teacherSessionsPanel,
 body.viewer-mode #teacherStudentsPanel,
 body.viewer-mode #clearResultsBtn,
+body.viewer-mode #recentlyDeletedBtn,
 body.viewer-mode .grade-clear-btn,
 body.viewer-mode [data-teacher-tab="overview"],
 body.viewer-mode [data-teacher-tab="sessions"],
