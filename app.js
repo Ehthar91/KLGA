@@ -77,6 +77,48 @@ async function cloudTeacherAuthorized(){
   return await window.KLGAFirebase.isAuthorizedTeacher();
 }
 
+async function cloudAccountAccess(){
+  if(!(await fbReady())) return {authorized:false,role:null};
+  if(window.KLGAFirebase.getAccountAccess){
+    return await window.KLGAFirebase.getAccountAccess();
+  }
+  const authorized=await window.KLGAFirebase.isAuthorizedTeacher();
+  return {authorized,role:authorized?'teacher':null};
+}
+
+let currentAccountRole='teacher';
+
+function isViewerAccount(){
+  return currentAccountRole==='viewer';
+}
+
+function applyAccountRole(role='teacher'){
+  currentAccountRole=role==='viewer'?'viewer':'teacher';
+  const viewer=isViewerAccount();
+  document.body.classList.toggle('viewer-mode',viewer);
+
+  const roleEl=document.getElementById('teacherAccountRole');
+  if(roleEl) roleEl.textContent=viewer?'Viewer':'Teacher';
+
+  const title=document.getElementById('teacherWorkspaceTitle');
+  if(title) title.textContent=viewer?'Results Viewer':'Teacher Dashboard';
+
+  const eyebrow=document.getElementById('teacherWorkspaceEyebrow');
+  if(eyebrow) eyebrow.textContent=viewer?'Read-Only Workspace':'Teacher Workspace';
+
+  const desc=document.getElementById('teacherWorkspaceDescription');
+  if(desc){
+    desc.textContent=viewer
+      ? 'View KLGA student assessment results in read-only mode.'
+      : 'Manage rosters, run live testing sessions, and review grouped benchmark results in one place.';
+  }
+
+  document.querySelectorAll('[data-teacher-tab]').forEach(btn=>{
+    const allowed=!viewer || btn.dataset.teacherTab==='results';
+    btn.classList.toggle('hidden',!allowed);
+  });
+}
+
 async function cloudEnsureStudentAuth(){
   if(!(await fbReady())) throw new Error("Firebase is not ready.");
   return await window.KLGAFirebase.ensureStudentAuth();
@@ -2815,7 +2857,7 @@ async function renderDashboard(resultsOverride=null){
                   `<span class="grade-count">${gradeResults.length} result${gradeResults.length===1?'':'s'}</span>`+
                 `</div>`+
                 `<div class="grade-title-actions">`+
-                  `<button class="btn mini danger grade-clear-btn" type="button" ${gradeResults.length?'':'disabled'}>Clear Results</button>`+
+                  `${isViewerAccount()?'':`<button class="btn mini danger grade-clear-btn" type="button" ${gradeResults.length?'':'disabled'}>Clear Results</button>`}`+
                   `<button class="grade-expand-btn" type="button" aria-expanded="false" title="Expand Grade ${grade} results">`+
                     `<span class="grade-expand-icon">›</span>`+
                     `<span class="grade-expand-text">Expand</span>`+
@@ -2933,6 +2975,7 @@ async function renderDashboard(resultsOverride=null){
 
     document.querySelectorAll('.grade-clear-btn').forEach(btn=>{
       btn.onclick=async()=>{
+        if(isViewerAccount()) return;
         const section=btn.closest('.grade-results-section');
         if(!section || btn.disabled) return;
 
@@ -3262,6 +3305,7 @@ let activeTeacherTab='overview';
 
 function setTeacherTab(tab){
   const valid=['overview','sessions','students','results'];
+  if(isViewerAccount()) tab='results';
   if(!valid.includes(tab)) tab='overview';
   activeTeacherTab=tab;
 
@@ -3365,7 +3409,7 @@ async function startResultsListener(){
 
   stopResultsListener=await cloudSubscribeResults(results=>{
     renderDashboard(results);
-    updateTeacherOverview(results);
+    if(!isViewerAccount()) updateTeacherOverview(results);
   });
 }
 
@@ -3456,9 +3500,11 @@ async function bootstrapDedicatedMonitorMode(){
       return true;
     }
 
-    const authorized=await cloudTeacherAuthorized();
-    if(!authorized){
-      teacherAuthMessage.textContent=`Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized as a KLGA teacher yet.`;
+    const access=await cloudAccountAccess();
+    if(!access.authorized || access.role==='viewer'){
+      teacherAuthMessage.textContent=access.role==='viewer'
+        ? 'Viewer accounts can review results but cannot open live testing monitors.'
+        : `Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized for KLGA yet.`;
       teacherAuthMessage.classList.remove('hidden');
       teacherUidText.textContent=user.uid;
       teacherUidBox.classList.remove('hidden');
@@ -3498,9 +3544,9 @@ async function openTeacherDashboard(){
       return;
     }
 
-    const authorized=await cloudTeacherAuthorized();
-    if(!authorized){
-      teacherAuthMessage.textContent=`Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized as a KLGA teacher yet.`;
+    const access=await cloudAccountAccess();
+    if(!access.authorized){
+      teacherAuthMessage.textContent=`Signed in as ${user.email||user.displayName||'Google user'}, but this account is not authorized for KLGA yet.`;
       teacherAuthMessage.classList.remove('hidden');
       teacherUidText.textContent=user.uid;
       teacherUidBox.classList.remove('hidden');
@@ -3509,8 +3555,17 @@ async function openTeacherDashboard(){
       return;
     }
 
-    teacherAccountName.textContent=user.displayName||'Teacher';
+    applyAccountRole(access.role);
+    teacherAccountName.textContent=user.displayName||(access.role==='viewer'?'Viewer':'Teacher');
     teacherAccountEmail.textContent=user.email||'';
+
+    if(access.role==='viewer'){
+      await startResultsListener();
+      showView('teacher');
+      setTeacherTab('results');
+      return;
+    }
+
     await backfillSessionStudentSummaries();
     await Promise.all([renderSessions(),renderRoster(),renderDashboard()]);
     await startResultsListener();
@@ -3534,9 +3589,9 @@ googleTeacherSignInBtn.onclick=async()=>{
   teacherAuthMessage.classList.add('hidden');
   teacherUidBox.classList.add('hidden');
   try{
-    const {user,authorized}=await cloudSignInTeacher();
+    const {user,authorized,role}=await cloudSignInTeacher();
     if(!authorized){
-      teacherAuthMessage.textContent=`Google sign-in worked, but ${user.email||'this account'} is not in the KLGA teacher allowlist yet.`;
+      teacherAuthMessage.textContent=`Google sign-in worked, but ${user.email||'this account'} is not in the KLGA access list yet.`;
       teacherAuthMessage.classList.remove('hidden');
       teacherUidText.textContent=user.uid;
       teacherUidBox.classList.remove('hidden');
@@ -3857,6 +3912,7 @@ nextQuestionBtn.onclick=submit;
 exportCsvBtn.onclick=exportCsv;
 
 clearResultsBtn.onclick=async()=>{
+  if(isViewerAccount()) return;
   const count=teacherResultCache.length;
   if(!count) return;
 

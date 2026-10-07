@@ -53,9 +53,9 @@
     </div>
   </div>
   <div class="auth-card student-content-panel">
-    <div class="eyebrow">Teacher Access</div>
+    <div class="eyebrow">KLGA Access</div>
     <h2>Sign in with Google</h2>
-    <p class="subtitle">Teachers must sign in with an authorized Google account to open the KLGA Teacher Dashboard.</p>
+    <p class="subtitle">Teachers and approved viewers can sign in with an authorized Google account.</p>
 
     <div id="teacherAuthMessage" class="auth-message hidden"></div>
 
@@ -224,7 +224,7 @@
 <div class="teacher-account-bar">
   <div>
     <span class="eyebrow">Signed in as</span>
-    <strong id="teacherAccountName">Teacher</strong>
+    <div class="teacher-account-name-row"><strong id="teacherAccountName">Teacher</strong><span id="teacherAccountRole" class="account-role-badge">Teacher</span></div>
     <small id="teacherAccountEmail"></small>
   </div>
   <div class="teacher-account-actions">
@@ -235,9 +235,9 @@
 
 <div class="workspace-banner teacher-welcome-banner">
   <div>
-    <div class="eyebrow">Teacher Workspace</div>
-    <h2>Teacher Dashboard</h2>
-    <p>Manage rosters, run live testing sessions, and review grouped benchmark results in one place.</p>
+    <div id="teacherWorkspaceEyebrow" class="eyebrow">Teacher Workspace</div>
+    <h2 id="teacherWorkspaceTitle">Teacher Dashboard</h2>
+    <p id="teacherWorkspaceDescription">Manage rosters, run live testing sessions, and review grouped benchmark results in one place.</p>
   </div>
   <div class="teacher-banner-tools">
     <div class="teacher-banner-chips teacher-nav" role="tablist" aria-label="Teacher Dashboard sections">

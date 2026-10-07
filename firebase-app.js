@@ -63,11 +63,14 @@ function providerIdForUser(user){
 }
 
 async function teacherAuthorization(user){
-  if(!db || !user || user.isAnonymous) return false;
+  if(!db || !user || user.isAnonymous) return {authorized:false,role:null};
   const provider=providerIdForUser(user);
-  if(provider!=="google.com") return false;
+  if(provider!=="google.com") return {authorized:false,role:null};
   const snap=await getDoc(doc(db,"teachers",user.uid));
-  return snap.exists();
+  if(!snap.exists()) return {authorized:false,role:null};
+  const data=snap.data() || {};
+  const role=data.role==="viewer" ? "viewer" : "teacher";
+  return {authorized:true,role};
 }
 
 window.KLGAFirebase={
@@ -87,11 +90,16 @@ window.KLGAFirebase={
     const provider=new GoogleAuthProvider();
     provider.setCustomParameters({prompt:"select_account"});
     const result=await signInWithPopup(auth,provider);
-    const authorized=await teacherAuthorization(result.user);
-    return {user:result.user,authorized};
+    const access=await teacherAuthorization(result.user);
+    return {user:result.user,...access};
   },
 
   async isAuthorizedTeacher(){
+    const access=await teacherAuthorization(auth?.currentUser || null);
+    return access.authorized;
+  },
+
+  async getAccountAccess(){
     return await teacherAuthorization(auth?.currentUser || null);
   },
 

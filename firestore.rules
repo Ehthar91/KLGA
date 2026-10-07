@@ -7,10 +7,35 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isTeacher() {
+    function isGoogleAccount() {
       return signedIn()
-        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    function hasAccessRecord() {
+      return isGoogleAccount()
         && exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    function accessData() {
+      return get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data;
+    }
+
+    // Existing teacher documents without a role field remain full teachers.
+    // Set role: "viewer" for read-only results access.
+    function isTeacher() {
+      return hasAccessRecord()
+        && (!("role" in accessData()) || accessData().role != 'viewer');
+    }
+
+    function isViewer() {
+      return hasAccessRecord()
+        && ("role" in accessData())
+        && accessData().role == 'viewer';
+    }
+
+    function canReadResults() {
+      return isTeacher() || isViewer();
     }
 
     function isAnonymousStudent() {
@@ -35,27 +60,27 @@ service cloud.firestore {
           .hasOnly(['authUid', 'status', 'updatedAt']);
     }
 
-    // Teacher allowlist. Create teacher UID documents from the Firebase Console.
+    // Access allowlist. The document ID is the Google user's Firebase UID.
+    // Optional field: role = "viewer". No role field means full teacher access.
     match /teachers/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
 
-    // Full roster is teacher-only.
+    // Roster remains teacher-only. Viewers cannot read or change it.
     match /students/{studentId} {
       allow read, write: if isTeacher();
     }
 
-    // Teachers can manage all sessions.
-    // Anonymous students can only read active sessions to join them.
+    // Sessions remain teacher-managed. Anonymous students can read active
+    // sessions to join them. Viewers cannot read session documents.
     match /sessions/{sessionId} {
       allow read: if isTeacher()
         || (isAnonymousStudent() && resource.data.status == 'Active');
       allow create, update, delete: if isTeacher();
     }
 
-    // Student status documents are normally owned by the anonymous student UID.
-    // A stale UID may be replaced only through the narrow reclaim rule above.
+    // Live student/session records remain teacher/student only.
     match /sessionStudents/{statusId} {
       allow read: if isTeacher()
         || (isAnonymousStudent() && resource.data.authUid == request.auth.uid);
@@ -72,10 +97,11 @@ service cloud.firestore {
       allow delete: if isTeacher();
     }
 
+    // Viewers may read results, but only teachers may delete them.
     // Students can submit only their own result.
-    // Teachers can read/export/delete results.
     match /results/{resultId} {
-      allow read, delete: if isTeacher();
+      allow read: if canReadResults();
+      allow delete: if isTeacher();
 
       allow create: if isAnonymousStudent()
         && request.resource.data.authUid == request.auth.uid;
