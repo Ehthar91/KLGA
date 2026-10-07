@@ -3071,7 +3071,92 @@ async function openRecentlyDeleted(){
   }
 }
 
+
+/* ---------------------------
+   FULLSCREEN GRADE RESULTS PORTAL
+   Move the grade card directly under <body> while fullscreen is open.
+   This prevents transformed/backdrop-filter dashboard ancestors from
+   becoming the containing block for position:fixed on Chrome/Chromebooks.
+---------------------------- */
+let gradeFullscreenPortal = null;
+
+function closeGradeResultsFullscreen(section=null){
+  const active = section || gradeFullscreenPortal?.section ||
+    document.querySelector('body > .grade-results-section.is-screen-open') ||
+    document.querySelector('.grade-results-section.is-screen-open');
+
+  if(!active) {
+    gradeFullscreenPortal = null;
+    syncPageScrollLock();
+    return;
+  }
+
+  active.classList.remove('is-screen-open');
+
+  const button = active.querySelector('.grade-fullscreen-btn');
+  if(button) button.textContent = 'Full Screen';
+
+  const portal = gradeFullscreenPortal;
+  if(portal && portal.section === active && portal.placeholder?.parentNode){
+    portal.placeholder.parentNode.insertBefore(active, portal.placeholder);
+    portal.placeholder.remove();
+  }
+
+  gradeFullscreenPortal = null;
+  syncPageScrollLock();
+}
+
+function openGradeResultsFullscreen(section){
+  if(!section) return;
+
+  if(gradeFullscreenPortal?.section && gradeFullscreenPortal.section !== section){
+    closeGradeResultsFullscreen(gradeFullscreenPortal.section);
+  }
+
+  if(section.classList.contains('is-screen-open')){
+    closeGradeResultsFullscreen(section);
+    return;
+  }
+
+  // Expand before moving it out of the dashboard.
+  if(section.classList.contains('is-collapsed')){
+    section.classList.remove('is-collapsed');
+    const expandBtn=section.querySelector('.grade-expand-btn');
+    if(expandBtn){
+      expandBtn.setAttribute('aria-expanded','true');
+      expandBtn.title=`Collapse Grade ${section.dataset.grade} results`;
+      const expandText=expandBtn.querySelector('.grade-expand-text');
+      if(expandText) expandText.textContent='Collapse';
+    }
+  }
+
+  const placeholder=document.createComment('KLGA grade fullscreen placeholder');
+  section.parentNode.insertBefore(placeholder,section);
+
+  gradeFullscreenPortal={section,placeholder};
+  document.body.appendChild(section);
+  section.classList.add('is-screen-open');
+
+  const button=section.querySelector('.grade-fullscreen-btn');
+  if(button) button.textContent='Restore';
+
+  const resultsBody=section.querySelector('.grade-results-body');
+  const resultsTitle=section.querySelector('.grade-results-title');
+
+  if(resultsBody) resultsBody.scrollTop=0;
+  if(resultsTitle) resultsTitle.scrollTop=0;
+
+  syncPageScrollLock();
+
+  requestAnimationFrame(()=>{
+    if(resultsBody) resultsBody.scrollTop=0;
+    if(resultsTitle) resultsTitle.scrollTop=0;
+    section.scrollIntoView({block:'start',inline:'nearest'});
+  });
+}
+
 async function renderDashboard(resultsOverride=null){
+  closeGradeResultsFullscreen();
   resultsHierarchy.innerHTML='<div class="empty-row">Loading results…</div>';
 
   try{
@@ -3244,42 +3329,10 @@ async function renderDashboard(resultsOverride=null){
       btn.onclick=()=>{
         const section=btn.closest('.grade-results-section');
         if(!section) return;
-
-        const opening=!section.classList.contains('is-screen-open');
-
-        document.querySelectorAll('.grade-results-section.is-screen-open').forEach(other=>{
-          if(other!==section){
-            other.classList.remove('is-screen-open');
-            const otherBtn=other.querySelector('.grade-fullscreen-btn');
-            if(otherBtn) otherBtn.textContent='Full Screen';
-          }
-        });
-
-        section.classList.toggle('is-screen-open',opening);
-        syncPageScrollLock();
-        btn.textContent=opening?'Restore':'Full Screen';
-
-        if(opening){
-          // Always open fullscreen results at the top of its own scroll region.
-          // This avoids Chromebook/browser viewport restoration leaving the
-          // fullscreen controls above the visible area.
-          const resultsBody=section.querySelector('.grade-results-body');
-          if(resultsBody) resultsBody.scrollTop=0;
-          const resultsTitle=section.querySelector('.grade-results-title');
-          if(resultsTitle) resultsTitle.scrollTop=0;
-          requestAnimationFrame(()=>{
-            if(resultsBody) resultsBody.scrollTop=0;
-            if(resultsTitle) resultsTitle.scrollTop=0;
-          });
-        }
-
-        if(opening && section.classList.contains('is-collapsed')){
-          section.classList.remove('is-collapsed');
-          const expandBtn=section.querySelector('.grade-expand-btn');
-          if(expandBtn){
-            expandBtn.setAttribute('aria-expanded','true');
-            expandBtn.title=`Collapse Grade ${section.dataset.grade} results`;
-          }
+        if(section.classList.contains('is-screen-open')){
+          closeGradeResultsFullscreen(section);
+        }else{
+          openGradeResultsFullscreen(section);
         }
       };
     });
@@ -3622,13 +3675,9 @@ function setTeacherTab(tab){
   if(!valid.includes(tab)) tab='overview';
   activeTeacherTab=tab;
 
-  // Leaving Results should never leave a fullscreen result scroll-lock behind.
+  // Leaving Results should restore any fullscreen result card to its dashboard location.
   if(tab!=='results'){
-    document.querySelectorAll('.grade-results-section.is-screen-open').forEach(section=>{
-      section.classList.remove('is-screen-open');
-      const button=section.querySelector('.grade-fullscreen-btn');
-      if(button) button.textContent='Full Screen';
-    });
+    closeGradeResultsFullscreen();
   }
 
   const panels={
@@ -3940,7 +3989,7 @@ document.querySelectorAll('[data-close-result-detail]').forEach(el=>{
 });
 
 teacherSignOutBtn.onclick=async()=>{
-  document.querySelectorAll('.grade-results-section.is-screen-open').forEach(section=>section.classList.remove('is-screen-open'));
+  closeGradeResultsFullscreen();
   if(liveSessionMonitor?.classList.contains('is-screen-open')) setLiveMonitorFullScreen(false);
   syncPageScrollLock();
   await cloudSignOut();
@@ -4298,10 +4347,7 @@ document.addEventListener('keydown',event=>{
 
   const section=document.querySelector('.grade-results-section.is-screen-open');
   if(!section) return;
-  section.classList.remove('is-screen-open');
-  syncPageScrollLock();
-  const btn=section.querySelector('.grade-fullscreen-btn');
-  if(btn) btn.textContent='Full Screen';
+  closeGradeResultsFullscreen(section);
 });
 
 
