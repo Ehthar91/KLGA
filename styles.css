@@ -2942,3 +2942,69 @@ body.dedicated-monitor-mode .live-monitor.is-screen-open .roster-head{
   top:0 !important;
   margin-top:0 !important;
 }
+
+/* ===== FULLSCREEN RESULTS VIEWPORT VISIBILITY FIX =====
+   Keep the grade/student results fullscreen panel completely inside the
+   browser's visible viewport on Chromebooks and browsers with dynamic chrome. */
+body.grade-result-screen-open{
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+
+.grade-results-section.is-screen-open{
+  position:fixed;
+  top:max(10px, env(safe-area-inset-top));
+  right:max(10px, env(safe-area-inset-right));
+  bottom:max(10px, env(safe-area-inset-bottom));
+  left:max(10px, env(safe-area-inset-left));
+  inset:auto;
+  width:auto;
+  height:auto;
+  max-width:none;
+  max-height:calc(100dvh - 20px);
+  box-sizing:border-box;
+  overflow:hidden;
+  isolation:isolate;
+}
+
+/* The fullscreen controls always remain in their own visible header row. */
+.grade-results-section.is-screen-open .grade-results-title{
+  position:relative;
+  top:auto;
+  z-index:20;
+  flex:0 0 auto;
+  max-height:42dvh;
+  overflow:auto;
+  overscroll-behavior:contain;
+  background:var(--surface);
+}
+
+/* Only the results table becomes the main scrolling region. */
+.grade-results-section.is-screen-open .grade-results-body{
+  flex:1 1 0;
+  min-height:0;
+  max-height:none!important;
+  overflow:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+html[data-theme="dark"] .grade-results-section.is-screen-open .grade-results-title{
+  background:#101a2c;
+}
+
+@media(max-height:700px){
+  .grade-results-section.is-screen-open{
+    top:max(4px, env(safe-area-inset-top));
+    right:max(4px, env(safe-area-inset-right));
+    bottom:max(4px, env(safe-area-inset-bottom));
+    left:max(4px, env(safe-area-inset-left));
+    max-height:calc(100dvh - 8px);
+    border-radius:14px;
+  }
+
+  .grade-results-section.is-screen-open .grade-results-title{
+    padding:10px 12px;
+    gap:6px;
+  }
+}

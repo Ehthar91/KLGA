@@ -3259,6 +3259,20 @@ async function renderDashboard(resultsOverride=null){
         syncPageScrollLock();
         btn.textContent=opening?'Restore':'Full Screen';
 
+        if(opening){
+          // Always open fullscreen results at the top of its own scroll region.
+          // This avoids Chromebook/browser viewport restoration leaving the
+          // fullscreen controls above the visible area.
+          const resultsBody=section.querySelector('.grade-results-body');
+          if(resultsBody) resultsBody.scrollTop=0;
+          const resultsTitle=section.querySelector('.grade-results-title');
+          if(resultsTitle) resultsTitle.scrollTop=0;
+          requestAnimationFrame(()=>{
+            if(resultsBody) resultsBody.scrollTop=0;
+            if(resultsTitle) resultsTitle.scrollTop=0;
+          });
+        }
+
         if(opening && section.classList.contains('is-collapsed')){
           section.classList.remove('is-collapsed');
           const expandBtn=section.querySelector('.grade-expand-btn');
